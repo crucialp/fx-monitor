@@ -2,6 +2,7 @@
 
   python scripts/fetch_smbs.py          # 최근 40일만 다시 받아 기존 파일에 병합 (GitHub Actions 기본)
   python scripts/fetch_smbs.py --full   # 2000년부터 전부 다시 받기
+  python scripts/fetch_smbs.py --auto   # 5분 주기 실행용: KST 8~13시이고 오늘 값이 아직 없을 때만 요청
 
 값이 바뀐 날만 파일을 다시 쓴다(변경 없으면 커밋도 생기지 않음).
 """
@@ -43,6 +44,11 @@ def main():
     old = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {"d": [], "v": []}
     series = dict(zip(old["d"], old["v"]))
     before = dict(series)
+    if "--auto" in sys.argv:
+        now = dt.datetime.now(KST)
+        if not (8 <= now.hour <= 13) or today.isoformat() in series:
+            print("건너뜀 (시간대 밖이거나 오늘 값 있음)")
+            return
     if "--full" in sys.argv or not series:
         for y in range(START_YEAR, today.year + 1):
             series.update(fetch_range(dt.date(y, 1, 1), min(dt.date(y, 12, 31), today)))

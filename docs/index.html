@@ -23,6 +23,8 @@
   --foreign:#2a78d6;
   --domestic:#eb6834;
   --bbg:#1baf7a;
+  --up:#d6453d;
+  --down:#2a6fd6;
   --font-display:"Noto Serif KR","Nanum Myeongjo","Batang",serif;
   --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
   --font-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
@@ -31,14 +33,14 @@
   :root:not([data-theme="light"]){
     --bg:#0f1215;--surface:#171b20;--ink:#eef1f4;--ink-2:#b4bcc6;--muted:#8a939e;
     --rule:#2a3038;--rule-strong:#3b434d;--chip:#232930;--zone:#1c2229;
-    --foreign:#3987e5;--domestic:#d95926;--bbg:#199e70;
+    --foreign:#3987e5;--domestic:#d95926;--bbg:#199e70;--up:#ec6a62;--down:#5596ee;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0f1215;--surface:#171b20;--ink:#eef1f4;--ink-2:#b4bcc6;--muted:#8a939e;
   --rule:#2a3038;--rule-strong:#3b434d;--chip:#232930;--zone:#1c2229;
-  --foreign:#3987e5;--domestic:#d95926;--bbg:#199e70;
+  --foreign:#3987e5;--domestic:#d95926;--bbg:#199e70;--up:#ec6a62;--down:#5596ee;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -220,6 +222,35 @@ img{max-width:100%}
 #tv{height:100%;width:100%}
 .credit{font-size:12px;color:var(--muted);margin-top:-8px}
 .p2intro{display:grid;gap:12px;padding-top:28px}
+.modes{display:flex;flex-wrap:wrap;gap:8px}
+.mode{display:flex;align-items:center;gap:9px;padding:8px 13px;border:1px solid var(--rule-strong);border-radius:8px;background:var(--surface);cursor:pointer;user-select:none}
+.mode input{accent-color:var(--ink);margin:0;width:16px;height:16px}
+.mode span{display:grid;line-height:1.3}
+.mode b{font-size:13.5px;font-weight:600;color:var(--ink)}
+.mode small{font-size:11.5px;color:var(--muted)}
+.mode:has(input:checked){border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.mpanel{display:grid;gap:10px}
+.spec{font-size:13px;color:var(--ink-2);background:var(--chip);border-radius:6px;padding:7px 11px;margin:0;max-width:none}
+.spec b{color:var(--ink);font-weight:600}
+.rchart{position:relative;height:max(380px,calc(100vh - 340px));height:max(380px,calc(100dvh - 340px));background:var(--surface);border:1px solid var(--rule);border-radius:6px;touch-action:pan-y}
+.rchart svg{display:block}
+.rchart .msg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:13px;text-align:center;padding:16px}
+.rtip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--rule-strong);border-radius:6px;padding:9px 11px;font-size:12.5px;line-height:1.5;min-width:170px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:3}
+.rtip .tq{font-family:var(--font-num);font-weight:500;color:var(--ink);margin-bottom:3px}
+.rtip .tr{display:flex;gap:10px;justify-content:space-between;color:var(--ink-2)}
+.rtip .tr b{font-family:var(--font-num);font-weight:500;color:var(--ink)}
+.up{color:var(--up)} .down{color:var(--down)}
+.dline{fill:none;stroke:var(--ink);stroke-width:1.75;stroke-linejoin:round;stroke-linecap:round}
+.darea{fill:var(--ink);fill-opacity:.06;stroke:none}
+.oline{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:4 4}
+.olab{fill:var(--ink-2);font-family:var(--font-num);font-size:11px}
+.lastdot{stroke:var(--surface);stroke-width:2}
+.lastlab{font-family:var(--font-num);font-size:12px;font-weight:500}
+.band{fill:var(--ink);fill-opacity:.09;stroke:none}
+.cline{fill:none;stroke:var(--ink);stroke-width:1.25;stroke-linejoin:round}
+.wick{stroke-width:1}
+.c-up{fill:var(--up);stroke:var(--up)} .c-dn{fill:var(--down);stroke:var(--down)}
+.dsep{stroke:var(--rule);stroke-width:1;stroke-dasharray:2 3}
 </style>
 </head>
 <body>
@@ -260,9 +291,17 @@ img{max-width:100%}
   <section id="rt">
     <div class="rt-bar">
       <div class="head">
-        <h2>실시간 1분봉</h2>
-        <p class="muted small">국제 외환시장 시세 · 한국 시간 기준</p>
+        <h2>실시간 달러/원</h2>
+        <p class="muted small">국제 외환시장 시세 · 한국 시간 기준 · 그래프 방식을 고르세요</p>
       </div>
+      <div class="modes" role="radiogroup" aria-label="그래프 방식">
+        <label class="mode"><input type="radio" name="rtmode" value="drag"><span><b>① 드래그로 보기</b><small>실시간 · 확대·이동</small></span></label>
+        <label class="mode"><input type="radio" name="rtmode" value="range"><span><b>② 기간 설정 · 10분봉</b><small>최대 1개월 · 한 화면 고정</small></span></label>
+        <label class="mode"><input type="radio" name="rtmode" value="day" checked><span><b>③ 하루</b><small>06:00 ~ 익일 06:00</small></span></label>
+      </div>
+    </div>
+
+    <div class="mpanel" data-mode="drag" hidden>
       <div class="ctl">
         <div class="seg" role="group" aria-label="보기 기간">
           <button type="button" data-v="1d" aria-pressed="true">1일 · 1분봉</button>
@@ -275,13 +314,43 @@ img{max-width:100%}
           <button type="button" data-s="1" aria-pressed="false">캔들</button>
         </div>
       </div>
+      <div class="rtchart"><div id="tv"></div></div>
+      <div class="credit">차트·시세 제공: <a href="https://www.tradingview.com/symbols/USDKRW/?exchange=FX_IDC" rel="noopener nofollow" target="_blank">TradingView</a> (FX_IDC:USDKRW) · 실시간 · 드래그로 이동, 휠·두 손가락으로 확대</div>
     </div>
-    <div class="rtchart"><div id="tv"></div></div>
-    <div class="credit">차트·시세 제공: <a href="https://www.tradingview.com/symbols/USDKRW/?exchange=FX_IDC" rel="noopener nofollow" target="_blank">TradingView</a> (FX_IDC:USDKRW)</div>
+
+    <div class="mpanel" data-mode="range" hidden>
+      <div class="ctl">
+        <div class="seg" role="group" aria-label="기간">
+          <button type="button" data-rp="1">1일</button>
+          <button type="button" data-rp="3">3일</button>
+          <button type="button" data-rp="7" aria-pressed="true">1주</button>
+          <button type="button" data-rp="14">2주</button>
+          <button type="button" data-rp="31">1개월</button>
+        </div>
+        <div class="dates">
+          <label for="r0">기간</label>
+          <input type="date" id="r0" aria-label="시작일">
+          <span>~</span>
+          <input type="date" id="r1" aria-label="종료일">
+        </div>
+      </div>
+      <p class="spec"><b>10분봉 기준</b>으로, 선택한 기간 전체를 <b>한 화면에 드래그 없이</b> 보여 줍니다. 최대 1개월. 하루는 06:00~익일 06:00이고, 주말처럼 거래가 없는 시간은 건너뛰고 이어 그립니다.</p>
+      <div class="sumrow" id="rsum"></div>
+      <div class="rchart" id="rchart"><div class="msg">장중 데이터를 불러오는 중…</div></div>
+      <div class="credit" id="rcredit"></div>
+    </div>
+
+    <div class="mpanel" data-mode="day">
+      <p class="spec"><b>하루 = 06:00 ~ 익일 06:00 (1분 단위).</b> 06:00부터 지금까지를 화면 폭 전체에 맞춰 그립니다. 시간이 흐를수록 같은 폭에 더 많은 움직임이 담겨 선의 굴곡이 늘어납니다.</p>
+      <div class="sumrow" id="dsum"></div>
+      <div class="rchart" id="dchart"><div class="msg">장중 데이터를 불러오는 중…</div></div>
+      <div class="credit" id="dcredit"></div>
+    </div>
+
     <ul class="notes" id="rtnotes">
-      <li><b>하루의 기준.</b> 국제 외환시장은 뉴욕 오후 5시에 하루를 마감한다. 한국 시간으로 오전 6시이고, 미국 서머타임이 끝나는 11월 첫 일요일부터 이듬해 3월 둘째 일요일 전까지는 오전 7시다. "1일" 보기는 최근 하루의 흐름을 1분 단위로 보여 준다.</li>
-      <li><b>데이터 기준.</b> 국제 외환시장 지표 시세라서 서울 외환시장 체결가(연합인포맥스 등)나 서울외국환중개 매매기준율과 몇 원 차이 날 수 있고, 갱신이 수 분 늦을 수 있다.</li>
-      <li><b>일별 매매기준율 추이와 분기별 전망</b>은 <a href="#p2">2페이지</a>, 기관별 수치와 출처는 <a href="#p3">3페이지</a>에 있다.</li>
+      <li><b>데이터 기준.</b> ①은 TradingView(FX_IDC:USDKRW) 실시간 시세, ②·③은 Yahoo Finance(KRW=X) 시세를 5분마다 받아 반영합니다. 둘 다 국제 외환시장 시세라 서울 외환시장 체결가(연합인포맥스 등)나 서울외국환중개 매매기준율과 몇 원 차이 날 수 있고, ②·③은 약 5~15분 늦습니다.</li>
+      <li><b>하루의 기준.</b> 국제 외환시장은 뉴욕 오후 5시에 하루를 마감합니다(한국 시간 오전 6시, 미국 서머타임이 아닌 11월 첫 일요일~3월 둘째 일요일 전에는 오전 7시). 이 페이지는 1년 내내 06:00~익일 06:00을 하루로 봅니다.</li>
+      <li><b>일별 매매기준율 추이와 분기별 전망</b>은 <a href="#p2">2페이지</a>, 기관별 수치와 출처는 <a href="#p3">3페이지</a>에 있습니다.</li>
     </ul>
   </section>
     <div class="pagefoot"><span class="muted small">1 / 3</span><a class="nextpg" href="#p2">2페이지 · 추이·전망 →</a></div>
@@ -1130,15 +1199,16 @@ img{max-width:100%}
     .then(function(j){base=j;onData()})
     .catch(function(){if(!overlay){var ld=$("loading");if(ld)ld.textContent="매매기준율 데이터를 불러오지 못했다. 페이지를 새로고침해 보라."}});
 
-  /* ---------- 1페이지: TradingView 실시간 차트 ---------- */
+  /* ---------- 1페이지 ①: TradingView 실시간 차트 ---------- */
   var TVV={"1d":{range:"1D",interval:"1"},"5d":{range:"5D",interval:"5"},"1m":{range:"1M",interval:"60"},"1y":{range:"12M",interval:"D"}};
   var TV={v:"1d",s:"2",mounted:false};
   try{var tvs=JSON.parse(localStorage.getItem("usdkrw-live")||"{}");if(TVV[tvs.v])TV.v=tvs.v;if(tvs.s==="1"||tvs.s==="2")TV.s=tvs.s}catch(e){}
   var darkMQ=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)");
   function isDark(){var t=document.documentElement.getAttribute("data-theme");return t?t==="dark":!!(darkMQ&&darkMQ.matches)}
+  function panel(m){return document.querySelector('.mpanel[data-mode="'+m+'"]')}
   function mountTV(force){
     if(TV.mounted&&!force)return;
-    if($("p1").hidden)return;
+    if($("p1").hidden||panel("drag").hidden)return;
     var v=TVV[TV.v], dk=isDark(), box=$("tv"); box.innerHTML="";
     var c=document.createElement("div"); c.className="tradingview-widget-container"; c.style.height="100%"; c.style.width="100%";
     var w=document.createElement("div"); w.className="tradingview-widget-container__widget"; w.style.height="100%"; w.style.width="100%";
@@ -1158,6 +1228,196 @@ img{max-width:100%}
   [].forEach.call(document.querySelectorAll("[data-s]"),function(b){b.addEventListener("click",function(){if(TV.s!==b.dataset.s){TV.s=b.dataset.s;mountTV(true)}})});
   if(darkMQ&&darkMQ.addEventListener)darkMQ.addEventListener("change",function(){if(TV.mounted){TV.mounted=false;mountTV(true)}});
 
+  /* ---------- 1페이지 ②③: 장중 데이터(Yahoo, 5분마다 사이트 반영) ---------- */
+  var ID=null, MODE="day", KOFF=540, DAYM=1440;
+  try{var mm=localStorage.getItem("usdkrw-mode");if(mm==="drag"||mm==="range"||mm==="day")MODE=mm}catch(e){}
+  var radios=[].slice.call(document.querySelectorAll('input[name="rtmode"]'));
+  function pad(n){return (n<10?"0":"")+n}
+  function kd(m){return new Date((m+KOFF)*60000)}
+  function hm(m){var x=kd(m);return pad(x.getUTCHours())+":"+pad(x.getUTCMinutes())}
+  function mdhm(m){var x=kd(m);return (x.getUTCMonth()+1)+"/"+x.getUTCDate()+" "+hm(m)}
+  function ymdK(m){return kd(m).toISOString().slice(0,10)}
+  function d6(dateStr){return dn(dateStr)*DAYM+360-KOFF}          /* 그 날짜 06:00 KST (epoch 분) */
+  function dayStart(m){var k=m+KOFF, s0=Math.floor(k/DAYM)*DAYM+360; if(k<s0)s0-=DAYM; return s0-KOFF}
+  function chg(a,b){var d=b-a, cls=d>0.0001?"up":d<-0.0001?"down":"";return '<b class="'+cls+'">'+sg(d,1)+' ('+sg(d/a*100,2)+'%)</b>'}
+  function msg(box,t){box.innerHTML='<div class="msg">'+t+'</div>'}
+
+  function loadID(){
+    return fetch("intraday.json?t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})
+      .then(function(j){if(j&&j.m1&&j.m10){ID=j;renderP1()}})
+      .catch(function(){if(!ID){msg($("dchart"),"장중 데이터를 불러오지 못했습니다. 잠시 후 새로고침해 주세요.");msg($("rchart"),"장중 데이터를 불러오지 못했습니다. 잠시 후 새로고침해 주세요.")}});
+  }
+  function setMode(m){
+    MODE=m;
+    [].forEach.call(document.querySelectorAll(".mpanel"),function(p){p.hidden=(p.dataset.mode!==m)});
+    radios.forEach(function(r){r.checked=(r.value===m)});
+    try{localStorage.setItem("usdkrw-mode",m)}catch(e){}
+    renderP1();
+  }
+  radios.forEach(function(r){r.addEventListener("change",function(){if(r.checked)setMode(r.value)})});
+  function renderP1(){
+    if($("p1").hidden)return;
+    if(MODE==="drag"){mountTV(false);return}
+    if(!ID){loadID();return}
+    if(MODE==="day")drawDay();else drawRange();
+  }
+  setInterval(function(){if(!document.hidden&&MODE!=="drag"&&!$("p1").hidden)loadID()},60000);
+
+  function frame(box,W,H,m){
+    box.innerHTML="";
+    var svg=el("svg",{width:W,height:H,viewBox:"0 0 "+W+" "+H,"aria-hidden":"true"},box);
+    var tip=document.createElement("div"); tip.className="rtip"; tip.hidden=true; box.appendChild(tip);
+    return {svg:svg,tip:tip};
+  }
+  function yAxis(svg,m,pw,ph,lo,hi,narrow){
+    var pad0=Math.max((hi-lo)*0.08,0.5), yt=niceTicks(lo-pad0,hi+pad0,narrow?4:6);
+    var Y=function(v){return m.t+(1-(v-yt.min)/(yt.max-yt.min))*ph};
+    yt.ticks.forEach(function(v){
+      if(v<yt.min-1e-6||v>yt.max+1e-6)return;
+      el("line",{x1:m.l,x2:m.l+pw,y1:Y(v),y2:Y(v),"class":"grid"},svg);
+      var t=el("text",{x:m.l-8,y:Y(v)+4,"class":"tick","text-anchor":"end"},svg);
+      t.textContent=v.toLocaleString("en-US",{minimumFractionDigits:yt.ticks[1]-yt.ticks[0]<1?1:0});
+    });
+    el("line",{x1:m.l,x2:m.l+pw,y1:m.t+ph,y2:m.t+ph,"class":"base"},svg);
+    return Y;
+  }
+  function placeTip(tip,x,W,top){
+    tip.hidden=false;
+    var tw=tip.offsetWidth, left=x+14; if(left+tw>W)left=x-14-tw; if(left<0)left=Math.max(0,(W-tw)/2);
+    tip.style.left=left+"px"; tip.style.top=top+"px";
+  }
+  function hover(svg,m,pw,ph,onPick,onClear){
+    var hit=el("rect",{x:m.l,y:m.t,width:pw,height:ph,"class":"hit"},svg);
+    function at(ev){var r=svg.getBoundingClientRect();onPick(ev.clientX-r.left)}
+    hit.addEventListener("pointermove",at); hit.addEventListener("pointerdown",at);
+    hit.addEventListener("pointerleave",function(ev){if(ev.pointerType==="mouse")onClear()});
+  }
+
+  /* ③ 하루: 06:00 ~ 익일 06:00, 06:00부터 마지막 시세까지를 폭 전체에 */
+  function drawDay(){
+    var box=$("dchart"), t=ID.m1.t, c=ID.m1.c, n=t.length;
+    if(!n){msg(box,"장중 데이터가 아직 없습니다.");return}
+    var last=t[n-1], start=dayStart(last), i0=lb(t,start);
+    var stale=Date.now()/60000-last>120;
+    if(stale&&last-start<180&&i0>0){start-=DAYM;i0=lb(t,start)}
+    var i1=lb(t,start+DAYM)-1, endT=t[i1];
+    var W=Math.max(280,box.clientWidth), H=box.clientHeight||380, narrow=W<600;
+    if(!box.clientWidth)return;
+    var m={l:narrow?46:58,r:narrow?52:70,t:18,b:34}, pw=W-m.l-m.r, ph=H-m.t-m.b;
+    var x0=t[i0], span=Math.max(endT-x0,1);
+    var X=function(tt){return m.l+(tt-x0)/span*pw};
+    var lo=Infinity,hi=-Infinity,ih=i0,il=i0,i;
+    for(i=i0;i<=i1;i++){if(c[i]<lo){lo=c[i];il=i}if(c[i]>hi){hi=c[i];ih=i}}
+    var open=c[i0], now=c[i1];
+    var f=frame(box,W,H,m), svg=f.svg, Y=yAxis(svg,m,pw,ph,lo,hi,narrow);
+    var stepC=[15,30,60,120,180,240,360], maxN=Math.max(3,Math.floor(pw/64)), step=stepC.filter(function(k){return span/k<=maxN})[0]||360;
+    for(var tk=start+Math.ceil((x0-start)/step)*step;tk<=endT;tk+=step){
+      var x=X(tk); el("line",{x1:x,x2:x,y1:m.t+ph,y2:m.t+ph+4,"class":"tickmark"},svg);
+      var tx=el("text",{x:x,y:m.t+ph+17,"class":"xt","text-anchor":x-m.l<24?"start":"middle"},svg); tx.textContent=hm(tk);
+    }
+    var pts=[];
+    for(i=i0;i<=i1;i++)pts.push(X(t[i]).toFixed(1)+","+Y(c[i]).toFixed(1));
+    el("path",{d:"M"+pts.join("L")+"L"+X(endT).toFixed(1)+","+(m.t+ph)+"L"+X(t[i0]).toFixed(1)+","+(m.t+ph)+"Z","class":"darea"},svg);
+    el("line",{x1:m.l,x2:m.l+pw,y1:Y(open),y2:Y(open),"class":"oline"},svg);
+    var ol=el("text",{x:m.l+6,y:Y(open)+(Y(open)-m.t<16?14:-6),"class":"olab"},svg); ol.textContent="시가 "+f1(open);
+    el("path",{d:"M"+pts.join("L"),"class":"dline"},svg);
+    var cls=now>open?"up":now<open?"down":"";
+    el("circle",{cx:X(endT),cy:Y(now),r:4.5,"class":"lastdot",style:"fill:var(--"+(cls||"ink")+")"},svg);
+    var ll=el("text",{x:X(endT)+8,y:Y(now)+4,"class":"lastlab "+cls,style:"fill:currentColor"},svg); ll.textContent=f1(now);
+    var cross=el("line",{x1:0,x2:0,y1:m.t,y2:m.t+ph,"class":"cross",visibility:"hidden"},svg);
+    var hv=el("circle",{cx:0,cy:0,r:4,"class":"hov",visibility:"hidden"},svg);
+    hover(svg,m,pw,ph,function(px){
+      var tt=x0+(px-m.l)/pw*span, j=lb(t,tt); if(j>i1)j=i1; if(j>i0&&Math.abs(t[j-1]-tt)<Math.abs(t[j]-tt))j--; if(j<i0)j=i0;
+      var x=X(t[j]); cross.setAttribute("x1",x);cross.setAttribute("x2",x);cross.setAttribute("visibility","visible");
+      hv.setAttribute("cx",x);hv.setAttribute("cy",Y(c[j]));hv.setAttribute("visibility","visible");
+      f.tip.innerHTML='<div class="tq">'+mdhm(t[j])+'</div><div class="tr">시세<b>'+f1(c[j])+'</b></div><div class="tr">시가 대비'+chg(open,c[j])+'</div>';
+      placeTip(f.tip,x,W,m.t+6);
+    },function(){f.tip.hidden=true;cross.setAttribute("visibility","hidden");hv.setAttribute("visibility","hidden")});
+    $("dsum").innerHTML='<span>하루 <b>'+mdhm(start)+' ~ '+mdhm(start+DAYM)+'</b></span>'+
+      '<span>시가(06:00~) <b>'+f1(open)+'</b></span><span>현재 '+hm(endT)+' <b>'+f1(now)+'</b></span><span>변동 '+chg(open,now)+'</span>'+
+      '<span>고가 <b>'+f1(hi)+'</b> ('+hm(t[ih])+')</span><span>저가 <b>'+f1(lo)+'</b> ('+hm(t[il])+')</span>'+
+      (stale?'<span class="muted">지금은 거래가 없는 시간이라 마지막 거래일을 보여 줍니다</span>':'');
+    $("dcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 1분 단위 · 사이트 반영 "+(ID.updated||"").replace("T"," ")+" (약 5~15분 지연)";
+  }
+
+  /* ② 기간 설정: 10분봉, 기간 전체를 한 화면에(드래그 없음), 최대 1개월 */
+  var RS={days:7,s:null,e:null};
+  [].forEach.call(document.querySelectorAll("[data-rp]"),function(b){b.addEventListener("click",function(){RS.days=+b.dataset.rp;RS.s=RS.e=null;drawRange()})});
+  function onRDates(){
+    var a=$("r0").value,b=$("r1").value; if(!a||!b)return;
+    var s0=d6(a), e0=d6(b)+DAYM;
+    if(e0<=s0){drawRange();return}
+    if(e0-s0>31*DAYM)s0=e0-31*DAYM;
+    RS.days=0;RS.s=s0;RS.e=e0;drawRange();
+  }
+  $("r0").addEventListener("change",onRDates); $("r1").addEventListener("change",onRDates);
+  function drawRange(){
+    var box=$("rchart"), B=ID.m10, t=B.t, n=t.length;
+    if(!n){msg(box,"10분봉 데이터가 아직 없습니다.");return}
+    var last=t[n-1], s0, e0;
+    if(RS.days){e0=dayStart(last)+DAYM; s0=e0-RS.days*DAYM}else{s0=RS.s;e0=RS.e}
+    [].forEach.call(document.querySelectorAll("[data-rp]"),function(b){b.setAttribute("aria-pressed",String(+b.dataset.rp===RS.days))});
+    var minD=ymdK(dayStart(t[0])), maxD=ymdK(dayStart(last));
+    $("r0").min=$("r1").min=minD; $("r0").max=$("r1").max=maxD;
+    $("r0").value=ymdK(Math.max(s0,dayStart(t[0]))); $("r1").value=ymdK(e0-DAYM);
+    var i0=lb(t,s0), i1=lb(t,e0)-1, N=i1-i0+1;
+    if(N<1){msg(box,"선택한 기간에 거래 데이터가 없습니다.");$("rsum").innerHTML="";return}
+    var W=Math.max(280,box.clientWidth), H=box.clientHeight||380, narrow=W<600;
+    if(!box.clientWidth)return;
+    var m={l:narrow?46:58,r:14,t:18,b:34}, pw=W-m.l-m.r, ph=H-m.t-m.b;
+    var bw=pw/N, X=function(k){return m.l+(k-i0+0.5)*bw};
+    var lo=Infinity,hi=-Infinity,ih=i0,il=i0,i;
+    for(i=i0;i<=i1;i++){if(B.l[i]<lo){lo=B.l[i];il=i}if(B.h[i]>hi){hi=B.h[i];ih=i}}
+    var f=frame(box,W,H,m), svg=f.svg, Y=yAxis(svg,m,pw,ph,lo,hi,narrow);
+    /* 눈금: 하루(06시) 경계, 짧으면 3시간 */
+    var spanD=(t[i1]-t[i0])/DAYM, maxN=Math.max(3,Math.floor(pw/64)), marks=[];
+    if(spanD<=1.5){
+      for(i=i0;i<=i1;i++){var hh=kd(t[i]).getUTCHours(), mi=kd(t[i]).getUTCMinutes(); if(mi===0&&hh%3===0)marks.push({k:i,a:hm(t[i])})}
+    }else{
+      var bd=[]; for(i=i0;i<=i1;i++){if(i===i0||dayStart(t[i])!==dayStart(t[i-1]))bd.push(i)}
+      var st=[1,2,3,5,7].filter(function(k){return bd.length/k<=maxN})[0]||7;
+      bd.forEach(function(k,j){
+        if(j%st)return;
+        if(k!==i0)el("line",{x1:X(k)-bw/2,x2:X(k)-bw/2,y1:m.t,y2:m.t+ph,"class":"dsep"},svg);
+        var x0=kd(dayStart(t[k])); marks.push({k:k,a:(x0.getUTCMonth()+1)+"/"+x0.getUTCDate(),left:true});
+      });
+    }
+    marks.forEach(function(mk){
+      var x=mk.left?Math.max(m.l,X(mk.k)-bw/2):X(mk.k);
+      el("line",{x1:x,x2:x,y1:m.t+ph,y2:m.t+ph+4,"class":"tickmark"},svg);
+      var tx=el("text",{x:x,y:m.t+ph+17,"class":"xt","text-anchor":mk.left?"start":"middle"},svg); tx.textContent=mk.a;
+    });
+    if(N<=240){
+      var cw=Math.max(1,Math.min(10,bw*0.62));
+      for(i=i0;i<=i1;i++){
+        var up=B.c[i]>=B.o[i], cl=up?"c-up":"c-dn", x=X(i);
+        el("line",{x1:x,x2:x,y1:Y(B.h[i]),y2:Y(B.l[i]),"class":"wick "+cl},svg);
+        var yT=Y(Math.max(B.o[i],B.c[i])), yB=Y(Math.min(B.o[i],B.c[i]));
+        el("rect",{x:x-cw/2,y:yT,width:cw,height:Math.max(1,yB-yT),"class":cl},svg);
+      }
+    }else{
+      var top=[],bot=[],cl2=[];
+      for(i=i0;i<=i1;i++){top.push(X(i).toFixed(1)+","+Y(B.h[i]).toFixed(1));bot.unshift(X(i).toFixed(1)+","+Y(B.l[i]).toFixed(1));cl2.push(X(i).toFixed(1)+","+Y(B.c[i]).toFixed(1))}
+      el("path",{d:"M"+top.join("L")+"L"+bot.join("L")+"Z","class":"band"},svg);
+      el("path",{d:"M"+cl2.join("L"),"class":"cline"},svg);
+    }
+    var cross=el("line",{x1:0,x2:0,y1:m.t,y2:m.t+ph,"class":"cross",visibility:"hidden"},svg);
+    hover(svg,m,pw,ph,function(px){
+      var j=i0+Math.floor((px-m.l)/bw); if(j<i0)j=i0; if(j>i1)j=i1;
+      var x=X(j); cross.setAttribute("x1",x);cross.setAttribute("x2",x);cross.setAttribute("visibility","visible");
+      f.tip.innerHTML='<div class="tq">'+mdhm(t[j])+'~'+hm(t[j]+10)+' (10분봉)</div><div class="tr">시가<b>'+f1(B.o[j])+'</b></div><div class="tr">고가<b>'+f1(B.h[j])+'</b></div><div class="tr">저가<b>'+f1(B.l[j])+'</b></div><div class="tr">종가<b>'+f1(B.c[j])+'</b></div>';
+      placeTip(f.tip,x,W,m.t+6);
+    },function(){f.tip.hidden=true;cross.setAttribute("visibility","hidden")});
+    $("rsum").innerHTML='<span>기간 <b>'+mdhm(t[i0])+' ~ '+mdhm(t[i1]+10)+'</b></span><span>10분봉 <b>'+N.toLocaleString("en-US")+'개</b></span>'+
+      '<span>시가 <b>'+f1(B.o[i0])+'</b></span><span>종가 <b>'+f1(B.c[i1])+'</b></span><span>변동 '+chg(B.o[i0],B.c[i1])+'</span>'+
+      '<span>고가 <b>'+f1(hi)+'</b> ('+mdhm(t[ih])+')</span><span>저가 <b>'+f1(lo)+'</b> ('+mdhm(t[il])+')</span>'+
+      (N>240?'<span class="muted">봉이 많아 종가 선과 고저 범위로 표시</span>':'');
+    $("rcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 10분봉(5분봉 2개 묶음) · 사이트 반영 "+(ID.updated||"").replace("T"," ")+" (약 5~15분 지연)";
+  }
+  if(window.ResizeObserver){
+    ["dchart","rchart"].forEach(function(id){var bx=$(id),w0=bx.clientWidth;new ResizeObserver(function(){if(bx.clientWidth!==w0){w0=bx.clientWidth;if(ID&&!$("p1").hidden){if(id==="dchart"&&MODE==="day")drawDay();if(id==="rchart"&&MODE==="range")drawRange()}}}).observe(bx)});
+  }
+
   /* ---------- 페이지 전환 (1·2·3) ---------- */
   var tabs=[].slice.call(document.querySelectorAll(".pager button"));
   function go(n,id){
@@ -1166,7 +1426,7 @@ img{max-width:100%}
       var ul=document.querySelector('nav.toc ul[data-for="'+k+'"]'); if(ul)ul.hidden=(k!==n);
     });
     tabs.forEach(function(b){b.setAttribute("aria-selected",String(b.dataset.go===n))});
-    if(n==="1")mountTV(false); if(n==="2")draw();
+    if(n==="1")renderP1(); if(n==="2")draw();
     var t=id&&$(id);
     if(t)t.scrollIntoView();else window.scrollTo(0,0);
     try{history.replaceState(null,"","#"+(id||"p"+n))}catch(e){}
@@ -1182,7 +1442,7 @@ img{max-width:100%}
     var h=(location.hash||"").slice(1), t=h&&document.getElementById(h); if(!t)return;
     var p=t.closest("[data-page]"); if(p)go(p.dataset.page,t===p?null:h);
   })();
-  mountTV(false);
+  setMode(MODE);
 
   if(window.ResizeObserver){var lw=wrap.clientWidth;new ResizeObserver(function(){if(wrap.clientWidth!==lw){lw=wrap.clientWidth;draw()}}).observe(wrap)}
   else window.addEventListener("resize",draw);

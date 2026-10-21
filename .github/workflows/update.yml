@@ -2,8 +2,11 @@ name: update-data
 
 on:
   schedule:
-    # 시간은 UTC. 평일 KST 09:20, 12:20 (매매기준율은 아침에 한 번 고시, 두 번째는 재시도용)
-    - cron: "20 0,3 * * 1-5"
+    # 시간은 UTC. 장중 데이터는 5분마다(GitHub 사정으로 늦어질 수 있음).
+    # UTC 월~금 = KST 월 09시 ~ 토 09시, UTC 일 21~23시 = KST 월 06~09시.
+    # 매매기준율은 같은 실행에서 KST 8~13시에 오늘 값이 없을 때만 요청한다.
+    - cron: "*/5 * * * 1-5"
+    - cron: "*/5 21-23 * * 0"
   workflow_dispatch:
     inputs:
       full:
@@ -26,7 +29,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -39,7 +42,14 @@ jobs:
 
       - name: 매매기준율 수집 (서울외국환중개)
         continue-on-error: true
-        run: python scripts/fetch_smbs.py ${{ inputs.full && '--full' || '' }}
+        run: python scripts/fetch_smbs.py ${{ github.event_name == 'schedule' && '--auto' || '' }} ${{ inputs.full && '--full' || '' }}
+
+      - name: 장중 데이터 수집 (Yahoo KRW=X)
+        continue-on-error: true
+        run: |
+          # 실패해도 사이트에서 직전 파일이 사라지지 않게 먼저 받아 둔다
+          curl -sf "https://crucialp.github.io/usdkrw-live/intraday.json" -o docs/intraday.json || true
+          python scripts/fetch_intraday.py
 
       - name: 데이터 커밋
         run: |
