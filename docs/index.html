@@ -244,8 +244,13 @@ img{max-width:100%}
 .darea{fill:var(--ink);fill-opacity:.06;stroke:none}
 .oline{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:4 4}
 .olab{fill:var(--ink-2);font-family:var(--font-num);font-size:11px}
-.lastdot{stroke:var(--surface);stroke-width:2}
-.lastlab{font-family:var(--font-num);font-size:12px;font-weight:500}
+.nowbox{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;padding-inline:2px}
+.nowbox .nlab{font-size:13px;color:var(--muted);font-weight:500}
+.nowbox .nval{font-family:var(--font-num);font-size:clamp(28px,4vw,36px);font-weight:500;letter-spacing:-.02em;line-height:1.1;color:var(--ink)}
+.nowbox .nunit{font-family:var(--font-body);font-size:15px;color:var(--ink-2);margin-left:3px;letter-spacing:0}
+.nowbox .nchg{font-size:14px;color:var(--ink-2)}
+.nowbox .nchg b{font-family:var(--font-num);font-weight:500}
+.nowbox .ntime{font-size:13px;color:var(--muted)}
 .band{fill:var(--ink);fill-opacity:.09;stroke:none}
 .cline{fill:none;stroke:var(--ink);stroke-width:1.25;stroke-linejoin:round}
 .wick{stroke-width:1}
@@ -342,6 +347,7 @@ img{max-width:100%}
 
     <div class="mpanel" data-mode="day">
       <p class="spec"><b>하루 = 06:00 ~ 익일 06:00 (1분 단위).</b> 06:00부터 지금까지를 화면 폭 전체에 맞춰 그립니다. 시간이 흐를수록 같은 폭에 더 많은 움직임이 담겨 선의 굴곡이 늘어납니다.</p>
+      <div class="nowbox" aria-live="polite"><span class="nlab">현재 달러/원</span><span class="nval"><span id="dnowv">–</span><span class="nunit">원</span></span><span class="nchg" id="dnowc"></span><span class="ntime" id="dnowt"></span></div>
       <div class="sumrow" id="dsum"></div>
       <div class="rchart" id="dchart"><div class="msg">장중 데이터를 불러오는 중…</div></div>
       <div class="credit" id="dcredit"></div>
@@ -1303,7 +1309,7 @@ img{max-width:100%}
     var i1=lb(t,start+DAYM)-1, endT=t[i1];
     var W=Math.max(280,box.clientWidth), H=box.clientHeight||380, narrow=W<600;
     if(!box.clientWidth)return;
-    var m={l:narrow?46:58,r:narrow?52:70,t:18,b:34}, pw=W-m.l-m.r, ph=H-m.t-m.b;
+    var m={l:narrow?46:58,r:narrow?12:18,t:18,b:34}, pw=W-m.l-m.r, ph=H-m.t-m.b;
     var x0=t[i0], span=Math.max(endT-x0,1);
     var X=function(tt){return m.l+(tt-x0)/span*pw};
     var lo=Infinity,hi=-Infinity,ih=i0,il=i0,i;
@@ -1321,9 +1327,6 @@ img{max-width:100%}
     el("line",{x1:m.l,x2:m.l+pw,y1:Y(open),y2:Y(open),"class":"oline"},svg);
     var ol=el("text",{x:m.l+6,y:Y(open)+(Y(open)-m.t<16?14:-6),"class":"olab"},svg); ol.textContent="시가 "+f1(open);
     el("path",{d:"M"+pts.join("L"),"class":"dline"},svg);
-    var cls=now>open?"up":now<open?"down":"";
-    el("circle",{cx:X(endT),cy:Y(now),r:4.5,"class":"lastdot",style:"fill:var(--"+(cls||"ink")+")"},svg);
-    var ll=el("text",{x:X(endT)+8,y:Y(now)+4,"class":"lastlab "+cls,style:"fill:currentColor"},svg); ll.textContent=f1(now);
     var cross=el("line",{x1:0,x2:0,y1:m.t,y2:m.t+ph,"class":"cross",visibility:"hidden"},svg);
     var hv=el("circle",{cx:0,cy:0,r:4,"class":"hov",visibility:"hidden"},svg);
     hover(svg,m,pw,ph,function(px){
@@ -1334,9 +1337,12 @@ img{max-width:100%}
       placeTip(f.tip,x,W,m.t+6);
     },function(){f.tip.hidden=true;cross.setAttribute("visibility","hidden");hv.setAttribute("visibility","hidden")});
     $("dsum").innerHTML='<span>하루 <b>'+mdhm(start)+' ~ '+mdhm(start+DAYM)+'</b></span>'+
-      '<span>시가(06:00~) <b>'+f1(open)+'</b></span><span>현재 '+hm(endT)+' <b>'+f1(now)+'</b></span><span>변동 '+chg(open,now)+'</span>'+
+      '<span>시가(06:00~) <b>'+f1(open)+'</b></span>'+
       '<span>고가 <b>'+f1(hi)+'</b> ('+hm(t[ih])+')</span><span>저가 <b>'+f1(lo)+'</b> ('+hm(t[il])+')</span>'+
       (stale?'<span class="muted">지금은 거래가 없는 시간이라 마지막 거래일을 보여 줍니다</span>':'');
+    $("dnowv").textContent=f1(now);
+    $("dnowc").innerHTML="06:00 시가 대비 "+chg(open,now);
+    $("dnowt").textContent=(stale?"마지막 거래 ":"")+mdhm(endT)+" 기준";
     $("dcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 1분 단위 · 사이트 반영 "+(ID.updated||"").replace("T"," ")+" (약 5~15분 지연)";
   }
 
