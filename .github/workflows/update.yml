@@ -1,0 +1,64 @@
+name: update-data
+
+on:
+  schedule:
+    # 시간은 UTC. 평일 KST 09:20, 12:20 (매매기준율은 아침에 한 번 고시, 두 번째는 재시도용)
+    - cron: "20 0,3 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "매매기준율 전체 다시 받기(2000년부터)"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths: ["docs/**", "scripts/**", ".github/workflows/update.yml"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 매매기준율 수집 (서울외국환중개)
+        continue-on-error: true
+        run: python scripts/fetch_smbs.py ${{ inputs.full && '--full' || '' }}
+
+      - name: 데이터 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+          git add docs/usdkrw_smbs.json
+          if git diff --cached --quiet; then
+            echo "변경 없음"
+          else
+            git commit -m "data: $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M') KST"
+            git pull --rebase --autostash origin main
+            git push
+          fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

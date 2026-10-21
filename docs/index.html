@@ -1,0 +1,1192 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="달러/원 실시간 1분봉, 서울외국환중개 매매기준율 일별 추이, 국내외 기관 분기별 전망 모음.">
+<title>달러/원 실시간·전망</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap">
+<style>
+/* Layout: a dealing-room research brief. Live base-rate chart first, then quarterly averages, consensus, per-institution ledgers with source links, method. */
+:root{
+  --bg:#f3f5f7;
+  --surface:#ffffff;
+  --ink:#12161b;
+  --ink-2:#46505b;
+  --muted:#6c7581;
+  --rule:#dee2e7;
+  --rule-strong:#c3c9d1;
+  --chip:#eaeef2;
+  --zone:#eef2f6;
+  --foreign:#2a78d6;
+  --domestic:#eb6834;
+  --bbg:#1baf7a;
+  --font-display:"Noto Serif KR","Nanum Myeongjo","Batang",serif;
+  --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --font-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1215;--surface:#171b20;--ink:#eef1f4;--ink-2:#b4bcc6;--muted:#8a939e;
+    --rule:#2a3038;--rule-strong:#3b434d;--chip:#232930;--zone:#1c2229;
+    --foreign:#3987e5;--domestic:#d95926;--bbg:#199e70;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1215;--surface:#171b20;--ink:#eef1f4;--ink-2:#b4bcc6;--muted:#8a939e;
+  --rule:#2a3038;--rule-strong:#3b434d;--chip:#232930;--zone:#1c2229;
+  --foreign:#3987e5;--domestic:#d95926;--bbg:#199e70;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 64px}
+@media (max-width:480px){.wrap{padding-inline:16px}}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;color:var(--ink)}
+h1{font-size:clamp(28px,4.4vw,42px);line-height:1.2;font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(21px,2.6vw,26px);line-height:1.3;font-weight:700}
+h3{font-size:17px;line-height:1.4;font-weight:600}
+p{margin:0;max-width:68ch}
+a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--rule-strong);text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{text-decoration-color:var(--ink)}
+a[target="_blank"]::after{content:"↗";font-size:.78em;margin-left:2px;color:var(--muted)}
+a:focus-visible,[tabindex]:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--foreign);outline-offset:2px;border-radius:2px}
+.num,td.n,th.n{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* header */
+header.top{display:grid;gap:14px;padding-block:8px 24px;border-bottom:1px solid var(--rule)}
+.lede{font-size:16px;color:var(--ink-2)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
+
+/* nav */
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--rule);margin-inline:-20px;padding-inline:20px}
+@media (max-width:480px){nav.toc{margin-inline:-16px;padding-inline:16px}}
+nav.toc .navrow{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding-block:10px}
+nav.toc ul{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1 1 260px;min-width:0}
+.pager{display:inline-flex;border:1px solid var(--rule-strong);border-radius:8px;overflow:hidden;flex:none;background:var(--surface)}
+.pager button{font:inherit;font-size:13.5px;font-weight:500;line-height:1.3;padding:6px 14px;border:0;background:transparent;color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.pager button + button{border-left:1px solid var(--rule-strong)}
+.pager button:hover{color:var(--ink)}
+.pager button[aria-selected="true"]{background:var(--ink);color:var(--surface)}
+.pager .pn{font-family:var(--font-num);font-size:12px;opacity:.7}
+nav.toc ul::-webkit-scrollbar{display:none}
+nav.toc a{display:block;white-space:nowrap;text-decoration:none;font-size:13px;padding:5px 11px;border-radius:999px;background:var(--chip);color:var(--ink-2)}
+nav.toc a::after{content:none}
+nav.toc a:hover{color:var(--ink)}
+
+/* stat row */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:24px}
+.stat{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px 18px;display:grid;gap:6px;min-width:0;align-content:start}
+.stat .label{font-size:13px;color:var(--muted);font-weight:500}
+.stat .big{font-family:var(--font-num);font-size:30px;line-height:1.1;font-weight:500;letter-spacing:-.02em}
+.stat .pair{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline}
+.stat .pair .v{font-family:var(--font-num);font-size:24px;font-weight:500;letter-spacing:-.02em}
+.stat .pair .k{font-size:13px;color:var(--ink-2);display:flex;align-items:center;gap:6px}
+.stat .foot{font-size:12.5px;color:var(--muted)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
+.sw.f{background:var(--foreign)} .sw.d{background:var(--domestic)} .sw.b{background:var(--bbg)}
+.sw.sq{border-radius:1px} .sw.dia{border-radius:1px;transform:rotate(45deg) scale(.85)}
+.sw.line{width:18px;height:0;border-radius:0;background:none;border-top:2px solid var(--ink)}
+.sw.dash{width:18px;height:0;border-radius:0;background:none;border-top:2px dashed var(--ink-2)}
+.sw.dash.f{border-top-color:var(--foreign)} .sw.dash.d{border-top-color:var(--domestic)} .sw.dash.b{border-top-color:var(--bbg)}
+.sw.dot{width:8px;height:8px;opacity:.5}
+
+/* sections */
+section{padding-block:40px 8px;display:grid;gap:16px;scroll-margin-top:120px}
+.pagehead{display:grid;gap:6px;padding-top:32px}
+.pagefoot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:44px;padding-top:16px;border-top:1px solid var(--rule)}
+.nextpg{text-decoration:none;font-weight:500;font-size:14px;padding:8px 14px;border:1px solid var(--rule-strong);border-radius:6px;background:var(--surface)}
+.nextpg:hover{border-color:var(--ink)}
+section > .head{display:grid;gap:6px}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:18px;min-width:0}
+.notes{margin:0;padding-left:1.1em;display:grid;gap:6px;max-width:72ch;color:var(--ink-2)}
+.notes b{color:var(--ink);font-weight:600}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.two > *{min-width:0}
+
+/* chart controls */
+.ctl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:12px}
+.seg{display:flex;flex-wrap:wrap;gap:4px}
+.seg button{font:inherit;font-size:13px;line-height:1.3;padding:5px 11px;border-radius:999px;border:1px solid var(--rule-strong);background:transparent;color:var(--ink-2);cursor:pointer}
+.seg button:hover{color:var(--ink);border-color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.chk{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-2);cursor:pointer;user-select:none}
+.chk input{accent-color:var(--ink);margin:0}
+.chk.off{opacity:.45;cursor:default}
+.dates{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.dates input{font-family:var(--font-num);font-size:13px;padding:4px 8px;border:1px solid var(--rule-strong);border-radius:4px;background:var(--surface);color:var(--ink);min-width:0}
+.sumrow{display:flex;flex-wrap:wrap;gap:4px 22px;font-size:13px;color:var(--ink-2);margin-bottom:10px}
+.sumrow b{font-family:var(--font-num);font-weight:500;color:var(--ink)}
+
+/* chart */
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--ink-2);margin-bottom:8px}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+#chart{position:relative;width:100%;min-height:300px;touch-action:pan-y}
+#chart svg{display:block}
+#chart .loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:13px}
+.grid{stroke:var(--rule);stroke-width:1}
+.base{stroke:var(--rule-strong);stroke-width:1}
+.tick{fill:var(--muted);font-family:var(--font-num);font-size:11px}
+.xt{fill:var(--ink-2);font-family:var(--font-num);font-size:11px}
+.xy{fill:var(--muted);font-family:var(--font-num);font-size:10.5px}
+.tickmark{stroke:var(--rule-strong)}
+.zone{fill:var(--zone)}
+.zone-label{fill:var(--muted);font-family:var(--font-body);font-size:11px;font-weight:500}
+.act{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.fc{fill:none;stroke-width:2;stroke-dasharray:5 4;stroke-linejoin:round}
+.fc-f{stroke:var(--foreign)} .fc-d{stroke:var(--domestic)} .fc-b{stroke:var(--bbg)}
+.mk{stroke:var(--surface);stroke-width:2}
+.mk-f{fill:var(--foreign)} .mk-d{fill:var(--domestic)} .mk-b{fill:var(--bbg)}
+.pt{stroke:var(--surface);stroke-width:1.25}
+.pt-f{fill:var(--foreign);fill-opacity:.45}
+.pt-d{fill:var(--domestic);fill-opacity:.45}
+.dl{fill:var(--ink);font-family:var(--font-body);font-size:12px;font-weight:500}
+.dl tspan.v{font-family:var(--font-num)}
+.cross{stroke:var(--rule-strong);stroke-width:1}
+.hov{fill:var(--ink);stroke:var(--surface);stroke-width:2}
+.hit{fill:transparent;cursor:crosshair}
+#tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--rule-strong);border-radius:6px;padding:10px 12px;font-size:12.5px;line-height:1.5;min-width:200px;max-width:270px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:3}
+#tip .tq{font-family:var(--font-num);font-weight:500;color:var(--ink);margin-bottom:4px}
+#tip .tr{display:flex;align-items:center;gap:7px;color:var(--ink)}
+#tip .tr b{font-family:var(--font-num);font-weight:500;margin-left:auto;padding-left:10px}
+#tip .ts{color:var(--muted);padding-left:17px;margin-bottom:3px}
+#tip .tg{color:var(--ink-2);border-top:1px solid var(--rule);padding-top:5px;margin-top:3px}
+.chart-help{font-size:12.5px;color:var(--muted);margin-top:8px}
+
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.5}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+tr:last-child td{border-bottom:0}
+thead th{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em;background:var(--surface);white-space:nowrap;border-bottom:1px solid var(--rule-strong)}
+td.n,th.n{text-align:right;white-space:nowrap}
+td.n.empty{color:var(--muted)}
+td.inst{white-space:nowrap;font-weight:500}
+td.inst .sub{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+td.src{min-width:180px;font-size:12.5px}
+td.date{white-space:nowrap;font-family:var(--font-num);font-size:12.5px;color:var(--ink-2)}
+td.view{min-width:300px;color:var(--ink-2)}
+td.dir{white-space:nowrap}
+th.grp{text-align:center;color:var(--ink);font-size:12.5px}
+th.grp .sw{margin-right:6px;vertical-align:-1px}
+td.q{font-family:var(--font-num);font-weight:500}
+td.big{font-size:15px;font-weight:500;color:var(--ink)}
+.sep{border-left:1px solid var(--rule-strong)}
+tr.subhead td{background:var(--bg);font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em;padding-block:6px}
+tr.ours td{color:var(--ink-2)}
+sup.fn{font-family:var(--font-body);font-size:10px;color:var(--muted);margin-left:2px}
+.pill{display:inline-block;font-size:11.5px;line-height:1.4;padding:1px 8px;border-radius:999px;background:var(--chip);color:var(--ink-2);white-space:nowrap}
+.pill.eop{border:1px solid var(--rule-strong);background:transparent}
+.dirtag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:3px;background:var(--chip);color:var(--ink-2);white-space:nowrap}
+.incl{font-size:13px;color:var(--ink-2);display:grid;gap:4px}
+.incl b{color:var(--ink);font-weight:600}
+
+/* aggregate cards */
+.agg{display:grid;gap:10px;align-content:start}
+.agg .h{display:grid;gap:2px}
+.agg .h .t{font-weight:600;font-size:14.5px;color:var(--ink)}
+.agg .h .s{font-size:12.5px;color:var(--muted)}
+.agg table{font-size:13px}
+.agg th,.agg td{padding:7px 8px}
+.agg tr td:first-child,.agg tr th:first-child{padding-left:0}
+.agg tr td:last-child,.agg tr th:last-child{padding-right:0}
+.agg .note{font-size:12.5px;color:var(--ink-2)}
+.cnt{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.cnt .bar{display:inline-block;height:8px;border-radius:2px;background:var(--rule-strong);width:calc(var(--w) * 56px)}
+.cnt .k{font-family:var(--font-num);min-width:2.6em;text-align:right}
+
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.strip div{background:var(--surface);padding:10px 12px;display:grid;gap:2px}
+.strip .m{font-size:12px;color:var(--muted)}
+.strip .v{font-family:var(--font-num);font-size:17px;font-weight:500}
+.strip .now{box-shadow:inset 0 -2px 0 var(--ink)}
+ul.plain{margin:0;padding-left:1.1em;display:grid;gap:7px;color:var(--ink-2)}
+ul.plain b{color:var(--ink);font-weight:600}
+footer{margin-top:48px;padding-top:18px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--muted);display:grid;gap:4px}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+#rt{padding-top:20px}
+.rt-bar{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 18px}
+.rtchart{height:max(440px,calc(100vh - 250px));height:max(440px,calc(100dvh - 250px));background:var(--surface);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+#tv{height:100%;width:100%}
+.credit{font-size:12px;color:var(--muted);margin-top:-8px}
+.p2intro{display:grid;gap:12px;padding-top:28px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">USD/KRW · 실시간 시세 · 서울외국환중개 매매기준율 · 기관 전망</div>
+    <h1>달러/원 실시간·전망</h1>
+  </header>
+
+  <nav class="toc" aria-label="페이지와 목차">
+    <div class="navrow">
+      <div class="pager" role="tablist" aria-label="페이지">
+        <button type="button" role="tab" aria-controls="p1" aria-selected="true" data-go="1"><span class="pn">1</span>실시간</button>
+        <button type="button" role="tab" aria-controls="p2" aria-selected="false" data-go="2"><span class="pn">2</span>추이·전망</button>
+        <button type="button" role="tab" aria-controls="p3" aria-selected="false" data-go="3"><span class="pn">3</span>기관별 상세·출처</button>
+      </div>
+      <ul data-for="1">
+        <li><a href="#rtnotes">데이터 기준</a></li>
+      </ul>
+      <ul data-for="2" hidden>
+        <li><a href="#trend">환율 추이</a></li>
+        <li><a href="#avg">분기별 평균</a></li>
+        <li><a href="#consensus">블룸버그 비교</a></li>
+        <li><a href="#now">최근 월평균</a></li>
+      </ul>
+      <ul data-for="3" hidden>
+        <li><a href="#foreign">외국계 기관</a></li>
+        <li><a href="#domestic">국내 기관</a></li>
+        <li><a href="#aggregates">기타 집계</a></li>
+        <li><a href="#excluded">평균 제외 자료</a></li>
+        <li><a href="#method">산출 기준·한계</a></li>
+        <li><a href="#next">다음 업데이트</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="p1" data-page="1">
+  <section id="rt">
+    <div class="rt-bar">
+      <div class="head">
+        <h2>실시간 1분봉</h2>
+        <p class="muted small">국제 외환시장 시세 · 한국 시간 기준</p>
+      </div>
+      <div class="ctl">
+        <div class="seg" role="group" aria-label="보기 기간">
+          <button type="button" data-v="1d" aria-pressed="true">1일 · 1분봉</button>
+          <button type="button" data-v="5d" aria-pressed="false">5일 · 5분봉</button>
+          <button type="button" data-v="1m" aria-pressed="false">1개월 · 1시간봉</button>
+          <button type="button" data-v="1y" aria-pressed="false">1년 · 일봉</button>
+        </div>
+        <div class="seg" role="group" aria-label="차트 모양">
+          <button type="button" data-s="2" aria-pressed="true">선</button>
+          <button type="button" data-s="1" aria-pressed="false">캔들</button>
+        </div>
+      </div>
+    </div>
+    <div class="rtchart"><div id="tv"></div></div>
+    <div class="credit">차트·시세 제공: <a href="https://www.tradingview.com/symbols/USDKRW/?exchange=FX_IDC" rel="noopener nofollow" target="_blank">TradingView</a> (FX_IDC:USDKRW)</div>
+    <ul class="notes" id="rtnotes">
+      <li><b>하루의 기준.</b> 국제 외환시장은 뉴욕 오후 5시에 하루를 마감한다. 한국 시간으로 오전 6시이고, 미국 서머타임이 끝나는 11월 첫 일요일부터 이듬해 3월 둘째 일요일 전까지는 오전 7시다. "1일" 보기는 최근 하루의 흐름을 1분 단위로 보여 준다.</li>
+      <li><b>데이터 기준.</b> 국제 외환시장 지표 시세라서 서울 외환시장 체결가(연합인포맥스 등)나 서울외국환중개 매매기준율과 몇 원 차이 날 수 있고, 갱신이 수 분 늦을 수 있다.</li>
+      <li><b>일별 매매기준율 추이와 분기별 전망</b>은 <a href="#p2">2페이지</a>, 기관별 수치와 출처는 <a href="#p3">3페이지</a>에 있다.</li>
+    </ul>
+  </section>
+    <div class="pagefoot"><span class="muted small">1 / 3</span><a class="nextpg" href="#p2">2페이지 · 추이·전망 →</a></div>
+  </main>
+
+  <main id="p2" data-page="2" hidden>
+    <div class="p2intro">
+      <div class="pagehead" style="padding-top:0"><span class="eyebrow">2페이지 · 전망 작성 기준일 2026-10-21</span><h2>원/달러 분기 전망 2027</h2></div>
+      <p class="lede">공개 출처에서 분기별 수치를 확인한 외국계 7곳과 국내 18곳의 원/달러 전망을 기관당 하나씩 모아 평균을 냈다. 두 그룹 모두 2027년까지 완만한 원화 강세를 예상한다. 다만 작성 시점의 매매기준율(10/21, 1,328.0원)은 이미 평균에 들어간 4Q26 전망 24개보다 모두 낮다. 대부분 9월 25일~10월 19일에 확정돼 10월 중순 연저점을 반영하지 못했기 때문이다.</p>
+      <div class="meta">
+        <span>단위: 원/달러 (1달러당 원)</span>
+        <span>환율 기준: 서울외국환중개 매매기준율</span>
+        <span>평균 대상: 2026-09-15 이후 발표된 분기별 수치</span>
+      </div>
+    </div>
+  <div class="stats">
+    <div class="stat">
+      <span class="label">매매기준율 · <span id="latestDate">2026-10-21</span></span>
+      <span class="big" id="latestVal">1,328.0</span>
+      <span class="foot"><span id="latestFoot">전일 대비 −4.1 · 올해 고점 1,554.4(07-02) 대비 −14.6%</span> (<a href="https://www.smbs.biz/ExRate/StdExRate.jsp" target="_blank" rel="noopener">서울외국환중개</a>)</span>
+    </div>
+    <div class="stat">
+      <span class="label">2026년 4분기 평균 전망</span>
+      <div class="pair">
+        <span class="k"><span class="sw f"></span>외국계 (7곳)</span><span class="v">1,364</span>
+        <span class="k"><span class="sw d"></span>국내 (17곳)</span><span class="v">1,366</span>
+      </div>
+      <span class="foot" id="gap4q">최근 매매기준율보다 외국계 +36원 · 국내 +38원</span>
+    </div>
+    <div class="stat">
+      <span class="label">2027년 4분기 평균 전망</span>
+      <div class="pair">
+        <span class="k"><span class="sw f"></span>외국계 (5곳)</span><span class="v">1,335</span>
+        <span class="k"><span class="sw d"></span>국내 (3곳)</span><span class="v">1,316</span>
+      </div>
+      <span class="foot">국내 3Q27·4Q27은 표본이 4곳·3곳뿐</span>
+    </div>
+  </div>
+
+
+  <!-- ============ 추이 차트 ============ -->
+  <section id="trend">
+    <div class="head">
+      <h2>매매기준율 추이와 전망</h2>
+      <p class="muted small">일별 매매기준율(2000년~)에 분기별 평균 전망을 이어 그렸다. 기간을 길게 잡으면 연 단위, 짧게 잡으면 월·일 단위로 눈금이 바뀐다. 장중 1분 단위 움직임은 <a href="#p1">1페이지 실시간 차트</a>에서 본다.</p>
+    </div>
+    <div class="card">
+      <div class="ctl">
+        <div class="seg" role="group" aria-label="기간 선택">
+          <button type="button" data-p="1m">1개월</button>
+          <button type="button" data-p="3m">3개월</button>
+          <button type="button" data-p="6m">6개월</button>
+          <button type="button" data-p="1y" aria-pressed="true">1년</button>
+          <button type="button" data-p="3y">3년</button>
+          <button type="button" data-p="5y">5년</button>
+          <button type="button" data-p="10y">10년</button>
+          <button type="button" data-p="all">전체</button>
+        </div>
+        <div class="dates">
+          <label for="d0">기간</label>
+          <input type="date" id="d0" aria-label="시작일">
+          <span>~</span>
+          <input type="date" id="d1" aria-label="종료일">
+        </div>
+        <label class="chk" for="fc"><input type="checkbox" id="fc" checked>2027년 말 전망까지 보기</label>
+        <label class="chk" for="inst" id="instLab"><input type="checkbox" id="inst">개별 기관 전망 점</label>
+      </div>
+      <div class="sumrow" id="sumrow" aria-live="polite"></div>
+      <div class="legend" aria-hidden="true">
+        <span><span class="sw line"></span>매매기준율 (일별)</span>
+        <span><span class="sw dash f"></span><span class="sw f"></span>외국계 평균 전망</span>
+        <span><span class="sw dash d"></span><span class="sw d sq"></span>국내 평균 전망</span>
+        <span><span class="sw dash b"></span><span class="sw b dia"></span>블룸버그 컨센서스</span>
+      </div>
+      <div id="chart" tabindex="0" aria-label="매매기준율 추이와 분기별 전망 차트. 좌우 화살표 키로 날짜를 이동하고, Shift를 누르면 20영업일씩 이동한다. 같은 수치는 아래 표에 있다.">
+        <div class="loading" id="loading">매매기준율 데이터를 불러오는 중…</div>
+        <div id="tip" hidden></div>
+      </div>
+      <p class="chart-help" id="chartNote">출처: 서울외국환중개 매매기준율. 전망 점은 분기 마지막 날에 표시했다. 기관마다 분기말·분기평균 기준이 섞여 있다. 차트 위에 마우스를 올리거나 탭하면 값이 나온다.</p>
+    </div>
+  </section>
+
+  <!-- ============ 평균 ============ -->
+  <section id="avg">
+    <div class="head">
+      <h2>분기별 평균 전망치</h2>
+      <p class="muted small">단순평균은 1원 단위 반올림. 기관당 가장 최근 분기 경로 한 세트만 사용. 블룸버그 등 집계치는 중복 집계를 피하려고 넣지 않았다.</p>
+    </div>
+
+    <div class="tbl">
+      <table>
+        <thead>
+          <tr>
+            <th rowspan="2" style="vertical-align:bottom">분기</th>
+            <th class="grp" colspan="4"><span class="sw f"></span>외국계 기관</th>
+            <th class="grp sep" colspan="4"><span class="sw d"></span>국내 기관</th>
+          </tr>
+          <tr>
+            <th class="n">평균</th><th class="n">중앙값</th><th class="n">최저~최고</th><th class="n">N</th>
+            <th class="n sep">평균</th><th class="n">중앙값</th><th class="n">최저~최고</th><th class="n">N</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="q">4Q26</td><td class="n big">1,364</td><td class="n">1,360</td><td class="n">1,340~1,400</td><td class="n">7</td><td class="n big sep">1,366</td><td class="n">1,360</td><td class="n">1,335~1,410</td><td class="n">17</td></tr>
+          <tr><td class="q">1Q27</td><td class="n big">1,360</td><td class="n">1,350</td><td class="n">1,330~1,410</td><td class="n">7</td><td class="n big sep">1,355</td><td class="n">1,350</td><td class="n">1,280~1,434</td><td class="n">16</td></tr>
+          <tr><td class="q">2Q27</td><td class="n big">1,351</td><td class="n">1,330</td><td class="n">1,315~1,420</td><td class="n">7</td><td class="n big sep">1,345</td><td class="n">1,340</td><td class="n">1,265~1,452</td><td class="n">16</td></tr>
+          <tr><td class="q">3Q27</td><td class="n big">1,343</td><td class="n">1,325</td><td class="n">1,300~1,425</td><td class="n">7</td><td class="n big sep">1,321</td><td class="n">1,300</td><td class="n">1,275~1,410</td><td class="n">4</td></tr>
+          <tr><td class="q">4Q27</td><td class="n big">1,335</td><td class="n">1,320</td><td class="n">1,275~1,435</td><td class="n">5</td><td class="n big sep">1,316</td><td class="n">1,290</td><td class="n">1,270~1,387</td><td class="n">3</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="two">
+      <div class="card incl">
+        <span><span class="sw f" style="margin-right:6px;vertical-align:-1px"></span><b>외국계 평균에 들어간 기관</b></span>
+        <span>4Q26~3Q27: ING, MUFG, UOB, OCBC, DBS, Westpac, Scotiabank (7곳)</span>
+        <span>4Q27: ING, OCBC, DBS, Westpac, Scotiabank (5곳, MUFG·UOB는 4Q27 미제시)</span>
+      </div>
+      <div class="card incl">
+        <span><span class="sw d" style="margin-right:6px;vertical-align:-1px"></span><b>국내 평균에 들어간 기관</b></span>
+        <span>4Q26 (17곳): 하나·KB국민·신한·우리·IBK기업·KDB산업·iM뱅크·BNK부산은행, KB·키움·대신·NH투자·DB·유안타·iM·한국투자·IBK투자증권</span>
+        <span>1Q27·2Q27 (16곳): 위에서 한국투자·IBK투자증권을 빼고 한화투자증권 추가</span>
+        <span>3Q27 (4곳): 대신·유안타·iM·한화투자증권 / 4Q27 (3곳): 유안타·iM·한화투자증권</span>
+      </div>
+    </div>
+
+    <ul class="notes">
+      <li><b>두 그룹 평균은 거의 같다.</b> 4Q26~2Q27 차이는 6원 이내이고, 둘 다 분기마다 4~11원씩 내려간다.</li>
+      <li><b>2027년으로 갈수록 의견이 갈라진다.</b> 4Q26 범위는 60~75원인데 4Q27에는 117~160원으로 벌어진다(ING 1,275원 vs DBS 1,435원). 연준 재인상 전제와 수출기업의 원화 환전 규모가 경로를 가른다.</li>
+      <li><b>국내 3Q27 평균 하락폭은 대부분 표본 효과다.</b> 2Q27(16곳) 1,345원에서 3Q27(4곳) 1,321원으로 24원 내려가지만, 같은 4곳만 보면 8원 하락에 그친다.</li>
+      <li><b>외국계 평균은 아시아·기타 은행 7곳의 평균이다.</b> 골드만삭스·JP모건·모건스탠리·씨티 등 미·유럽 대형 IB의 분기별 전망표는 유료라 공개 출처에서 찾지 못했다. 이들의 방향성 의견은 <a href="#foreign">외국계 기관</a> 절에 따로 정리했다.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 컨센서스 ============ -->
+  <section id="consensus">
+    <div class="head">
+      <h2>블룸버그 컨센서스 비교</h2>
+      <p class="muted small">집계치는 개별 기관 응답을 이미 포함하므로 기관 평균에 넣지 않았다. 같은 블룸버그 컨센서스도 인용 시점에 따라 4Q26 값이 1,360원과 1,422원으로 62원 차이 난다.</p>
+    </div>
+
+    <h3>분기별 비교</h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>집계</th><th>기준일</th><th class="n">4Q26</th><th class="n">1Q27</th><th class="n">2Q27</th><th class="n">3Q27</th><th class="n">4Q27</th><th>출처</th></tr></thead>
+        <tbody>
+          <tr><td class="inst"><span class="sw b dia" style="margin-right:8px;vertical-align:0"></span>블룸버그 컨센서스<span class="sub">MUFG 월간 FX 10월호 인용 · 가장 최근 · 차트에 표시</span></td><td class="date">9/30 종가 기준</td><td class="n">1,360</td><td class="n">1,350</td><td class="n">1,340</td><td class="n">1,330</td><td class="n empty">–</td><td class="src"><a href="https://mufgresearch.com/fx/monthly-foreign-exchange-outlook-october-2026/" target="_blank" rel="noopener">MUFG Monthly FX Outlook</a></td></tr>
+          <tr><td class="inst">블룸버그 IB 컨센서스<span class="sub">현대경제연구원 경제주평 인용 · 집계일 미상</span></td><td class="date">9/11 보고서</td><td class="n">1,422</td><td class="n">1,412</td><td class="n">1,400</td><td class="n">1,366</td><td class="n">1,383</td><td class="src"><a href="https://hri.co.kr/upload/board/1789367708694_26326fd60d32.pdf" target="_blank" rel="noopener">현대경제연구원 PDF</a></td></tr>
+          <tr><td class="inst">블룸버그 중간값 (국내외 28개사)<span class="sub">2차 정리글 · 고점기 숫자라 오래됨</span></td><td class="date">6/8</td><td class="n">1,400<sup class="fn">①</sup></td><td class="n empty">–</td><td class="n empty">–</td><td class="n empty">–</td><td class="n">1,350<sup class="fn">②</sup></td><td class="src"><a href="https://www.welfarehello.com/community/policyInfo/2026-%EC%9B%90%EB%8B%AC%EB%9F%AC-%ED%99%98%EC%9C%A8-1500%EC%9B%90%EB%8C%80-%EB%8F%8C%ED%8C%8C-%EB%B0%B0%EA%B2%BD%EA%B3%BC-%EC%A0%84%EB%A7%9D-%EC%B4%9D%EC%A0%95%EB%A6%AC--594b7ae9-ef6a-4c99-bade-d0881d7d700a" target="_blank" rel="noopener">welfarehello</a></td></tr>
+          <tr class="subhead"><td colspan="8">비교용: 이 자료의 기관 평균</td></tr>
+          <tr class="ours"><td class="inst"><span class="sw f" style="margin-right:8px;vertical-align:0"></span>외국계 평균<span class="sub">7곳 · 4Q27은 5곳</span></td><td class="date">9/25~10/15 발표</td><td class="n">1,364</td><td class="n">1,360</td><td class="n">1,351</td><td class="n">1,343</td><td class="n">1,335</td><td class="src"><a href="#foreign">외국계 기관 표</a></td></tr>
+          <tr class="ours"><td class="inst"><span class="sw d sq" style="margin-right:8px;vertical-align:0"></span>국내 평균<span class="sub">17·16·16·4·3곳</span></td><td class="date">9/28~10/19 발표</td><td class="n">1,366</td><td class="n">1,355</td><td class="n">1,345</td><td class="n">1,321</td><td class="n">1,316</td><td class="src"><a href="#domestic">국내 기관 표</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">① 2026년 12월 값 ② 2027년 말 값. 현대경제연구원 인용본은 4Q27(1,383)이 3Q27(1,366)보다 높게 적혀 있으며 원문 그대로 옮겼다.</p>
+    <p class="small muted">한경 외환전문가 설문, 연합인포맥스·로이터 집계처럼 분기 형식이 아닌 자료는 <a href="#aggregates">2페이지 기타 집계</a>에 있다.</p>
+  </section>
+
+  <!-- ============ 현재 ============ -->
+  <section id="now">
+    <div class="head">
+      <h2>최근 월평균 매매기준율</h2>
+      <p class="muted small">서울외국환중개 매매기준율을 월별로 평균한 값(자체 계산). 2분기 종가 평균 1,501.6원은 1998년 이후 최고였다(<a href="https://www.fnnews.com/news/202607020602295387" target="_blank" rel="noopener">파이낸셜뉴스</a>).</p>
+    </div>
+    <div class="strip" id="strip">
+      <div><span class="m">5월 평균</span><span class="v">1,490.1</span></div>
+      <div><span class="m">6월 평균</span><span class="v">1,527.3</span></div>
+      <div><span class="m">7월 평균</span><span class="v">1,497.4</span></div>
+      <div><span class="m">8월 평균</span><span class="v">1,406.3</span></div>
+      <div><span class="m">9월 평균</span><span class="v">1,359.0</span></div>
+      <div><span class="m">10월 평균 (1~21일)</span><span class="v">1,343.1</span></div>
+      <div class="now"><span class="m">최근 10/21</span><span class="v">1,328.0</span></div>
+    </div>
+
+    <div class="two">
+      <div class="card">
+        <h3 style="margin-bottom:10px">원화 강세 요인</h3>
+        <ul class="plain">
+          <li><b>반도체 수출 달러.</b> 9월 무역흑자 사상 최대 499억 달러(<a href="https://www.etoday.co.kr/news/view/2631681" target="_blank" rel="noopener">이투데이</a>). 한은 경상흑자 전망 2026년 4,500억·2027년 4,300억 달러(<a href="https://www.asiatoday.co.kr/kn/view.php?key=20261013010003982" target="_blank" rel="noopener">아시아투데이</a>)</li>
+          <li><b>한은 긴축.</b> 7·8월 연속 인상으로 기준금리 3%(<a href="https://www.koreatimes.co.kr/economy/20261018/won-strengthens-on-robust-exports-increased-dollar-supply" target="_blank" rel="noopener">Korea Times</a>)</li>
+          <li><b>수급.</b> 수출업체 원화 환전, 국민연금 환헤지 비율 상향 중단(9월 초)(<a href="https://www.investing.com/news/forex-news/goldman-sees-korean-fx-intervention-risk-if-won-strengthens-sharply-93CH-4933873" target="_blank" rel="noopener">Investing.com</a>)</li>
+          <li><b>포지션.</b> 로이터 10/1 포지션 폴에서 원화 5회 연속 강세 베팅(<a href="https://www.aol.com/articles/bears-maintain-grip-oil-importing-075221000.html" target="_blank" rel="noopener">AOL/Reuters</a>)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:10px">원화 약세(달러 강세) 요인</h3>
+        <ul class="plain">
+          <li><b>미 금리.</b> 연준 9월 FOMC 인상, 미 10년물 5.2%대(<a href="https://kbthink.com/news-list/view.html?newsId=20260930080003794" target="_blank" rel="noopener">연합인포맥스 설문</a>). 10/5 장중 5.349%(<a href="https://www.metroseoul.co.kr/article/20261007500438" target="_blank" rel="noopener">메트로신문</a>)</li>
+          <li><b>자본 유출.</b> 엔화 158엔대 약세, 국내 투자자 미국 주식 보관액 2,002억 달러(<a href="https://www.metroseoul.co.kr/article/20261007500438" target="_blank" rel="noopener">메트로신문</a>)</li>
+          <li><b>증시.</b> 10월 셋째 주 코스피 주간 −15%. MUFG는 원화 강세 확신을 낮춤(<a href="https://www.mufgresearch.com/fx/asia-fx-weekly-16-october-2026" target="_blank" rel="noopener">MUFG</a>)</li>
+          <li><b>계절 요인.</b> 11월 배당 역송금으로 단기 1,350원 가능(하나은행 서정훈, <a href="https://www.etoday.co.kr/news/view/2637433" target="_blank" rel="noopener">이투데이</a>). KB 10월 4주차 예상 범위 1,320~1,355원(<a href="https://kbthink.com/investment/deepdive/weekly/261019-4.html" target="_blank" rel="noopener">KB Think</a>)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+
+    <div class="pagefoot"><a class="nextpg" href="#p1">← 1페이지 · 실시간</a><span class="muted small">2 / 3</span><a class="nextpg" href="#p3">3페이지 · 기관별 상세·출처 →</a></div>
+  </main>
+
+  <main id="p3" data-page="3" hidden>
+    <div class="pagehead"><span class="eyebrow">3페이지</span><h2>기관별 상세·출처</h2><p class="muted small">평균 계산에 쓴 기관별 수치와 원문 링크, 분기 형식이 아닌 집계, 평균에서 뺀 자료, 산출 기준을 모았다.</p></div>
+
+  <!-- ============ 외국계 ============ -->
+  <section id="foreign">
+    <div class="head">
+      <h2><span class="sw f" style="width:12px;height:12px;margin-right:8px;vertical-align:2px"></span>외국계 기관</h2>
+      <p class="muted small">분기별 수치를 공개한 7곳. ING·MUFG·OCBC·Westpac은 2027년 하반기 1,275~1,325원의 원화 강세 경로, UOB·DBS·Scotiabank는 연준 4.50% 재인상을 전제로 1,357~1,435원의 횡보·약세 경로다.</p>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>기관</th><th>발표일</th><th>기준</th><th class="n">4Q26</th><th class="n">1Q27</th><th class="n">2Q27</th><th class="n">3Q27</th><th class="n">4Q27</th><th>출처</th></tr></thead>
+        <tbody>
+          <tr><td class="inst">ING<span class="sub">네덜란드</span></td><td class="date">2026-10-15</td><td><span class="pill eop">분기말</span></td><td class="n">1,375</td><td class="n">1,350</td><td class="n">1,325</td><td class="n">1,300</td><td class="n">1,275</td><td class="src"><a href="https://think.ing.com/forecasts/" target="_blank" rel="noopener">ING THINK Forecasts</a> · <a href="https://think.ing.com/articles/asia-fx-talking-october-2026/" target="_blank" rel="noopener">Asia FX Talking</a></td></tr>
+          <tr><td class="inst">MUFG<span class="sub">일본</span></td><td class="date">2026-10-02</td><td><span class="pill eop">분기말</span></td><td class="n">1,350</td><td class="n">1,330</td><td class="n">1,315</td><td class="n">1,300</td><td class="n empty">–</td><td class="src"><a href="https://mufgresearch.com/fx/monthly-foreign-exchange-outlook-october-2026/" target="_blank" rel="noopener">월간 FX 10월호</a> · <a href="https://www.mufgresearch.com/media/h5ip0jxf/asia-fx-outlook-quarterly-2-october-2026-final_v2.pdf" target="_blank" rel="noopener">Asia FX Outlook PDF</a></td></tr>
+          <tr><td class="inst">UOB<span class="sub">싱가포르</span></td><td class="date">2026-09-25</td><td><span class="pill">미명시</span></td><td class="n">1,370</td><td class="n">1,380</td><td class="n">1,390</td><td class="n">1,390</td><td class="n empty">–</td><td class="src"><a href="https://www.uob.com.sg/assets/web-resources/research/pdf/FX_Int_Rate.pdf" target="_blank" rel="noopener">FX·금리 전망 PDF</a> · <a href="https://uob.com.sg/assets/web-resources/research/pdf/FXRM_260925.pdf" target="_blank" rel="noopener">FXRM 9/25</a></td></tr>
+          <tr><td class="inst">OCBC<span class="sub">싱가포르</span></td><td class="date">2026-10-01</td><td><span class="pill eop">분기말</span> <span class="small muted">방향성 경로 각주</span></td><td class="n">1,360</td><td class="n">1,340</td><td class="n">1,320</td><td class="n">1,300</td><td class="n">1,290</td><td class="src"><a href="https://www.ocbc.com/iwov-resources/sg/ocbc/gbc/pdf/Research%20Monitor/Research%20Monitor%20%281Oct%2026%29.pdf" target="_blank" rel="noopener">Research Monitor PDF</a> · <a href="https://www.asiatoday.co.kr/kn/view.php?key=20261013010003982" target="_blank" rel="noopener">아시아투데이</a></td></tr>
+          <tr><td class="inst">DBS<span class="sub">싱가포르</span></td><td class="date">2026-10-02</td><td><span class="pill eop">분기말</span></td><td class="n">1,400</td><td class="n">1,410</td><td class="n">1,420</td><td class="n">1,425</td><td class="n">1,435</td><td class="src"><a href="https://www.dbs.com/insightsdirect/api/s3/dbs-buffer/article_attachment/20261002/10-27-58_261002_insights_week_ahead.pdf" target="_blank" rel="noopener">Week Ahead PDF</a></td></tr>
+          <tr><td class="inst">Westpac<span class="sub">호주</span></td><td class="date">2026-10 (10/15 데이터)</td><td><span class="pill">미명시</span></td><td class="n">1,340</td><td class="n">1,335</td><td class="n">1,330</td><td class="n">1,325</td><td class="n">1,320</td><td class="src"><a href="https://library.westpaciq.com.au/content/dam/public/westpaciq/secure/economics/documents/aus/2026/10/WestpacMarketOutlookOctober2026.pdf" target="_blank" rel="noopener">Market Outlook PDF</a> · <a href="https://www.westpaciq.com.au/economics/2026/10/westpac-market-outlook-october-2026" target="_blank" rel="noopener">페이지</a></td></tr>
+          <tr><td class="inst">Scotiabank<span class="sub">캐나다</span></td><td class="date">2026-10-13</td><td><span class="pill eop">분기말</span></td><td class="n">1,350</td><td class="n">1,375</td><td class="n">1,360</td><td class="n">1,358</td><td class="n">1,357</td><td class="src"><a href="https://www.scotiabank.com/content/dam/scotiabank/sub-brands/scotiabank-economics/english/documents/forecast-tables/forecast20261013.pdf" target="_blank" rel="noopener">Forecast Tables PDF</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>기관별 견해 요약 (분기 수치가 없는 미·유럽 IB 포함)</h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>기관</th><th>방향</th><th>핵심 근거·수준</th><th>출처</th></tr></thead>
+        <tbody>
+          <tr><td class="inst">ING</td><td class="dir"><span class="dirtag">원화 강세</span></td><td class="view">칩 수출 효과 확산, 수출기업 환전 증가, 한은 최대 100bp 인상 가능성. "2027년 1,300 하회 가능", 연말까지 1,325~1,400 박스</td><td class="src"><a href="https://think.ing.com/articles/asia-fx-talking-october-2026/" target="_blank" rel="noopener">ING</a></td></tr>
+          <tr><td class="inst">MUFG</td><td class="dir"><span class="dirtag">원화 강세</span></td><td class="view">메모리 주도 반도체 호황(8월 반도체 수출 +209%). 10/16 이후 코스피 급락으로 확신은 낮춤</td><td class="src"><a href="https://mufgresearch.com/media/crnhwp1y/combined-fxo-oct-2026-new-disclaimer-v3.pdf" target="_blank" rel="noopener">MUFG PDF</a> · <a href="https://www.mufgresearch.com/fx/asia-fx-talk-21-october-2026" target="_blank" rel="noopener">10/21</a></td></tr>
+          <tr><td class="inst">UOB</td><td class="dir"><span class="dirtag">소폭 약세</span></td><td class="view">연준의 새 인상 사이클로 달러 강세. 한은 인상과 경상흑자가 하방을 받침</td><td class="src"><a href="https://uob.com.sg/assets/web-resources/research/pdf/FXRM_260925.pdf" target="_blank" rel="noopener">UOB</a></td></tr>
+          <tr><td class="inst">OCBC</td><td class="dir"><span class="dirtag">원화 강세</span></td><td class="view">9/1 원화 전망을 강세 쪽으로 상향. 한은 1Q27 인상 예상, 중동 분쟁은 리스크</td><td class="src"><a href="https://www.fxstreet.com/news/asia-fx-krw-and-myr-lead-firmer-profile-vs-usd-ocbc-202609012058" target="_blank" rel="noopener">FXStreet</a></td></tr>
+          <tr><td class="inst">DBS</td><td class="dir"><span class="dirtag">완만한 약세</span></td><td class="view">6월 보고서는 원화가 2009년 이후 가장 저평가라고 서술했지만, 수치 경로는 2027년으로 갈수록 상승. 6월 표(4Q27 1,545)에서는 크게 낮춤</td><td class="src"><a href="https://www.dbs.com/insightsdirect/api/s3/dbs-buffer/article_attachment/20260630/13-17-48_260630_insights_fxquarterly.pdf" target="_blank" rel="noopener">DBS 6/30</a></td></tr>
+          <tr><td class="inst">Westpac</td><td class="dir"><span class="dirtag">완만한 강세</span></td><td class="view">2년간 미 달러 약세 전제. 위안이 먼저 절상되고 원화·대만달러가 뒤따른다고 봄</td><td class="src"><a href="https://library.westpaciq.com.au/content/dam/public/westpaciq/secure/economics/documents/aus/2026/10/WestpacMarketOutlookOctober2026.pdf" target="_blank" rel="noopener">Westpac</a></td></tr>
+          <tr><td class="inst">Scotiabank</td><td class="dir"><span class="dirtag">횡보</span></td><td class="view">원화 개별 서술 없음. 한은 3.50%, 연준 4.50% 전제로 2028년까지 1,356 수준</td><td class="src"><a href="https://www.scotiabank.com/content/dam/scotiabank/sub-brands/scotiabank-economics/english/documents/forecast-tables/forecast20261013.pdf" target="_blank" rel="noopener">Scotiabank</a></td></tr>
+          <tr><td class="inst">골드만삭스<span class="sub">10/16</span></td><td class="dir"><span class="dirtag">원화 강세</span></td><td class="view">"중기적으로 1,300 아래". 한은이 1,250~1,300 부근에서 보유액을 쌓으면 추가 강세가 제한될 수 있음. 분기 수치 미공개</td><td class="src"><a href="https://www.investing.com/news/forex-news/usdkrw-goldman-sachs-sees-korean-won-strengthening-93CH-4953507" target="_blank" rel="noopener">Investing.com</a> · <a href="https://www.investing.com/news/forex-news/goldman-sees-korean-fx-intervention-risk-if-won-strengthens-sharply-93CH-4933873" target="_blank" rel="noopener">10/6</a></td></tr>
+          <tr><td class="inst">씨티<span class="sub">10/1</span></td><td class="dir"><span class="dirtag">원화 강세</span></td><td class="view">장기 전망 1,400 → 1,250 하향. 2026~28년 경상흑자 GDP 대비 22.2% 추정, 대미투자 단기 영향은 제한적</td><td class="src"><a href="https://www.etoday.co.kr/news/view/2631681" target="_blank" rel="noopener">이투데이</a> · <a href="https://www.bloomberg.com/news/articles/2026-09-18/citi-s-korea-trading-head-says-buy-won-near-1-400-per-dollar" target="_blank" rel="noopener">Bloomberg 9/18</a></td></tr>
+          <tr><td class="inst">모건스탠리<span class="sub">9/28</span></td><td class="dir"><span class="dirtag">달러 강세</span></td><td class="view">달러인덱스 2027년 중반 104, 연준 12월·2027년 3월 인상 전제. 원화 수치 없음</td><td class="src"><a href="https://blockchaintoday.co.kr/news/articleView.html?idxno=65939" target="_blank" rel="noopener">블록체인투데이</a></td></tr>
+          <tr><td class="inst">코메르츠방크<span class="sub">9/15</span></td><td class="dir"><span class="dirtag">강세 둔화</span></td><td class="view">6월 말 이후 약 15% 절상으로 "쉬운 상승은 끝났을 수 있다". 단기 1,330~1,380 박스</td><td class="src"><a href="https://www.fxstreet.com/news/south-korean-won-supportive-fundamentals-slower-gains-commerzbank-202609151751" target="_blank" rel="noopener">FXStreet 9/15</a> · <a href="https://www.fxstreet.com/news/south-korean-won-bok-welcomes-stronger-won-commerzbank-202610142101" target="_blank" rel="noopener">10/14</a></td></tr>
+          <tr><td class="inst">웰스파고<span class="sub">9/29</span></td><td class="dir"><span class="dirtag">달러 강세</span></td><td class="view">2027년 말 달러인덱스 100~104, 2027년까지 연준 1%p 추가 인상. 원화 언급 없음</td><td class="src"><a href="https://kr.investing.com/news/economy-news/article-2110435" target="_blank" rel="noopener">인베스팅닷컴</a></td></tr>
+          <tr><td class="inst">도이체방크<span class="sub">8/7</span></td><td class="dir"><span class="dirtag">원화 저평가</span></td><td class="view">무역가중 기준 약 10% 저평가. 수치 전망 없음</td><td class="src"><a href="https://www.koreatimes.co.kr/amp/economy/20260807/time-for-won-to-catch-up-with-koreas-economic-role-deutsche-bank" target="_blank" rel="noopener">Korea Times</a></td></tr>
+          <tr><td class="inst">UBS<span class="sub">5/11</span></td><td class="dir"><span class="dirtag">원화 강세</span></td><td class="view">"2H26 중 1,400 하회" 제시, 이미 달성. 이후 갱신본 못 찾음</td><td class="src"><a href="https://www.investing.com/news/forex-news/usdkrw-ubs-sees-won-strength-on-balance-of-payments-flows-93CH-4675340" target="_blank" rel="noopener">Investing.com</a></td></tr>
+          <tr><td class="inst">바클리<span class="sub">6/24</span></td><td class="dir"><span class="dirtag">원화 회복</span></td><td class="view">외국인 주식 매도 둔화, 실질실효환율상 "매우 싸다". 외국인 순유출 100억 달러당 원화 0.73% 절하 추정</td><td class="src"><a href="https://www.investing.com/news/forex-news/barclays-sees-korean-won-recovery-as-foreign-stock-selling-slows-93CH-4758609" target="_blank" rel="noopener">Investing.com</a></td></tr>
+          <tr><td class="inst">JP모건</td><td class="dir"><span class="dirtag">최신 수치 없음</span></td><td class="view">7월 SNS 2차 출처의 1,560/1,585만 있어 평균에서 제외. JP모건자산운용 CIO는 7/7 원화가 "가장 큰 깜짝 강세" 가능성 언급</td><td class="src"><a href="https://v.daum.net/v/20260707164822413" target="_blank" rel="noopener">다음</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">공개 출처에서 2026년 8~10월자 분기별 원화 전망을 찾지 못한 곳: 노무라, 미즈호, SMBC, HSBC, 스탠다드차타드, 소시에테제네랄, 나티시스, 메이뱅크, ANZ, CBA, 라보뱅크, 캐피털이코노믹스, 옥스퍼드이코노믹스. 미즈호 9월 중기 전망에는 원화가 없고(<a href="https://library.mizuhogroup.com/asset/0809ce1a-0eac-41b4-a421-0cef7cb2950d/bk_FX-Medium-Term-Outlook-Sep-2026.pdf" target="_blank" rel="noopener">Mizuho</a>), 단스케방크는 공개 전망에서 원화를 다루지 않는다(<a href="https://research.danskebank.com/link/FXForecastUpdate190626/$file/FX_Forecast_Update_190626.pdf" target="_blank" rel="noopener">Danske</a>).</p>
+  </section>
+
+  <!-- ============ 국내 ============ -->
+  <section id="domestic">
+    <div class="head">
+      <h2><span class="sw d" style="width:12px;height:12px;margin-right:8px;vertical-align:2px"></span>국내 기관</h2>
+      <p class="muted small">은행 8곳은 4Q26 1,340~1,400원에서 2Q27 1,310~1,360원으로 내려오는 좁은 띠 안에 있다. 증권사는 NH투자·유안타(상반기 반등)와 iM·한화투자(2027년 1,200원대 진입)로 양 끝이 벌어진다. 연합인포맥스 월례 설문은 4Q26~2Q27 세 분기만 묻기 때문에 3Q27·4Q27은 자체 보고서를 낸 증권사에서만 나온다.</p>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>기관</th><th>발표일</th><th>기준</th><th class="n">4Q26</th><th class="n">1Q27</th><th class="n">2Q27</th><th class="n">3Q27</th><th class="n">4Q27</th><th>출처</th></tr></thead>
+        <tbody>
+          <tr><td class="inst">하나은행<span class="sub">이석진 · 연합인포맥스 설문</span></td><td class="date">2026-09-30</td><td><span class="pill">미명시</span></td><td class="n">1,400</td><td class="n">1,380</td><td class="n">1,360</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080003794" target="_blank" rel="noopener">설문 ②</a></td></tr>
+          <tr><td class="inst">KB국민은행<span class="sub">이민혁 · 설문</span></td><td class="date">2026-09-30</td><td><span class="pill">미명시</span></td><td class="n">1,360</td><td class="n">1,350</td><td class="n">1,330</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080003794" target="_blank" rel="noopener">설문 ②</a></td></tr>
+          <tr><td class="inst">신한은행<span class="sub">김익헌 · 설문</span></td><td class="date">2026-09-30</td><td><span class="pill">미명시</span></td><td class="n">1,360</td><td class="n">1,350</td><td class="n">1,350</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">우리은행<span class="sub">전용진 · 설문</span></td><td class="date">2026-09-30</td><td><span class="pill">미명시</span></td><td class="n">1,360</td><td class="n">1,350</td><td class="n">1,340</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">IBK기업은행<span class="sub">김휘현 · 설문</span></td><td class="date">2026-09-30</td><td><span class="pill">미명시</span></td><td class="n">1,380</td><td class="n">1,365</td><td class="n">1,350</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">KDB산업은행<span class="sub">김수현 · 설문</span></td><td class="date">2026-09-30</td><td><span class="pill">미명시</span></td><td class="n">1,360</td><td class="n">1,370</td><td class="n">1,360</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">iM뱅크<span class="sub">이현환 · 설문</span></td><td class="date">2026-09-30</td><td><span class="pill">미명시</span></td><td class="n">1,360</td><td class="n">1,350</td><td class="n">1,330</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">BNK부산은행<span class="sub">이영화 · 설문</span></td><td class="date">2026-09-30</td><td><span class="pill">미명시</span></td><td class="n">1,340</td><td class="n">1,325</td><td class="n">1,310</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080003794" target="_blank" rel="noopener">설문 ②</a></td></tr>
+          <tr><td class="inst">KB증권<span class="sub">정용호 · 설문</span></td><td class="date">2026-09-30</td><td><span class="pill">미명시</span></td><td class="n">1,380</td><td class="n">1,360</td><td class="n">1,340</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">키움증권<span class="sub">노도희 · 설문</span></td><td class="date">2026-09-30</td><td><span class="pill">미명시</span></td><td class="n">1,350</td><td class="n">1,330</td><td class="n">1,360</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">대신증권<span class="sub">공동락·이정훈 · 주간 전망표</span></td><td class="date">2026-10-19</td><td><span class="pill eop">분기말</span></td><td class="n">1,350</td><td class="n">1,330</td><td class="n">1,300</td><td class="n">1,320</td><td class="n empty">–</td><td class="src"><a href="https://stock.pstatic.net/stock-research/invest/15/20261020_invest_344060000.pdf" target="_blank" rel="noopener">대신증권 PDF</a></td></tr>
+          <tr><td class="inst">NH투자증권<span class="sub">권아민 · 설문</span></td><td class="date">2026-09-30</td><td><span class="pill">평균 추정</span></td><td class="n">1,380</td><td class="n">1,410</td><td class="n">1,430</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080003794" target="_blank" rel="noopener">설문 ②</a></td></tr>
+          <tr><td class="inst">DB증권<span class="sub">문홍철 · 설문</span></td><td class="date">2026-09-30</td><td><span class="pill">미명시</span></td><td class="n">1,354</td><td class="n">1,343</td><td class="n">1,336</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080003794" target="_blank" rel="noopener">설문 ②</a></td></tr>
+          <tr><td class="inst">유안타증권<span class="sub">김호정·임지윤 · 기본 시나리오(45%)</span></td><td class="date">2026-09-28</td><td><span class="pill eop">분기말</span></td><td class="n">1,410</td><td class="n">1,434</td><td class="n">1,452</td><td class="n">1,410</td><td class="n">1,387</td><td class="src"><a href="https://stock.pstatic.net/stock-research/economy/18/20260928_economy_726625000.pdf" target="_blank" rel="noopener">유안타증권 PDF</a></td></tr>
+          <tr><td class="inst">iM증권<span class="sub">박상현</span></td><td class="date">2026-10-06</td><td><span class="pill">분기평균</span></td><td class="n">1,335</td><td class="n">1,280</td><td class="n">1,265</td><td class="n">1,275</td><td class="n">1,290</td><td class="src"><a href="https://stock.pstatic.net/stock-research/economy/61/20261006_economy_190402000.pdf" target="_blank" rel="noopener">iM증권 PDF</a></td></tr>
+          <tr><td class="inst">한화투자증권<span class="sub">최규호 · 2027 연간전망</span></td><td class="date">2026-10-19</td><td><span class="pill">기간평균</span></td><td class="n empty">–</td><td class="n">1,350</td><td class="n">1,300</td><td class="n">1,280</td><td class="n">1,270</td><td class="src"><a href="https://stock.pstatic.net/stock-research/invest/16/20261019_invest_843905000.pdf" target="_blank" rel="noopener">한화투자증권 PDF</a></td></tr>
+          <tr><td class="inst">한국투자증권<span class="sub">문다운</span></td><td class="date">2026-10-08</td><td><span class="pill">분기평균</span></td><td class="n">1,350</td><td class="n empty">–</td><td class="n empty">–</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://www.g-enews.com/article/Securities/2026/10/20261008090116159344093b5d4e_1" target="_blank" rel="noopener">글로벌이코노믹</a></td></tr>
+          <tr><td class="inst">IBK투자증권<span class="sub">정용택·김희주</span></td><td class="date">2026-10-02</td><td><span class="pill">연말 근사</span></td><td class="n">1,400<br><span class="muted small">"전후"</span></td><td class="n empty">–</td><td class="n empty">–</td><td class="n empty">–</td><td class="n empty">–</td><td class="src"><a href="https://consensus.hankyung.com/analysis/downpdf?report_idx=652679" target="_blank" rel="noopener">IBK투자증권 PDF</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">설문 ①·② = 연합인포맥스 "[표] 10월 및 중장기 달러-원 전망"(9/30, 13개 기관)의 KB Think 재게재본. 원 사이트는 직접 열리지 않아 재게재본으로 확인했다. 대신증권 표의 열 이름은 "F1Q말~F4Q말"뿐이어서 같은 표의 기준금리 경로를 근거로 4Q26말~3Q27말로 해석했다.</p>
+
+    <h3>기관별 견해 요약 (분기 수치가 없는 연구기관 포함)</h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>기관</th><th>방향</th><th>핵심 근거·수준</th><th>출처</th></tr></thead>
+        <tbody>
+          <tr><td class="inst">하나은행</td><td class="dir"><span class="dirtag">완만한 하락</span></td><td class="view">국민연금 환헤지 중단으로 단기 저점 확인, 1,300원대 후반 네고가 상단을 막음. 10/19 서정훈 수석연구위원은 "연말 1,320원 정도", 11월 배당 역송금 때 1,350원 가능</td><td class="src"><a href="https://www.etoday.co.kr/news/view/2637433" target="_blank" rel="noopener">이투데이</a></td></tr>
+          <tr><td class="inst">KB국민은행</td><td class="dir"><span class="dirtag">완만한 하락</span></td><td class="view">경상흑자에 따른 달러 공급 우위. 10/12 적정환율 모형상 월 500억 달러 흑자가 이어지면 2027년 상반기 말~하반기 초 1,200원대 진입 가능</td><td class="src"><a href="https://kbthink.com/investment/fx/daily/261012.html" target="_blank" rel="noopener">KB Think</a></td></tr>
+          <tr><td class="inst">신한은행</td><td class="dir"><span class="dirtag">레인지</span></td><td class="view">미 국채금리·연준 긴축 등 달러 강세 재료와 수출업체 네고가 맞서 1,360원 전후</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">우리은행</td><td class="dir"><span class="dirtag">박스권</span></td><td class="view">미 국채금리·저점 매수가 하단을, 분기말 네고·엔화 강세 전환 압력이 상단을 막음</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">IBK기업은행</td><td class="dir"><span class="dirtag">완만한 하락</span></td><td class="view">미 추가 긴축이 상방 압력이지만 반도체 수출과 한은 연속 인상으로 상대적 원화 강세</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">KDB산업은행</td><td class="dir"><span class="dirtag">1Q27 소폭 반등</span></td><td class="view">연준 물가 전망 상향과 점도표 4.1% 등 미 고금리 장기화가 하단을 지지</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">iM뱅크</td><td class="dir"><span class="dirtag">완만한 하락</span></td><td class="view">연준 인상·외국인 주식 매도·유가가 상승 압력, 네고가 상단 제한</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">BNK부산은행</td><td class="dir"><span class="dirtag">은행 중 최저</span></td><td class="view">1~8월 누적 무역흑자 2,024억 달러(사상 최대). 9월 FOMC 인상에도 상단이 1,400원에서 막혔다고 봄</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080003794" target="_blank" rel="noopener">설문 ②</a></td></tr>
+          <tr><td class="inst">KB증권</td><td class="dir"><span class="dirtag">완만한 하락</span></td><td class="view">네고에 따른 하락 압력과 달러 강세·외국인 매도·거주자 해외투자에 따른 하단 지지가 맞섬</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a></td></tr>
+          <tr><td class="inst">키움증권</td><td class="dir"><span class="dirtag">1,300원대 등락</span></td><td class="view">달러-엔 동조화·일본 개입 경계와 미 금리 급등이 맞섬. 리서치센터(9/10)는 연말 1,400원대 초반 반등 예상</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080004214" target="_blank" rel="noopener">설문 ①</a> · <a href="https://stock.pstatic.net/stock-research/economy/39/20260910_economy_112558000.pdf" target="_blank" rel="noopener">키움 PDF</a></td></tr>
+          <tr><td class="inst">대신증권</td><td class="dir"><span class="dirtag">강세 후 진정</span></td><td class="view">연준 인상이 2~3회에 그치면 무역흑자로 강세 지속. 2Q27말 1,200원대 진입 시도 후 수출 모멘텀 둔화로 속도 진정</td><td class="src"><a href="https://stock.pstatic.net/stock-research/invest/15/20261020_invest_344060000.pdf" target="_blank" rel="noopener">대신증권 PDF</a></td></tr>
+          <tr><td class="inst">NH투자증권</td><td class="dir"><span class="dirtag">상승 경로</span></td><td class="view">개인의 미국주식 투자, 외국인 국내주식 순매도, 미집행 대미투자, 국민연금 환헤지 잠정 중단 등 달러 수요</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080003794" target="_blank" rel="noopener">설문 ②</a></td></tr>
+          <tr><td class="inst">DB증권</td><td class="dir"><span class="dirtag">레인지</span></td><td class="view">장기 추세가 바뀌어 달러 매도 물량이 나오고 상단 1,400~1,420원 제한. 미 중간선거 전까지 레인지</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080003794" target="_blank" rel="noopener">설문 ②</a></td></tr>
+          <tr><td class="inst">유안타증권</td><td class="dir"><span class="dirtag">상고하저</span></td><td class="view">2027년 상반기 외국인 유출로 약세, 하반기 달러 약세·위안 강세·미환전 달러 출회로 강세. 위험 시나리오 4Q27은 1,534원</td><td class="src"><a href="https://stock.pstatic.net/stock-research/economy/18/20260928_economy_726625000.pdf" target="_blank" rel="noopener">유안타증권 PDF</a></td></tr>
+          <tr><td class="inst">iM증권</td><td class="dir"><span class="dirtag">강한 원화 강세</span></td><td class="view">경상흑자 GDP 대비 20% 안팎 유지, 미국의 절상 압력. 2027년 평균 1,280원, 밴드 1,200~1,450원</td><td class="src"><a href="https://stock.pstatic.net/stock-research/economy/61/20261006_economy_190402000.pdf" target="_blank" rel="noopener">iM증권 PDF</a></td></tr>
+          <tr><td class="inst">한화투자증권</td><td class="dir"><span class="dirtag">강한 원화 강세</span></td><td class="view">반도체 기업 중심 달러 공급 확대, 분기말 계절성 달러 매도. 2027년 평균 1,300원, 밴드 1,250~1,400원</td><td class="src"><a href="https://stock.pstatic.net/stock-research/invest/16/20261019_invest_843905000.pdf" target="_blank" rel="noopener">한화투자증권 PDF</a></td></tr>
+          <tr><td class="inst">한국투자증권</td><td class="dir"><span class="dirtag">원화 강세 지속</span></td><td class="view">수출 달러 국내 유입, 수출기업 달러 매도 전환. 4Q 적정 범위 1,280~1,420원, 2027년 연평균 1,350원</td><td class="src"><a href="https://www.g-enews.com/article/Securities/2026/10/20261008090116159344093b5d4e_1" target="_blank" rel="noopener">글로벌이코노믹</a></td></tr>
+          <tr><td class="inst">IBK투자증권</td><td class="dir"><span class="dirtag">상승 쪽</span></td><td class="view">원화 강세 요인은 이미 반영, 대외 약세 요인은 덜 반영. 연말이나 내년 1,400원대 중후반 가능성</td><td class="src"><a href="https://consensus.hankyung.com/analysis/downpdf?report_idx=652679" target="_blank" rel="noopener">IBK투자증권 PDF</a></td></tr>
+          <tr><td class="inst">메리츠증권</td><td class="dir"><span class="dirtag">기조적 강세</span></td><td class="view">반도체 2사 원화 수요가 2027년 458조원으로 증가 추정. 2027년 연평균 가정 1,315원(분기 수치 아님)</td><td class="src"><a href="https://consensus.hankyung.com/analysis/downpdf?report_idx=652581" target="_blank" rel="noopener">메리츠 PDF</a></td></tr>
+          <tr><td class="inst">신한투자증권</td><td class="dir"><span class="dirtag">균형 1,400원</span></td><td class="view">6월 이후 하락은 오버슈팅 해소이고 균형은 1,400원. 강세 시나리오 1,240~1,300원, 약세 시나리오 1,650~1,710원</td><td class="src"><a href="https://stock.pstatic.net/stock-research/economy/21/20260929_economy_604058000.pdf" target="_blank" rel="noopener">신한투자 PDF</a></td></tr>
+          <tr><td class="inst">현대경제연구원</td><td class="dir"><span class="dirtag">원화 강세</span></td><td class="view">글로벌 달러 약세와 경상흑자로 2027년 "1,300원 후반대 수준 유지"(정성 표현). 보고서 속 분기 수치는 블룸버그 재인용</td><td class="src"><a href="https://hri.co.kr/upload/board/1789367708694_26326fd60d32.pdf" target="_blank" rel="noopener">HRI PDF</a></td></tr>
+          <tr><td class="inst">한국은행</td><td class="dir"><span class="dirtag">추가 강세 여지</span></td><td class="view">8/27 총재 "1,300원대 후반도 과거 평가 수준보다 여전히 높다". 환율 전제 숫자는 확인 못 함</td><td class="src"><a href="https://www.etoday.co.kr/news/view/2618825" target="_blank" rel="noopener">이투데이</a></td></tr>
+          <tr><td class="inst">KDI</td><td class="dir"><span class="dirtag">전망 안 함</span></td><td class="view">"가격 변수 전망은 하지 않으며 환율은 최근 수준 유지" 가정</td><td class="src"><a href="https://www.korea.kr/briefing/policyBriefingView.do?newsId=156774833" target="_blank" rel="noopener">정책브리핑</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">2026-10-21 현재 2027년 원/달러 수치를 공개 출처에서 찾지 못한 곳: 하나금융연구소·KB경영연구소·우리금융경영연구소·NH금융연구소·IBK경제연구소·산은·수은 해외경제연구소, LG경영연구원, 산업연구원, 한국금융연구원, 삼성글로벌리서치, 대한상의 SGI, 국제금융센터. 증권사 중 삼성·미래에셋·하나·교보·SK·현대차·상상인증권도 8~10월 분기 수치가 확인되지 않는다.</p>
+  </section>
+
+  <!-- ============ 기타 집계 ============ -->
+  <section id="aggregates">
+    <div class="head">
+      <h2>기타 집계</h2>
+      <p class="muted small">분기별 수치가 아닌 설문·포지션·기간형 집계. 개별 응답을 이미 포함하므로 기관 평균에는 넣지 않았다.</p>
+    </div>
+    <div class="two">
+      <div class="card agg">
+        <div class="h">
+          <span class="t">한국경제 외환전문가 설문</span>
+          <span class="s">9/14~15 조사, 9/16 보도 · 국내외 증권사·은행 21명 · <a href="https://www.hankyung.com/article/2026091693981" target="_blank" rel="noopener">한국경제</a></span>
+        </div>
+        <table>
+          <thead><tr><th>응답 구간</th><th class="n">연말 (4Q26)</th><th class="n">2027 상반기</th></tr></thead>
+          <tbody>
+            <tr><td>1,300원 미만<span class="muted small"><br>연말 1,250~1,300 / 상반기 1,200원대</span></td><td class="n"><span class="cnt"><span class="bar" style="--w:.111"></span><span class="k">1명</span></span></td><td class="n"><span class="cnt"><span class="bar" style="--w:.444"></span><span class="k">4명</span></span></td></tr>
+            <tr><td>1,300~1,350원</td><td class="n"><span class="cnt"><span class="bar" style="--w:1"></span><span class="k">9명</span></span></td><td class="n"><span class="cnt"><span class="bar" style="--w:.889"></span><span class="k">8명</span></span></td></tr>
+            <tr><td>1,350~1,400원</td><td class="n"><span class="cnt"><span class="bar" style="--w:1"></span><span class="k">9명</span></span></td><td class="n"><span class="cnt"><span class="bar" style="--w:.889"></span><span class="k">8명</span></span></td></tr>
+            <tr><td>1,400~1,450원</td><td class="n"><span class="cnt"><span class="bar" style="--w:.222"></span><span class="k">2명</span></span></td><td class="n"><span class="cnt"><span class="bar" style="--w:.111"></span><span class="k">1명</span></span></td></tr>
+            <tr><td><b>중앙값(추정)</b></td><td class="n"><b>1,350원 부근</b></td><td class="n"><b>1,300~1,350원</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card agg">
+        <div class="h">
+          <span class="t">연합인포맥스 10월 설문 집계</span>
+          <span class="s">9/30 · 은행·증권 13개 기관 · <a href="https://kbthink.com/news-list/view.html?newsId=20260930080004692" target="_blank" rel="noopener">KB Think 재게재</a></span>
+        </div>
+        <table>
+          <thead><tr><th>항목</th><th class="n">평균</th></tr></thead>
+          <tbody>
+            <tr><td>10월 고점 전망</td><td class="n">1,391.15</td></tr>
+            <tr><td>10월 저점 전망</td><td class="n">1,331.62</td></tr>
+          </tbody>
+        </table>
+        <p class="note">월간 범위 전망이다. 같은 설문의 기관별 4Q26~2Q27 수치는 <a href="#domestic">국내 기관 표</a>에 들어가 있다. 10월 저점 전망 평균은 10/21 매매기준율(1,328.0)보다 이미 높다.</p>
+      </div>
+
+      <div class="card agg">
+        <div class="h">
+          <span class="t">로이터 아시아 통화 포지션 폴</span>
+          <span class="s">격주 · 응답 10명 · <a href="https://www.aol.com/articles/bears-maintain-grip-oil-importing-075221000.html" target="_blank" rel="noopener">AOL/Reuters</a></span>
+        </div>
+        <table>
+          <thead><tr><th>조사일</th><th class="n">원화 점수</th><th class="n">해석</th></tr></thead>
+          <tbody>
+            <tr><td class="num">2026-10-01</td><td class="n">−1.27</td><td class="n">원화 매수 우위</td></tr>
+            <tr><td class="num">2026-09-17</td><td class="n">−1.54</td><td class="n">원화 매수 우위</td></tr>
+          </tbody>
+        </table>
+        <p class="note">−3(원화 강세 베팅)~+3(약세 베팅) 척도. 5회 연속 원화 매수 포지션이다. 환율 수준 전망은 없다.</p>
+      </div>
+
+      <div class="card agg">
+        <div class="h">
+          <span class="t">국제금융센터 기반 글로벌 IB 12곳 평균</span>
+          <span class="s">2025-12-28 보도 · 오래됨 · <a href="https://www.asiae.co.kr/article/2025122811593037401" target="_blank" rel="noopener">아시아경제</a></span>
+        </div>
+        <table>
+          <thead><tr><th>전망 시계</th><th class="n">평균</th></tr></thead>
+          <tbody>
+            <tr><td>3개월 후 (2026년 3월 말경)</td><td class="n">1,440</td></tr>
+            <tr><td>6개월 후 (2026년 6월 말경)</td><td class="n">1,426</td></tr>
+            <tr><td>12개월 후 (2026년 12월 말경)</td><td class="n">1,424</td></tr>
+          </tbody>
+        </table>
+        <p class="note">발표 시점에서 센 기간형 전망이다. 2026년 8~10월자 최신 집계는 공개 출처에서 찾지 못했다.</p>
+      </div>
+    </div>
+    <p class="small muted">FocusEconomics·Consensus Economics 원화 수치는 페이지 접근이 막혀 확인하지 못했다(<a href="https://www.focus-economics.com/country-indicator/korea/exchange-rate/" target="_blank" rel="noopener">FocusEconomics</a>). 블룸버그 터미널 FXFC 화면이나 국제금융센터 IB 집계가 있으면 미·유럽 IB 공백을 메울 수 있다.</p>
+  </section>
+
+  <!-- ============ 제외 ============ -->
+  <section id="excluded">
+    <div class="head">
+      <h2>평균에서 뺀 자료</h2>
+      <p class="muted small">출처는 있지만 9/15 이전이거나 분기 수치가 아니어서 평균에 넣지 않았다. 8월 이전 전망은 대부분 1,380~1,585원으로 현물보다 50~260원 높아, 섞으면 평균이 원화 약세 쪽으로 크게 왜곡된다.</p>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>구분</th><th>기관</th><th>발표일</th><th>수치</th><th>제외 사유</th><th>출처</th></tr></thead>
+        <tbody>
+          <tr><td><span class="sw f"></span></td><td class="inst">JP모건</td><td class="date">2026-07-04</td><td class="num small">2026년 말 1,560 / 2027년 6월 1,585</td><td class="small">SNS 2차 출처, 원문 미확인</td><td class="src"><a href="https://www.threads.com/@eunho.letter/post/DaXVlp4k430" target="_blank" rel="noopener">Threads</a></td></tr>
+          <tr><td><span class="sw f"></span></td><td class="inst">BofA</td><td class="date">2026-02-17</td><td class="num small">2026년 말 1,395</td><td class="small">9/15 이전</td><td class="src"><a href="https://www.fnnews.com/news/202602171000364268" target="_blank" rel="noopener">파이낸셜뉴스</a></td></tr>
+          <tr><td><span class="sw f"></span></td><td class="inst">BNP파리바</td><td class="date">2026-02-09</td><td class="num small">2026년 말 1,400 수준</td><td class="small">9/15 이전</td><td class="src"><a href="https://www.etoday.co.kr/news/view/2554587" target="_blank" rel="noopener">이투데이</a></td></tr>
+          <tr><td><span class="sw f"></span></td><td class="inst">바클리</td><td class="date">2025-12-28</td><td class="num small">12개월 1,490</td><td class="small">9/15 이전, 기간형</td><td class="src"><a href="https://www.koreaherald.com/article/10644674" target="_blank" rel="noopener">Korea Herald</a></td></tr>
+          <tr><td><span class="sw f"></span></td><td class="inst">노무라 / HSBC / SC</td><td class="date">2025-12-28</td><td class="num small">3개월 1,460 / 1,400 / 1,460, 노무라 12개월 1,380</td><td class="small">9/15 이전, 기간형</td><td class="src"><a href="https://www.koreaherald.com/article/10644674" target="_blank" rel="noopener">Korea Herald</a></td></tr>
+          <tr><td><span class="sw f"></span></td><td class="inst">MUFG·노무라·SC·미즈호·RBC</td><td class="date">2026-02-17</td><td class="num small">연말 1,385 / 1,380 / 1,400 / 1,320~1,430 / 1,430</td><td class="small">9/15 이전 (MUFG는 10월 경로로 대체)</td><td class="src"><a href="https://www.fnnews.com/news/202602171000364268" target="_blank" rel="noopener">파이낸셜뉴스</a></td></tr>
+          <tr><td><span class="sw f"></span></td><td class="inst">DBS (6월 표)</td><td class="date">2026-06-30</td><td class="num small">1,485 / 1,500 / 1,515 / 1,530 / 1,545</td><td class="small">10/2 표로 대체</td><td class="src"><a href="https://www.dbs.com/insightsdirect/api/s3/dbs-buffer/article_attachment/20260630/13-17-48_260630_insights_fxquarterly.pdf" target="_blank" rel="noopener">DBS</a></td></tr>
+          <tr><td><span class="sw f"></span></td><td class="inst">씨티 (한경협 세미나)</td><td class="date">2026-06-22</td><td class="num small">3개월 1,480 → 6~12개월 1,450</td><td class="small">기간형, 10/1 장기 1,250으로 대체</td><td class="src"><a href="https://www.etoday.co.kr/news/view/2595767" target="_blank" rel="noopener">이투데이</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">NH농협은행 (설문)</td><td class="date">2026-08-31</td><td class="num small">1,425 / 1,405 / 1,415 (4Q26~2Q27)</td><td class="small">9/15 이전, 10월 설문 불참</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260831080004707" target="_blank" rel="noopener">KB Think</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">NH투자·DB·키움 (7월 설문)</td><td class="date">2026-07-31</td><td class="num small">4Q26 1,470 / 1,456 / 1,480</td><td class="small">9/30 설문으로 대체</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260731080007906" target="_blank" rel="noopener">설문 ②</a> · <a href="https://kbthink.com/news-list/view.html?newsId=20260731080002523" target="_blank" rel="noopener">①</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">KB국민·우리은행</td><td class="date">2026-07-05</td><td class="num small">KB 2027년 말 1,550, 우리 1,450</td><td class="small">2차 출처, 원문 표 미확인</td><td class="src"><a href="https://www.wablelife.com/2026/07/exchange-rate-forecast.html" target="_blank" rel="noopener">와블라이프</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">수출입은행 해외경제연구소</td><td class="date">2025-12-31</td><td class="num small">2026년 말 1,400</td><td class="small">9/15 이전</td><td class="src"><a href="https://www.khan.co.kr/article/202512310755001" target="_blank" rel="noopener">경향신문</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">우리금융경영연구소</td><td class="date">2026-08-06</td><td class="num small">8월 말 1,420</td><td class="small">대상 분기 아님</td><td class="src"><a href="https://www.etoday.co.kr/news/view/2611873" target="_blank" rel="noopener">이투데이</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">한국투자증권 (8월)</td><td class="date">2026-08-20</td><td class="num small">4Q26 1,410</td><td class="small">10/8 전망으로 대체</td><td class="src"><a href="https://v.daum.net/v/20260820081548766" target="_blank" rel="noopener">다음</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">산업연구원</td><td class="date">2026-05-27</td><td class="num small">2026 하반기 평균 1,447.5</td><td class="small">반기 평균, 9/15 이전</td><td class="src"><a href="https://www.kiet.re.kr/trends/ecolookView?ecolook_no=56" target="_blank" rel="noopener">KIET</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">LG경영연구원</td><td class="date">2025-12-22</td><td class="num small">2026 연평균 1,400</td><td class="small">연평균, 9/15 이전</td><td class="src"><a href="https://www.lgbr.co.kr/report/view.do?idx=19738" target="_blank" rel="noopener">LGBR</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">LS증권</td><td class="date">2026-08-31</td><td class="num small">연말 1,346~1,452</td><td class="small">범위, 9/15 이전</td><td class="src"><a href="https://www.dt.co.kr/article/12081054" target="_blank" rel="noopener">디지털타임스</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">유진투자증권</td><td class="date">2026-09-08</td><td class="num small">2027년 1,250~1,420</td><td class="small">범위, 9/15 이전</td><td class="src"><a href="https://stock.pstatic.net/stock-research/debenture/63/20260908_debenture_325210000.pdf" target="_blank" rel="noopener">유진 PDF</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">메리츠 / 한투 / iM / 한화</td><td class="date">9/29~10/19</td><td class="num small">2027 연평균 1,315 / 1,350 / 1,280 / 1,300</td><td class="small">연간 평균 (iM·한화는 분기값만 반영)</td><td class="src"><a href="https://consensus.hankyung.com/analysis/downpdf?report_idx=652581" target="_blank" rel="noopener">메리츠</a> · <a href="https://www.g-enews.com/article/Securities/2026/10/20261008090116159344093b5d4e_1" target="_blank" rel="noopener">한투</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">대신증권 (9/30 설문)</td><td class="date">2026-09-30</td><td class="num small">1,370 / 1,350 / 1,340</td><td class="small">같은 기관 10/19 자체표가 더 최근</td><td class="src"><a href="https://kbthink.com/news-list/view.html?newsId=20260930080003794" target="_blank" rel="noopener">설문 ②</a></td></tr>
+          <tr><td><span class="sw d"></span></td><td class="inst">하나은행 서정훈</td><td class="date">2026-10-19</td><td class="num small">연말 1,320</td><td class="small">단발성 코멘트, 민감도에만 반영</td><td class="src"><a href="https://www.etoday.co.kr/news/view/2637433" target="_blank" rel="noopener">이투데이</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">구분 점: <span class="sw f" style="vertical-align:-1px"></span> 외국계 · <span class="sw d" style="vertical-align:-1px"></span> 국내</p>
+  </section>
+
+  <!-- ============ 방법 ============ -->
+  <section id="method">
+    <div class="head">
+      <h2>산출 기준과 한계</h2>
+    </div>
+    <ul class="plain">
+      <li><b>기관당 한 세트.</b> 2026-09-15 이후 발표된 가장 최근의 분기 경로만 쓴다. 설문 응답과 자체 보고서가 함께 있으면 더 늦게 나온 것을 쓴다.</li>
+      <li><b>분기 수치만.</b> 연간·반기 평균, 범위, 방향성 의견은 평균에서 빼고 견해 표에만 적었다.</li>
+      <li><b>집계치 분리.</b> 블룸버그·한경·로이터 집계는 개별 응답을 이미 포함하므로 따로 표기했다.</li>
+      <li><b>기준이 섞여 있다.</b> ING·MUFG·DBS·Scotiabank·유안타·대신은 분기말, iM·한화·한국투자는 평균, 연합인포맥스 설문·UOB·Westpac은 기준 미표기다. 원화 강세 국면에서는 분기말 값이 평균보다 낮게 나오기 쉬워, 국내 3Q27·4Q27이 외국계보다 낮은 이유 일부는 기준 차이일 수 있다.</li>
+      <li><b>외국계 표본 편중.</b> 분기 경로 7개 모두 리서치를 공개하는 아시아·기타 은행이다. "월가 컨센서스"가 아니다.</li>
+    </ul>
+
+    <h3>민감도: 국내 4Q26 평균</h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>시나리오</th><th class="n">평균</th><th class="n">중앙값</th><th class="n">범위</th><th class="n">N</th></tr></thead>
+        <tbody>
+          <tr><td>기본</td><td class="n">1,366</td><td class="n">1,360</td><td class="n">1,335~1,410</td><td class="n">17</td></tr>
+          <tr><td>하나은행 설문값 1,400 → 서정훈 10/19 "연말 1,320원"으로 대체</td><td class="n">1,362</td><td class="n">1,360</td><td class="n">1,320~1,410</td><td class="n">17</td></tr>
+          <tr><td>IBK투자증권 "1,400원 전후" 제외</td><td class="n">1,364</td><td class="n">1,360</td><td class="n">1,335~1,410</td><td class="n">16</td></tr>
+          <tr><td>위 두 가지 동시 적용</td><td class="n">1,359</td><td class="n">1,360</td><td class="n">1,320~1,410</td><td class="n">16</td></tr>
+          <tr><td>대신증권을 9/30 설문값으로 사용 (4Q26 / 1Q27 / 2Q27)</td><td class="n">1,368 / 1,356 / 1,347</td><td class="n">1,360 / 1,350 / 1,340</td><td class="n empty">–</td><td class="n">17 / 16 / 16</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">4Q26 응답 17곳 중 9곳이 1,350~1,360원에 몰려 있어 한 곳을 바꿔도 평균은 4원 안팎만 움직이고 중앙값은 그대로다.</p>
+  </section>
+
+  <!-- ============ 다음 ============ -->
+  <section id="next">
+    <div class="head">
+      <h2>다음 업데이트 일정</h2>
+      <p class="muted small">지금 표는 2027년 연간 전망 시즌 직전의 스냅숏이다. 아래 일정은 작년 발표일 기준 추정.</p>
+    </div>
+    <ul class="plain">
+      <li><b>10/30 전후</b> 연합인포맥스 11월 설문(은행·증권 딜러 4Q26~2Q27). 10월 중순 연저점이 처음 반영된다(<a href="https://kbthink.com/news-list/view.html?newsId=20260930080004692" target="_blank" rel="noopener">KB Think</a>).</li>
+      <li><b>11월 초~</b> 외국계 월간 표 갱신: MUFG, OCBC, UOB, Westpac, ING, Scotiabank.</li>
+      <li><b>11월 중순</b> 한국금융연구원 2027 전망(작년 11/11, <a href="https://www.khan.co.kr/article/202511111709011/" target="_blank" rel="noopener">경향신문</a>), 웰스파고 연간 전망(작년 11/19, <a href="https://externalcontent.blob.core.windows.net/pdfs/WellsFargo20251119.pdf" target="_blank" rel="noopener">PDF</a>).</li>
+      <li><b>11월 하순</b> 산업연구원 반기·연간 평균 환율(작년 11/24, <a href="https://www.newsis.com/view/NISX20251124_0003413762" target="_blank" rel="noopener">뉴시스</a>). 삼성·미래에셋·KB·하나·신한 증권사 연간 전망.</li>
+      <li><b>12월</b> 모건스탠리 연간 전망(작년 12/1, <a href="https://www.hankyung.com/article/202512017098i" target="_blank" rel="noopener">한국경제</a>), 무역협회 IIT(12/17, <a href="https://www.fnnews.com/news/202512171100059469" target="_blank" rel="noopener">파이낸셜뉴스</a>), LG경영연구원(12/22), 수출입은행 해외경제연구소(12/31), 블룸버그 12개월 집계 기사(12월 말, <a href="https://www.koreaherald.com/article/10644674" target="_blank" rel="noopener">Korea Herald</a>).</li>
+    </ul>
+  </section>
+
+    <div class="pagefoot"><a class="nextpg" href="#p2">← 2페이지 · 추이·전망</a><span class="muted small">3 / 3</span></div>
+  </main>
+
+  <footer>
+    <span>기관 전망을 모아 정리한 자료이며 투자 권유가 아니다. 수치는 각 출처 원문 기준이고, 확인하지 못한 값은 "–"로 비웠다.</span>
+    <span>환율 데이터: 서울외국환중개 매매기준율 (<a href="https://www.smbs.biz/ExRate/StdExRate.jsp" target="_blank" rel="noopener">smbs.biz</a>) · 최종 갱신 <span id="updStamp">2026-10-21</span></span>
+    <span>실시간 시세: TradingView (FX_IDC:USDKRW) · 전망 작성 기준일 2026-10-21 · 공개 웹 출처 기반 조사 · Claude 작성</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id)};
+
+  /* ---------- 전망 데이터 (분기말 날짜에 표시) ---------- */
+  var QD=["2026-12-31","2027-03-31","2027-06-30","2027-09-30","2027-12-31"];
+  var QL=["4Q26","1Q27","2Q27","3Q27","4Q27"];
+  var INST={
+    f:{"ING":[1375,1350,1325,1300,1275],"MUFG":[1350,1330,1315,1300,null],"UOB":[1370,1380,1390,1390,null],
+       "OCBC":[1360,1340,1320,1300,1290],"DBS":[1400,1410,1420,1425,1435],"Westpac":[1340,1335,1330,1325,1320],
+       "Scotiabank":[1350,1375,1360,1358,1357]},
+    d:{"하나은행":[1400,1380,1360,null,null],"KB국민은행":[1360,1350,1330,null,null],"신한은행":[1360,1350,1350,null,null],
+       "우리은행":[1360,1350,1340,null,null],"IBK기업은행":[1380,1365,1350,null,null],"KDB산업은행":[1360,1370,1360,null,null],
+       "iM뱅크":[1360,1350,1330,null,null],"BNK부산은행":[1340,1325,1310,null,null],"KB증권":[1380,1360,1340,null,null],
+       "키움증권":[1350,1330,1360,null,null],"대신증권":[1350,1330,1300,1320,null],"NH투자증권":[1380,1410,1430,null,null],
+       "DB증권":[1354,1343,1336,null,null],"유안타증권":[1410,1434,1452,1410,1387],"iM증권":[1335,1280,1265,1275,1290],
+       "한화투자증권":[null,1350,1300,1280,1270],"한국투자증권":[1350,null,null,null,null],"IBK투자증권":[1400,null,null,null,null]}
+  };
+  function qstat(g,i){
+    var v=[];for(var k in g){if(g[k][i]!=null)v.push(g[k][i])}
+    if(!v.length)return null;
+    v.sort(function(a,b){return a-b});
+    return {mean:v.reduce(function(a,b){return a+b},0)/v.length,n:v.length,lo:v[0],hi:v[v.length-1]};
+  }
+  var SER=[
+    {key:"f",label:"외국계 평균",short:"외국계",shape:"c",st:QL.map(function(_,i){return qstat(INST.f,i)})},
+    {key:"d",label:"국내 평균",short:"국내",shape:"s",st:QL.map(function(_,i){return qstat(INST.d,i)})},
+    {key:"b",label:"블룸버그 컨센서스",short:"블룸버그",shape:"r",st:[1360,1350,1340,1330,null].map(function(v){return v==null?null:{mean:v}})}
+  ];
+
+  /* ---------- 날짜·숫자 도우미 ---------- */
+  function dn(s){return Date.UTC(+s.slice(0,4),+s.slice(5,7)-1,+s.slice(8,10))/864e5}
+  function ds(n){return new Date(n*864e5).toISOString().slice(0,10)}
+  var QT=QD.map(dn), FC_END=dn("2027-12-31");
+  var WD="일월화수목금토";
+  function wd(n){return WD[new Date(n*864e5).getUTCDay()]}
+  function f1(x){return x.toLocaleString("en-US",{minimumFractionDigits:1,maximumFractionDigits:1})}
+  function f0(x){return Math.round(x).toLocaleString("en-US")}
+  function sg(x,d){var a=Math.abs(x),s=d?a.toFixed(d):String(Math.round(a));return (x>0.00001?"+":x<-0.00001?"−":"±")+s}
+  function lb(a,x){var lo=0,hi=a.length;while(lo<hi){var m=(lo+hi)>>1;if(a[m]<x)lo=m+1;else hi=m}return lo}
+  function ub(a,x){var lo=0,hi=a.length;while(lo<hi){var m=(lo+hi)>>1;if(a[m]<=x)lo=m+1;else hi=m}return lo}
+
+  /* ---------- 환율 데이터: 페이지와 함께 발행한 파일 (로그인 없이도 읽힘) ---------- */
+  var base=null, overlay=null, R={d:[],v:[],t:[],updated:""};
+  function rebuild(){
+    var m={};
+    [base,overlay].forEach(function(s){
+      if(!s||!Array.isArray(s.d)||!Array.isArray(s.v))return;
+      for(var i=0;i<s.d.length;i++){if(typeof s.v[i]==="number"&&/^\d{4}-\d{2}-\d{2}$/.test(s.d[i]))m[s.d[i]]=s.v[i]}
+    });
+    var k=Object.keys(m).sort();
+    R.d=k;R.v=k.map(function(x){return m[x]});R.t=k.map(dn);
+    var u=[base&&base.updated,overlay&&overlay.updated].filter(Boolean).sort();
+    R.updated=u.length?u[u.length-1]:"";
+  }
+
+  /* ---------- 상태 ---------- */
+  var PRE={"1m":30,"3m":91,"6m":182,"1y":365,"3y":1096,"5y":1826,"10y":3653,"all":0};
+  var SHORT={"1m":1,"3m":1,"6m":1};
+  var S={preset:"1y",fc:true,inst:false,s:0,e:0,hover:null};
+  var wrap=$("chart"), tip=$("tip"), fcBox=$("fc"), instBox=$("inst"), d0=$("d0"), d1=$("d1");
+  var buttons=[].slice.call(document.querySelectorAll(".seg button[data-p]"));
+  function lastT(){return R.t[R.t.length-1]}
+
+  function applyPreset(p){
+    S.preset=p;
+    var L=lastT();
+    S.s=p==="all"?R.t[0]:L-PRE[p];
+    S.e=S.fc?FC_END:L;
+    syncControls();
+  }
+  function syncControls(){
+    buttons.forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.p===S.preset))});
+    fcBox.checked=S.fc; instBox.checked=S.inst;
+    instBox.disabled=!S.fc; $("instLab").classList.toggle("off",!S.fc);
+    if(R.d.length){d0.min=d1.min=R.d[0]; d0.max=d1.max="2027-12-31"}
+    d0.value=ds(S.s); d1.value=ds(S.e);
+  }
+  buttons.forEach(function(b){b.addEventListener("click",function(){
+    if(!R.t.length)return;
+    S.fc=!SHORT[b.dataset.p];
+    applyPreset(b.dataset.p); S.hover=null; draw();
+  })});
+  fcBox.addEventListener("change",function(){
+    S.fc=fcBox.checked;
+    if(S.preset)applyPreset(S.preset);
+    else{var L=lastT(); S.e=S.fc?Math.max(S.e,FC_END):Math.min(S.e,L); if(S.e<=S.s)S.s=S.e-30; syncControls()}
+    S.hover=null; draw();
+  });
+  instBox.addEventListener("change",function(){S.inst=instBox.checked; draw()});
+  function onDates(){
+    if(!d0.value||!d1.value)return;
+    var a=dn(d0.value), b=dn(d1.value);
+    if(!(a<b)){syncControls();return}
+    S.s=a; S.e=b; S.preset=null;
+    if(b>lastT()&&!S.fc){S.fc=true}
+    S.hover=null; syncControls(); draw();
+  }
+  d0.addEventListener("change",onDates); d1.addEventListener("change",onDates);
+
+  /* ---------- 눈금 ---------- */
+  function niceTicks(lo,hi,n){
+    var raw=(hi-lo)/Math.max(1,n), p=Math.pow(10,Math.floor(Math.log10(raw))), st=p;
+    [1,2,2.5,5,10].some(function(k){st=k*p;return st>=raw});
+    var a=Math.floor(lo/st)*st, b=Math.ceil(hi/st)*st, out=[];
+    for(var v=a;v<=b+st/2;v+=st)out.push(Math.round(v*100)/100);
+    return {min:a,max:b,ticks:out};
+  }
+  function xTicks(s,e,maxN){
+    var span=e-s, out=[], i, st, prevY=null;
+    var unit=span>1095?"y":span>92?"m":"d";
+    if(unit==="y"){
+      var y0=new Date(s*864e5).getUTCFullYear(), y1=new Date(e*864e5).getUTCFullYear();
+      st=[1,2,5,10].filter(function(k){return (y1-y0)/k<=maxN})[0]||10;
+      for(var y=Math.ceil(y0/st)*st;y<=y1;y+=st){var t=Date.UTC(y,0,1)/864e5;if(t>=s&&t<=e)out.push({t:t,a:String(y)})}
+    }else if(unit==="m"){
+      var a=new Date(s*864e5), b=new Date(e*864e5);
+      var m0=a.getUTCFullYear()*12+a.getUTCMonth(), m1=b.getUTCFullYear()*12+b.getUTCMonth();
+      st=[1,2,3,6].filter(function(k){return (m1-m0)/k<=maxN})[0]||12;
+      for(i=Math.ceil(m0/st)*st;i<=m1;i+=st){
+        var yy=Math.floor(i/12), mo=i%12, tt=Date.UTC(yy,mo,1)/864e5;
+        if(tt<s||tt>e)continue;
+        out.push({t:tt,a:(mo+1)+"월",b:prevY!==yy?String(yy):""}); prevY=yy;
+      }
+    }else{
+      st=[1,2,3,5,7,14].filter(function(k){return span/k<=maxN})[0]||14;
+      var t0=Math.ceil(s);
+      if(st===7||st===14){while(new Date(t0*864e5).getUTCDay()!==1)t0++}
+      for(i=t0;i<=e;i+=st){
+        var dd=new Date(i*864e5), yr=dd.getUTCFullYear();
+        out.push({t:i,a:(dd.getUTCMonth()+1)+"/"+dd.getUTCDate(),b:prevY!==yr?String(yr):""}); prevY=yr;
+      }
+    }
+    return out;
+  }
+
+  /* ---------- 그리기 ---------- */
+  var NS="http://www.w3.org/2000/svg", G=null, clipN=0;
+  function el(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+  function marker(shape,x,y,cls,p){
+    if(shape==="c")return el("circle",{cx:x,cy:y,r:4.5,"class":cls},p);
+    if(shape==="s")return el("rect",{x:x-4,y:y-4,width:8,height:8,"class":cls},p);
+    return el("path",{d:"M"+x+","+(y-5.5)+"L"+(x+5.5)+","+y+"L"+x+","+(y+5.5)+"L"+(x-5.5)+","+y+"Z","class":cls},p);
+  }
+
+  function draw(){
+    if(!R.t.length||!wrap.clientWidth)return;
+    var W=Math.max(280,wrap.clientWidth), narrow=W<600;
+    var H=narrow?300:400;
+    var s=S.s, e=Math.max(S.e,S.s+1), L=lastT(), Lv=R.v[R.v.length-1];
+    var fcOn=S.fc&&e>L;
+    var showLab=!narrow&&fcOn&&e>=FC_END-3&&s<FC_END;
+    var m={l:narrow?46:58,r:showLab?104:14,t:20,b:44};
+    var pw=W-m.l-m.r, ph=H-m.t-m.b;
+    var X=function(t){return m.l+(t-s)/(e-s)*pw};
+
+    var i0=lb(R.t,s), i1=ub(R.t,e)-1;
+    var a0=Math.max(0,i0-1), a1=Math.min(R.t.length-1,i1+1);
+    var lo=Infinity, hi=-Infinity, i;
+    for(i=i0;i<=i1;i++){var v=R.v[i];if(v<lo)lo=v;if(v>hi)hi=v}
+    if(fcOn){
+      if(L>=s){lo=Math.min(lo,Lv);hi=Math.max(hi,Lv)}
+      SER.forEach(function(se){se.st.forEach(function(q,qi){if(q&&QT[qi]>=s&&QT[qi]<=e){lo=Math.min(lo,q.mean);hi=Math.max(hi,q.mean)}})});
+      if(S.inst)["f","d"].forEach(function(g){for(var k in INST[g])INST[g][k].forEach(function(v,qi){if(v!=null&&QT[qi]>=s&&QT[qi]<=e){lo=Math.min(lo,v);hi=Math.max(hi,v)}})});
+    }
+    if(!isFinite(lo)){lo=Lv-50;hi=Lv+50}
+    var pad=Math.max((hi-lo)*0.08,3), yt=niceTicks(lo-pad,hi+pad,narrow?4:6);
+    var Y=function(v){return m.t+(1-(v-yt.min)/(yt.max-yt.min))*ph};
+
+    var old=wrap.querySelector("svg"); if(old)old.remove();
+    var svg=el("svg",{width:W,height:H,viewBox:"0 0 "+W+" "+H,"aria-hidden":"true"});
+    wrap.insertBefore(svg,tip);
+    var defs=el("defs",{},svg), c1="cl"+(++clipN), c2="cm"+clipN;
+    el("rect",{x:m.l,y:m.t-8,width:pw,height:ph+16},el("clipPath",{id:c1},defs));
+    el("rect",{x:m.l-7,y:m.t-8,width:pw+14,height:ph+16},el("clipPath",{id:c2},defs));
+
+    if(fcOn){
+      var zx=Math.max(X(L),m.l);
+      el("rect",{x:zx,y:m.t,width:Math.max(0,m.l+pw-zx),height:ph,"class":"zone"},svg);
+      if(m.l+pw-zx>40){var zl=el("text",{x:zx+6,y:m.t+13,"class":"zone-label"},svg);zl.textContent="전망 구간"}
+    }
+    yt.ticks.forEach(function(v){
+      if(v<yt.min-0.01||v>yt.max+0.01)return;
+      el("line",{x1:m.l,x2:m.l+pw,y1:Y(v),y2:Y(v),"class":"grid"},svg);
+      var t=el("text",{x:m.l-8,y:Y(v)+4,"class":"tick","text-anchor":"end"},svg);t.textContent=v.toLocaleString("en-US");
+    });
+    el("line",{x1:m.l,x2:m.l+pw,y1:m.t+ph,y2:m.t+ph,"class":"base"},svg);
+    xTicks(s,e,Math.max(3,Math.floor(pw/(narrow?56:70)))).forEach(function(k){
+      var x=X(k.t); if(x<m.l-0.5||x>m.l+pw+0.5)return;
+      el("line",{x1:x,x2:x,y1:m.t+ph,y2:m.t+ph+4,"class":"tickmark"},svg);
+      var t=el("text",{x:x,y:m.t+ph+17,"class":"xt","text-anchor":"middle"},svg);t.textContent=k.a;
+      if(k.b){var u=el("text",{x:x,y:m.t+ph+31,"class":"xy","text-anchor":"middle"},svg);u.textContent=k.b}
+    });
+
+    /* 실제 환율: 픽셀당 최고·최저만 남겨 그린다 */
+    var idx=[];
+    if(a1-a0+1>pw*1.6){
+      var bx=null,mn=0,mx=0;
+      var flush=function(){if(bx===null)return;if(mn===mx)idx.push(mn);else if(mn<mx){idx.push(mn);idx.push(mx)}else{idx.push(mx);idx.push(mn)}};
+      for(i=a0;i<=a1;i++){var px=Math.floor(X(R.t[i]));if(px!==bx){flush();bx=px;mn=mx=i}else{if(R.v[i]<R.v[mn])mn=i;if(R.v[i]>R.v[mx])mx=i}}
+      flush();
+    }else for(i=a0;i<=a1;i++)idx.push(i);
+    if(idx.length){
+      var dp=idx.map(function(j,k){return (k?"L":"M")+X(R.t[j]).toFixed(1)+","+Y(R.v[j]).toFixed(1)}).join("");
+      el("path",{d:dp,"class":"act","clip-path":"url(#"+c1+")"},svg);
+    }
+
+    /* 전망선: 최근 매매기준율에서 분기말 평균으로 */
+    var labels=[];
+    if(fcOn){
+      var gF=el("g",{"clip-path":"url(#"+c2+")"},svg);
+      if(S.inst){
+        [["f",-6],["d",6]].forEach(function(gd){
+          for(var k in INST[gd[0]])INST[gd[0]][k].forEach(function(v,qi){
+            if(v==null)return;
+            var c=el("circle",{cx:X(QT[qi])+gd[1],cy:Y(v),r:3,"class":"pt pt-"+gd[0]},gF);
+            el("title",{},c).textContent=k+" "+QL[qi]+" "+f0(v);
+          });
+        });
+      }
+      SER.forEach(function(se){
+        var pts=[[L,Lv]],last=null;
+        se.st.forEach(function(q,qi){if(q){pts.push([QT[qi],q.mean]);last=[qi,q.mean]}});
+        el("path",{d:pts.map(function(p,k){return (k?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)}).join(""),"class":"fc fc-"+se.key},gF);
+        se.st.forEach(function(q,qi){if(q)marker(se.shape,X(QT[qi]),Y(q.mean),"mk mk-"+se.key,gF)});
+        if(last)labels.push({se:se,qi:last[0],v:last[1],y:Y(last[1])});
+      });
+    }
+    if(showLab&&labels.length){
+      labels.sort(function(a,b){return a.y-b.y});
+      for(i=1;i<labels.length;i++)if(labels[i].y-labels[i-1].y<15)labels[i].y=labels[i-1].y+15;
+      var over=labels[labels.length-1].y-(m.t+ph);
+      if(over>0)labels.forEach(function(l){l.y-=over});
+      labels.forEach(function(l){
+        var x=m.l+pw+10;
+        marker(l.se.shape,x+4,l.y,"mk mk-"+l.se.key,svg);
+        var t=el("text",{x:x+14,y:l.y+4,"class":"dl"},svg);
+        el("tspan",{},t).textContent=l.se.short+" ";
+        el("tspan",{"class":"v"},t).textContent=f0(l.v);
+      });
+    }
+
+    var cross=el("line",{x1:0,x2:0,y1:m.t,y2:m.t+ph,"class":"cross",visibility:"hidden"},svg);
+    var hov=el("circle",{cx:0,cy:0,r:4,"class":"hov",visibility:"hidden"},svg);
+    var hit=el("rect",{x:m.l,y:m.t,width:pw,height:ph,"class":"hit"},svg);
+    G={X:X,Y:Y,W:W,m:m,pw:pw,s:s,e:e,i0:i0,i1:i1,L:L,fcOn:fcOn,cross:cross,hov:hov};
+    function at(ev){var r=svg.getBoundingClientRect();pick(ev.clientX-r.left)}
+    hit.addEventListener("pointermove",at);
+    hit.addEventListener("pointerdown",at);
+    hit.addEventListener("pointerleave",function(ev){if(ev.pointerType==="mouse")clearHover()});
+
+    summary(i0,i1);
+    if(S.hover)showHover();
+  }
+
+  function pick(px){
+    if(!G)return;
+    var t=G.s+(px-G.m.l)/G.pw*(G.e-G.s);
+    var target=null;
+    if(G.fcOn&&t>G.L){
+      var best=-1,bd=Infinity;
+      QT.forEach(function(q,qi){if(q<G.s||q>G.e)return;var d=Math.abs(q-t);if(d<bd){bd=d;best=qi}});
+      if(best>=0&&(G.i1<G.i0||Math.abs(G.X(QT[best])-px)<Math.abs(G.X(G.L)-px)))target={q:best};
+    }
+    if(!target&&G.i1>=G.i0){
+      var i=lb(R.t,t); if(i>G.i1)i=G.i1; if(i>G.i0&&Math.abs(R.t[i-1]-t)<Math.abs(R.t[i]-t))i--; if(i<G.i0)i=G.i0;
+      target={i:i};
+    }
+    S.hover=target; showHover();
+  }
+  function clearHover(){S.hover=null;tip.hidden=true;if(G){G.cross.setAttribute("visibility","hidden");G.hov.setAttribute("visibility","hidden")}}
+  function showHover(){
+    var h=S.hover; if(!h||!G)return clearHover();
+    var x,html;
+    if(h.q!=null){
+      var qi=h.q; x=G.X(QT[qi]);
+      if(x<G.m.l||x>G.m.l+G.pw)return clearHover();
+      G.hov.setAttribute("visibility","hidden");
+      var Lv=R.v[R.v.length-1];
+      html='<div class="tq">'+QL[qi]+' 전망 · '+QD[qi]+'</div>';
+      SER.forEach(function(se){
+        var q=se.st[qi];
+        html+='<div class="tr"><span class="sw '+se.key+(se.shape==="s"?" sq":se.shape==="r"?" dia":"")+'"></span>'+se.label+'<b>'+(q?f0(q.mean):"–")+'</b></div>';
+        if(q&&q.n)html+='<div class="ts">'+q.n+'곳 · '+f0(q.lo)+'~'+f0(q.hi)+' · 최근 대비 '+sg(q.mean-Lv)+'원</div>';
+      });
+      html+='<div class="tg">최근 매매기준율 '+f1(Lv)+' ('+R.d[R.d.length-1]+')</div>';
+    }else{
+      var i=h.i; x=G.X(R.t[i]);
+      G.hov.setAttribute("cx",x); G.hov.setAttribute("cy",G.Y(R.v[i])); G.hov.setAttribute("visibility","visible");
+      html='<div class="tq">'+R.d[i]+' ('+wd(R.t[i])+')</div><div class="tr">매매기준율<b>'+f1(R.v[i])+'</b></div>';
+      if(i>0)html+='<div class="ts" style="padding-left:0">전일 대비 '+sg(R.v[i]-R.v[i-1],1)+'원</div>';
+    }
+    G.cross.setAttribute("x1",x); G.cross.setAttribute("x2",x); G.cross.setAttribute("visibility","visible");
+    tip.innerHTML=html; tip.hidden=false;
+    var tw=tip.offsetWidth, left=x+14;
+    if(left+tw>G.W)left=x-14-tw;
+    if(left<0)left=Math.max(0,(G.W-tw)/2);
+    tip.style.left=left+"px"; tip.style.top=(G.m.t+6)+"px";
+  }
+  wrap.addEventListener("keydown",function(ev){
+    if(!G)return;
+    var k=ev.key, step=ev.shiftKey?20:1, h=S.hover;
+    var qs=G.fcOn?QT.map(function(q,qi){return qi}).filter(function(qi){return QT[qi]>=G.s&&QT[qi]<=G.e}):[];
+    if(k==="Escape"){clearHover();return}
+    if(k!=="ArrowLeft"&&k!=="ArrowRight")return;
+    ev.preventDefault();
+    var right=k==="ArrowRight";
+    if(!h){h=G.i1>=G.i0?{i:G.i1}:(qs.length?{q:qs[0]}:null)}
+    else if(h.q!=null){
+      var p=qs.indexOf(h.q)+(right?1:-1);
+      if(p>=0&&p<qs.length)h={q:qs[p]};else if(p<0&&G.i1>=G.i0)h={i:G.i1};
+    }else{
+      var ni=h.i+(right?step:-step);
+      if(ni>G.i1){h=qs.length?{q:qs[0]}:{i:G.i1}}else h={i:Math.max(G.i0,ni)};
+    }
+    S.hover=h; showHover();
+  });
+  wrap.addEventListener("blur",clearHover);
+  document.addEventListener("pointerdown",function(ev){if(!wrap.contains(ev.target))clearHover()});
+
+  /* ---------- 요약·타일·월평균 ---------- */
+  function summary(i0,i1){
+    var row=$("sumrow"), h="<span>기간 <b>"+ds(S.s)+" ~ "+ds(S.e)+"</b></span>";
+    if(i1>=i0){
+      var mx=i0,mn=i0;for(var i=i0;i<=i1;i++){if(R.v[i]>R.v[mx])mx=i;if(R.v[i]<R.v[mn])mn=i}
+      h+="<span>기간 최고 <b>"+f1(R.v[mx])+"</b> ("+R.d[mx]+")</span>";
+      h+="<span>기간 최저 <b>"+f1(R.v[mn])+"</b> ("+R.d[mn]+")</span>";
+      if(i1>i0)h+="<span>기간 변화 <b>"+sg((R.v[i1]/R.v[i0]-1)*100,1)+"%</b> ("+f1(R.v[i0])+" → "+f1(R.v[i1])+")</span>";
+    }else h+="<span>선택한 기간에는 실제 환율 데이터가 없다(전망 구간).</span>";
+    row.innerHTML=h;
+  }
+  function tiles(){
+    var n=R.v.length; if(!n)return;
+    var Lv=R.v[n-1], Ld=R.d[n-1], yr=Ld.slice(0,4), mx=-1;
+    for(var i=0;i<n;i++)if(R.d[i].slice(0,4)===yr&&(mx<0||R.v[i]>R.v[mx]))mx=i;
+    $("latestDate").textContent=Ld;
+    $("latestVal").textContent=f1(Lv);
+    $("latestFoot").textContent=(n>1?"전일 대비 "+sg(Lv-R.v[n-2],1)+" · ":"")+"올해 고점 "+f1(R.v[mx])+"("+R.d[mx].slice(5)+") 대비 "+sg((Lv/R.v[mx]-1)*100,1)+"%";
+    $("gap4q").textContent="최근 매매기준율보다 외국계 "+sg(SER[0].st[0].mean-Lv)+"원 · 국내 "+sg(SER[1].st[0].mean-Lv)+"원";
+    var by={},keys=[];
+    R.d.forEach(function(d,i){var k=d.slice(0,7);if(!by[k]){by[k]=[];keys.push(k)}by[k].push(i)});
+    var h="";
+    keys.slice(-6).forEach(function(k,j,arr){
+      var ix=by[k], avg=ix.reduce(function(a,i){return a+R.v[i]},0)/ix.length;
+      var lab=(+k.slice(5))+"월 평균"+(j===arr.length-1&&k===Ld.slice(0,7)?" (1~"+(+R.d[ix[ix.length-1]].slice(8))+"일)":"");
+      h+='<div><span class="m">'+lab+'</span><span class="v">'+f1(avg)+'</span></div>';
+    });
+    h+='<div class="now"><span class="m">최근 '+(+Ld.slice(5,7))+"/"+(+Ld.slice(8))+'</span><span class="v">'+f1(Lv)+'</span></div>';
+    $("strip").innerHTML=h;
+    if(R.updated)$("updStamp").textContent=R.updated.replace("T"," ");
+  }
+
+  function onData(){
+    rebuild(); S.hover=null;
+    if(!R.t.length)return;
+    var ld=$("loading"); if(ld)ld.remove();
+    if(S.preset||!S.s)applyPreset(S.preset||"1y"); else syncControls();
+    draw(); tiles();
+  }
+
+  fetch("usdkrw_smbs.json").then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})
+    .then(function(j){base=j;onData()})
+    .catch(function(){if(!overlay){var ld=$("loading");if(ld)ld.textContent="매매기준율 데이터를 불러오지 못했다. 페이지를 새로고침해 보라."}});
+
+  /* ---------- 1페이지: TradingView 실시간 차트 ---------- */
+  var TVV={"1d":{range:"1D",interval:"1"},"5d":{range:"5D",interval:"5"},"1m":{range:"1M",interval:"60"},"1y":{range:"12M",interval:"D"}};
+  var TV={v:"1d",s:"2",mounted:false};
+  try{var tvs=JSON.parse(localStorage.getItem("usdkrw-live")||"{}");if(TVV[tvs.v])TV.v=tvs.v;if(tvs.s==="1"||tvs.s==="2")TV.s=tvs.s}catch(e){}
+  var darkMQ=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)");
+  function isDark(){var t=document.documentElement.getAttribute("data-theme");return t?t==="dark":!!(darkMQ&&darkMQ.matches)}
+  function mountTV(force){
+    if(TV.mounted&&!force)return;
+    if($("p1").hidden)return;
+    var v=TVV[TV.v], dk=isDark(), box=$("tv"); box.innerHTML="";
+    var c=document.createElement("div"); c.className="tradingview-widget-container"; c.style.height="100%"; c.style.width="100%";
+    var w=document.createElement("div"); w.className="tradingview-widget-container__widget"; w.style.height="100%"; w.style.width="100%";
+    c.appendChild(w);
+    var sc=document.createElement("script"); sc.type="text/javascript"; sc.async=true;
+    sc.src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    sc.innerHTML=JSON.stringify({autosize:true,symbol:"FX_IDC:USDKRW",range:v.range,interval:v.interval,timezone:"Asia/Seoul",
+      theme:dk?"dark":"light",style:TV.s,locale:"kr",backgroundColor:dk?"#171b20":"#ffffff",
+      gridColor:dk?"rgba(255,255,255,0.06)":"rgba(18,22,27,0.06)",hide_side_toolbar:true,hide_volume:true,
+      allow_symbol_change:false,save_image:false,calendar:false,withdateranges:true,support_host:"https://www.tradingview.com"});
+    c.appendChild(sc); box.appendChild(c); TV.mounted=true;
+    [].forEach.call(document.querySelectorAll("[data-v]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.v===TV.v))});
+    [].forEach.call(document.querySelectorAll("[data-s]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.s===TV.s))});
+    try{localStorage.setItem("usdkrw-live",JSON.stringify({v:TV.v,s:TV.s}))}catch(e){}
+  }
+  [].forEach.call(document.querySelectorAll("[data-v]"),function(b){b.addEventListener("click",function(){if(TV.v!==b.dataset.v){TV.v=b.dataset.v;mountTV(true)}})});
+  [].forEach.call(document.querySelectorAll("[data-s]"),function(b){b.addEventListener("click",function(){if(TV.s!==b.dataset.s){TV.s=b.dataset.s;mountTV(true)}})});
+  if(darkMQ&&darkMQ.addEventListener)darkMQ.addEventListener("change",function(){if(TV.mounted){TV.mounted=false;mountTV(true)}});
+
+  /* ---------- 페이지 전환 (1·2·3) ---------- */
+  var tabs=[].slice.call(document.querySelectorAll(".pager button"));
+  function go(n,id){
+    ["1","2","3"].forEach(function(k){
+      $("p"+k).hidden=(k!==n);
+      var ul=document.querySelector('nav.toc ul[data-for="'+k+'"]'); if(ul)ul.hidden=(k!==n);
+    });
+    tabs.forEach(function(b){b.setAttribute("aria-selected",String(b.dataset.go===n))});
+    if(n==="1")mountTV(false); if(n==="2")draw();
+    var t=id&&$(id);
+    if(t)t.scrollIntoView();else window.scrollTo(0,0);
+    try{history.replaceState(null,"","#"+(id||"p"+n))}catch(e){}
+  }
+  tabs.forEach(function(b){b.addEventListener("click",function(){go(b.dataset.go)})});
+  document.addEventListener("click",function(ev){
+    var a=ev.target.closest&&ev.target.closest('a[href^="#"]'); if(!a)return;
+    var id=a.getAttribute("href").slice(1), t=id&&document.getElementById(id); if(!t)return;
+    var p=t.closest("[data-page]"); if(!p)return;
+    ev.preventDefault(); go(p.dataset.page,t===p?null:id);
+  });
+  (function(){
+    var h=(location.hash||"").slice(1), t=h&&document.getElementById(h); if(!t)return;
+    var p=t.closest("[data-page]"); if(p)go(p.dataset.page,t===p?null:h);
+  })();
+  mountTV(false);
+
+  if(window.ResizeObserver){var lw=wrap.clientWidth;new ResizeObserver(function(){if(wrap.clientWidth!==lw){lw=wrap.clientWidth;draw()}}).observe(wrap)}
+  else window.addEventListener("resize",draw);
+})();
+</script>
+</body>
+</html>
