@@ -1,0 +1,10 @@
+# Cloudflare Pages: https://usdkrw-live.pages.dev
+# 배포: cd cloudflare && npx wrangler pages deploy (이 폴더에서 실행)
+name = "usdkrw-live"
+pages_build_output_dir = "public"
+compatibility_date = "2026-10-01"
+
+# '업데이트' 버튼 하루 1회 잠금
+[[kv_namespaces]]
+binding = "KV"
+id = "85349e46143444fc960664115711b1bc"

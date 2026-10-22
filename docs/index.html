@@ -244,6 +244,33 @@ img{max-width:100%}
 .darea{fill:var(--ink);fill-opacity:.06;stroke:none}
 .oline{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:4 4}
 .olab{fill:var(--ink-2);font-family:var(--font-num);font-size:11px}
+.toprow{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 20px}
+.updbox{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.updbtn{font:inherit;font-size:14px;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--surface);cursor:pointer}
+.updbtn:disabled{background:transparent;color:var(--muted);border-color:var(--rule-strong);cursor:default}
+.updmsg{font-size:12.5px;color:var(--muted);max-width:42ch}
+.updconfirm{display:grid;gap:10px;margin-top:4px;padding:12px 14px;border:1.5px solid var(--ink);border-radius:8px;background:var(--surface);font-size:14px;max-width:640px}
+.updconfirm p{margin:0}
+.updconfirm .row{display:flex;gap:8px}
+.updconfirm button{font:inherit;font-size:13.5px;font-weight:500;padding:6px 14px;border-radius:6px;border:1px solid var(--rule-strong);background:transparent;color:var(--ink);cursor:pointer}
+.updconfirm button.go{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+#nq{font:inherit;font-size:13px;padding:5px 10px;border:1px solid var(--rule-strong);border-radius:6px;background:var(--surface);color:var(--ink);min-width:0;width:200px}
+.urgent{border:1.5px solid var(--up);border-radius:8px;background:var(--surface);padding:10px 14px;display:grid;gap:4px}
+.urgent .uh{font-size:12.5px;font-weight:600;color:var(--up)}
+.newslist{display:grid;background:var(--surface);border:1px solid var(--rule);border-radius:6px;overflow:hidden;position:relative;min-height:120px}
+.newslist .msg{padding:24px;color:var(--muted);font-size:13px;text-align:center}
+.nday{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em;padding:10px 14px 6px;background:var(--bg);border-bottom:1px solid var(--rule)}
+.nitem{display:grid;grid-template-columns:44px auto 1fr auto;align-items:baseline;gap:4px 10px;padding:9px 14px;border-bottom:1px solid var(--rule);text-decoration:none;color:var(--ink)}
+.nitem:hover{background:var(--chip)}
+.nitem::after{content:none!important}
+.ntime{font-family:var(--font-num);font-size:12.5px;color:var(--muted)}
+.nbadge{font-size:11px;font-weight:600;padding:1px 7px;border-radius:3px;white-space:nowrap;border:1px solid var(--rule-strong);color:var(--ink-2)}
+.nbadge.lv-긴급{border-color:var(--up);color:var(--up)}
+.nbadge.lv-외환{border-color:var(--down);color:var(--down)}
+.ntitle{font-size:14px;line-height:1.5;min-width:0}
+.nitem .nsrc{font-size:12px;color:var(--muted);white-space:nowrap}
+.nitem.fresh .ntitle{font-weight:600}
+@media (max-width:600px){.nitem{grid-template-columns:40px auto 1fr}.nitem .nsrc{grid-column:3}}
 .nowbox{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;padding-inline:2px}
 .nowbox .nlab{font-size:13px;color:var(--muted);font-weight:500}
 .nowbox .nval{font-family:var(--font-num);font-size:clamp(28px,4vw,36px);font-weight:500;letter-spacing:-.02em;line-height:1.1;color:var(--ink)}
@@ -262,7 +289,17 @@ img{max-width:100%}
 <div class="wrap">
   <header class="top">
     <div class="eyebrow">USD/KRW · 실시간 시세 · 서울외국환중개 매매기준율 · 기관 전망</div>
-    <h1>달러/원 실시간·전망</h1>
+    <div class="toprow">
+      <h1>달러/원 실시간·전망</h1>
+      <div class="updbox">
+        <button type="button" class="updbtn" id="updBtn" disabled>업데이트</button>
+        <span class="updmsg" id="updMsg">상태 확인 중…</span>
+      </div>
+    </div>
+    <div class="updconfirm" id="updConfirm" hidden>
+      <p><b>기관 전망·블룸버그 컨센서스를 새로 조사해 반영합니다.</b> 하루에 한 번만 실행되며, 누르면 오늘은 다른 사람도 다시 누를 수 없습니다. 반영까지 10~30분 걸립니다. 시세와 뉴스는 누르지 않아도 자동으로 갱신됩니다.</p>
+      <div class="row"><button type="button" class="go" id="updGo">실행</button><button type="button" id="updCancel">취소</button></div>
+    </div>
   </header>
 
   <nav class="toc" aria-label="페이지와 목차">
@@ -271,6 +308,7 @@ img{max-width:100%}
         <button type="button" role="tab" aria-controls="p1" aria-selected="true" data-go="1"><span class="pn">1</span>실시간</button>
         <button type="button" role="tab" aria-controls="p2" aria-selected="false" data-go="2"><span class="pn">2</span>추이·전망</button>
         <button type="button" role="tab" aria-controls="p3" aria-selected="false" data-go="3"><span class="pn">3</span>기관별 상세·출처</button>
+        <button type="button" role="tab" aria-controls="p4" aria-selected="false" data-go="4"><span class="pn">4</span>뉴스</button>
       </div>
       <ul data-for="1">
         <li><a href="#rtnotes">데이터 기준</a></li>
@@ -288,6 +326,9 @@ img{max-width:100%}
         <li><a href="#excluded">평균 제외 자료</a></li>
         <li><a href="#method">산출 기준·한계</a></li>
         <li><a href="#next">다음 업데이트</a></li>
+      </ul>
+      <ul data-for="4" hidden>
+        <li><a href="#news">환율 뉴스</a></li>
       </ul>
     </div>
   </nav>
@@ -354,12 +395,12 @@ img{max-width:100%}
     </div>
 
     <ul class="notes" id="rtnotes">
-      <li><b>데이터 기준.</b> ①은 TradingView(FX_IDC:USDKRW) 실시간 시세, ②·③은 Yahoo Finance(KRW=X) 시세를 5분마다 받아 반영합니다. 둘 다 국제 외환시장 시세라 서울 외환시장 체결가(연합인포맥스 등)나 서울외국환중개 매매기준율과 몇 원 차이 날 수 있고, ②·③은 약 5~15분 늦습니다.</li>
+      <li><b>데이터 기준.</b> ①은 TradingView(FX_IDC:USDKRW) 실시간 시세, ②·③은 Yahoo Finance(KRW=X) 시세를 열 때마다 받아 옵니다(약 1~2분 지연). 둘 다 국제 외환시장 시세라 서울 외환시장 체결가(연합인포맥스 등)나 서울외국환중개 매매기준율과 몇 원 차이 날 수 있습니다.</li>
       <li><b>하루의 기준.</b> 국제 외환시장은 뉴욕 오후 5시에 하루를 마감합니다(한국 시간 오전 6시, 미국 서머타임이 아닌 11월 첫 일요일~3월 둘째 일요일 전에는 오전 7시). 이 페이지는 1년 내내 06:00~익일 06:00을 하루로 봅니다.</li>
       <li><b>일별 매매기준율 추이와 분기별 전망</b>은 <a href="#p2">2페이지</a>, 기관별 수치와 출처는 <a href="#p3">3페이지</a>에 있습니다.</li>
     </ul>
   </section>
-    <div class="pagefoot"><span class="muted small">1 / 3</span><a class="nextpg" href="#p2">2페이지 · 추이·전망 →</a></div>
+    <div class="pagefoot"><span class="muted small">1 / 4</span><a class="nextpg" href="#p2">2페이지 · 추이·전망 →</a></div>
   </main>
 
   <main id="p2" data-page="2" hidden>
@@ -555,7 +596,7 @@ img{max-width:100%}
   </section>
 
 
-    <div class="pagefoot"><a class="nextpg" href="#p1">← 1페이지 · 실시간</a><span class="muted small">2 / 3</span><a class="nextpg" href="#p3">3페이지 · 기관별 상세·출처 →</a></div>
+    <div class="pagefoot"><a class="nextpg" href="#p1">← 1페이지 · 실시간</a><span class="muted small">2 / 4</span><a class="nextpg" href="#p3">3페이지 · 기관별 상세·출처 →</a></div>
   </main>
 
   <main id="p3" data-page="3" hidden>
@@ -830,7 +871,34 @@ img{max-width:100%}
     </ul>
   </section>
 
-    <div class="pagefoot"><a class="nextpg" href="#p2">← 2페이지 · 추이·전망</a><span class="muted small">3 / 3</span></div>
+    <div class="pagefoot"><a class="nextpg" href="#p2">← 2페이지 · 추이·전망</a><span class="muted small">3 / 4</span><a class="nextpg" href="#p4">4페이지 · 뉴스 →</a></div>
+  </main>
+
+  <main id="p4" data-page="4" hidden>
+    <div class="pagehead"><span class="eyebrow">4페이지</span><h2>환율 뉴스</h2><p class="muted small">환율에 영향을 줄 수 있는 기사를 자동으로 모읍니다(연합인포맥스·연합뉴스 RSS, 구글 뉴스 검색). 제목과 링크만 보여 주며 본문은 각 언론사에서 보세요. 화면을 열어 두면 1분마다 새 기사를 확인합니다.</p></div>
+    <section id="news" style="padding-top:16px">
+      <div class="ctl">
+        <div class="seg" role="group" aria-label="분류">
+          <button type="button" data-nf="all" aria-pressed="true">전체</button>
+          <button type="button" data-nf="긴급" aria-pressed="false">긴급·속보</button>
+          <button type="button" data-nf="외환" aria-pressed="false">외환 시황</button>
+          <button type="button" data-nf="영향" aria-pressed="false">영향 요인</button>
+        </div>
+        <div class="seg" role="group" aria-label="출처">
+          <button type="button" data-ns="all" aria-pressed="true">모든 출처</button>
+          <button type="button" data-ns="infomax" aria-pressed="false">연합인포맥스</button>
+        </div>
+        <input type="search" id="nq" placeholder="제목 검색 (예: 외환-마감)" aria-label="제목 검색">
+      </div>
+      <div class="urgent" id="nurgent" hidden></div>
+      <div class="newslist" id="nlist"><div class="msg">뉴스를 불러오는 중…</div></div>
+      <ul class="notes">
+        <li><b>분류 기준(키워드 자동 분류).</b> 긴급·속보 = 속보·개입·급등락 등 + 환율·금리·관세 같은 재료, 외환 시황 = 달러-원·NDF·외환당국 등 외환시장 기사(인포맥스 [외환]·[외환-마감] 포함), 영향 요인 = 연준·한은·유가·국민연금처럼 환율을 움직일 수 있는 기사.</li>
+        <li><b>연합인포맥스 단말기 전용 기사</b>(외환-NNNNNN 코드)는 공개되지 않아 볼 수 없고, 같은 내용이 공개 사이트와 KB Think에 [외환]·[외환-마감] 제목으로 올라온 것을 모읍니다.</li>
+      </ul>
+      <div class="credit" id="ncredit"></div>
+    </section>
+    <div class="pagefoot"><a class="nextpg" href="#p3">← 3페이지 · 기관별 상세·출처</a><span class="muted small">4 / 4</span></div>
   </main>
 
   <footer>
@@ -1234,7 +1302,10 @@ img{max-width:100%}
   [].forEach.call(document.querySelectorAll("[data-s]"),function(b){b.addEventListener("click",function(){if(TV.s!==b.dataset.s){TV.s=b.dataset.s;mountTV(true)}})});
   if(darkMQ&&darkMQ.addEventListener)darkMQ.addEventListener("change",function(){if(TV.mounted){TV.mounted=false;mountTV(true)}});
 
-  /* ---------- 1페이지 ②③: 장중 데이터(Yahoo, 5분마다 사이트 반영) ---------- */
+  /* ---------- 서버(Cloudflare) 주소: pages.dev 에서는 같은 사이트, 그 밖(github.io 등)에서는 절대 주소 ---------- */
+  var API=/\.pages\.dev$/.test(location.hostname)?"":"https://usdkrw-live.pages.dev";
+
+  /* ---------- 1페이지 ②③: 장중 데이터(Yahoo, 열 때마다 서버가 받아 옴) ---------- */
   var ID=null, MODE="day", KOFF=540, DAYM=1440;
   try{var mm=localStorage.getItem("usdkrw-mode");if(mm==="drag"||mm==="range"||mm==="day")MODE=mm}catch(e){}
   var radios=[].slice.call(document.querySelectorAll('input[name="rtmode"]'));
@@ -1249,7 +1320,7 @@ img{max-width:100%}
   function msg(box,t){box.innerHTML='<div class="msg">'+t+'</div>'}
 
   function loadID(){
-    return fetch("intraday.json?t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})
+    return fetch(API+"/api/intraday",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})
       .then(function(j){if(j&&j.m1&&j.m10){ID=j;renderP1()}})
       .catch(function(){if(!ID){msg($("dchart"),"장중 데이터를 불러오지 못했습니다. 잠시 후 새로고침해 주세요.");msg($("rchart"),"장중 데이터를 불러오지 못했습니다. 잠시 후 새로고침해 주세요.")}});
   }
@@ -1343,7 +1414,7 @@ img{max-width:100%}
     $("dnowv").textContent=f1(now);
     $("dnowc").innerHTML="06:00 시가 대비 "+chg(open,now);
     $("dnowt").textContent=(stale?"마지막 거래 ":"")+mdhm(endT)+" 기준";
-    $("dcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 1분 단위 · 사이트 반영 "+(ID.updated||"").replace("T"," ")+" (약 5~15분 지연)";
+    $("dcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 1분 단위 · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)";
   }
 
   /* ② 기간 설정: 10분봉, 기간 전체를 한 화면에(드래그 없음), 최대 1개월 */
@@ -1418,21 +1489,88 @@ img{max-width:100%}
       '<span>시가 <b>'+f1(B.o[i0])+'</b></span><span>종가 <b>'+f1(B.c[i1])+'</b></span><span>변동 '+chg(B.o[i0],B.c[i1])+'</span>'+
       '<span>고가 <b>'+f1(hi)+'</b> ('+mdhm(t[ih])+')</span><span>저가 <b>'+f1(lo)+'</b> ('+mdhm(t[il])+')</span>'+
       (N>240?'<span class="muted">봉이 많아 종가 선과 고저 범위로 표시</span>':'');
-    $("rcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 10분봉(5분봉 2개 묶음) · 사이트 반영 "+(ID.updated||"").replace("T"," ")+" (약 5~15분 지연)";
+    $("rcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 10분봉(5분봉 2개 묶음) · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)";
   }
   if(window.ResizeObserver){
     ["dchart","rchart"].forEach(function(id){var bx=$(id),w0=bx.clientWidth;new ResizeObserver(function(){if(bx.clientWidth!==w0){w0=bx.clientWidth;if(ID&&!$("p1").hidden){if(id==="dchart"&&MODE==="day")drawDay();if(id==="rchart"&&MODE==="range")drawRange()}}}).observe(bx)});
   }
 
+  /* ---------- 4페이지: 환율 뉴스 ---------- */
+  var NEWS=null, NF="all", NS="all", NSEEN=null;
+  try{NSEEN=+localStorage.getItem("usdkrw-news-seen")||null}catch(e){}
+  function esc(x){return String(x).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function loadNews(){
+    return fetch(API+"/api/news",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})
+      .then(function(j){if(j&&j.items){NEWS=j;renderNews()}})
+      .catch(function(){if(!NEWS)$("nlist").innerHTML='<div class="msg">뉴스를 불러오지 못했습니다. 잠시 후 다시 열어 주세요.</div>'});
+  }
+  function renderNews(){
+    if(!NEWS)return;
+    var q=($("nq").value||"").trim().toLowerCase(), it=NEWS.items, nowM=Date.now()/60000;
+    var isIM=function(x){return /인포맥스|KB Think/.test(x.s)};
+    var list=it.filter(function(x){return (NF==="all"||x.lv===NF)&&(NS==="all"||isIM(x))&&(!q||x.t.toLowerCase().indexOf(q)>=0)});
+    var urg=it.filter(function(x){return x.lv==="긴급"&&nowM-x.m<=24*60}).slice(0,5);
+    var ub=$("nurgent");
+    if(urg.length&&NF==="all"&&!q){
+      ub.hidden=false;
+      ub.innerHTML='<div class="uh">최근 24시간 긴급·속보</div>'+urg.map(function(x){return '<a class="nitem" style="border:0;padding:4px 0" href="'+esc(x.u)+'" target="_blank" rel="noopener"><span class="ntime">'+hm(x.m)+'</span><span class="nbadge lv-긴급">긴급</span><span class="ntitle">'+esc(x.t)+'</span><span class="nsrc">'+esc(x.s)+'</span></a>'}).join("");
+    }else ub.hidden=true;
+    if(!list.length){$("nlist").innerHTML='<div class="msg">조건에 맞는 기사가 없습니다.</div>';return}
+    var h="", day="";
+    list.slice(0,300).forEach(function(x){
+      var d=kd(x.m), dk=(d.getUTCMonth()+1)+"월 "+d.getUTCDate()+"일 ("+"일월화수목금토"[d.getUTCDay()]+")";
+      if(dk!==day){h+='<div class="nday">'+dk+'</div>';day=dk}
+      h+='<a class="nitem'+(NSEEN&&x.m>NSEEN?" fresh":"")+'" href="'+esc(x.u)+'" target="_blank" rel="noopener"><span class="ntime">'+hm(x.m)+'</span><span class="nbadge lv-'+x.lv+'">'+(x.lv==="긴급"?"긴급":x.lv==="외환"?"외환":"영향")+'</span><span class="ntitle">'+esc(x.t)+'</span><span class="nsrc">'+esc(x.s)+'</span></a>';
+    });
+    $("nlist").innerHTML=h;
+    $("ncredit").textContent="기사 "+list.length+"건 · 받은 시각 "+(NEWS.updated||"").replace("T"," ")+" · 굵은 제목은 지난번 방문 이후 새 기사";
+    if(!$("p4").hidden&&it.length){try{localStorage.setItem("usdkrw-news-seen",String(it[0].m))}catch(e){}}
+  }
+  [].forEach.call(document.querySelectorAll("[data-nf]"),function(b){b.addEventListener("click",function(){NF=b.dataset.nf;[].forEach.call(document.querySelectorAll("[data-nf]"),function(x){x.setAttribute("aria-pressed",String(x===b))});renderNews()})});
+  [].forEach.call(document.querySelectorAll("[data-ns]"),function(b){b.addEventListener("click",function(){NS=b.dataset.ns;[].forEach.call(document.querySelectorAll("[data-ns]"),function(x){x.setAttribute("aria-pressed",String(x===b))});renderNews()})});
+  $("nq").addEventListener("input",renderNews);
+  setInterval(function(){if(!document.hidden&&!$("p4").hidden)loadNews()},60000);
+
+  /* ---------- 상단 '업데이트' 버튼: 하루 한 번, 누르면 그날은 모두 잠김 ---------- */
+  var UPD=null;
+  function kToday(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,10)}
+  function showUpd(j){
+    UPD=j; var b=$("updBtn"), m=$("updMsg"), t=j.today||kToday(), st=j.status||{}, lk=j.lock||{};
+    b.disabled=true;
+    if(st.date===t&&st.state==="done")m.textContent="오늘 "+(st.finished||"")+" 업데이트 완료 · 내일 다시 가능";
+    else if(st.date===t&&st.state==="running")m.textContent="업데이트 진행 중 ("+(st.started||"")+" 시작) · 10~30분 걸림";
+    else if(st.date===t&&st.state==="failed")m.textContent="오늘 업데이트가 실패했습니다 ("+(st.finished||"")+") · 내일 다시 가능";
+    else if(st.date===t)m.textContent="오늘은 이미 실행됨 · 내일 다시 가능";
+    else if(lk.date===t)m.textContent="오늘 "+(lk.at||"")+"에 요청됨 · 곧 시작합니다";
+    else{b.disabled=false;m.textContent="기관 전망 리서치 · 하루 1회 · 시세·뉴스는 자동 갱신"}
+  }
+  function loadUpd(){
+    fetch(API+"/api/update",{cache:"no-store"}).then(function(r){return r.json()}).then(showUpd)
+      .catch(function(){$("updMsg").textContent="업데이트 상태를 불러오지 못했습니다"});
+  }
+  $("updBtn").addEventListener("click",function(){$("updConfirm").hidden=false;$("updGo").focus()});
+  $("updCancel").addEventListener("click",function(){$("updConfirm").hidden=true});
+  $("updGo").addEventListener("click",function(){
+    $("updConfirm").hidden=true; $("updBtn").disabled=true; $("updMsg").textContent="요청 중…";
+    fetch(API+"/api/update",{method:"POST"}).then(function(r){return r.json().then(function(j){return [r.status,j]})}).then(function(a){
+      if(a[1]&&a[1].ok)$("updMsg").textContent="요청했습니다 · 10~30분 뒤 반영 · 오늘은 더 누를 수 없습니다";
+      else if(a[0]===409)showUpd(a[1]);
+      else{$("updMsg").textContent="요청에 실패했습니다. 잠시 후 다시 시도해 주세요";$("updBtn").disabled=false}
+      setTimeout(loadUpd,15000);
+    }).catch(function(){$("updMsg").textContent="요청에 실패했습니다. 잠시 후 다시 시도해 주세요";$("updBtn").disabled=false});
+  });
+  /* 버튼 뒤의 자동 리서치는 아직 설정 전이라 잠가 둔다 */
+  $("updBtn").disabled=true; $("updMsg").textContent="업데이트 버튼 준비 중 · 시세·뉴스는 자동 갱신";
+
   /* ---------- 페이지 전환 (1·2·3) ---------- */
   var tabs=[].slice.call(document.querySelectorAll(".pager button"));
   function go(n,id){
-    ["1","2","3"].forEach(function(k){
+    ["1","2","3","4"].forEach(function(k){
       $("p"+k).hidden=(k!==n);
       var ul=document.querySelector('nav.toc ul[data-for="'+k+'"]'); if(ul)ul.hidden=(k!==n);
     });
     tabs.forEach(function(b){b.setAttribute("aria-selected",String(b.dataset.go===n))});
-    if(n==="1")renderP1(); if(n==="2")draw();
+    if(n==="1")renderP1(); if(n==="2")draw(); if(n==="4")loadNews();
     var t=id&&$(id);
     if(t)t.scrollIntoView();else window.scrollTo(0,0);
     try{history.replaceState(null,"","#"+(id||"p"+n))}catch(e){}

@@ -1,12 +1,18 @@
 # 달러/원 실시간·전망
 
-https://crucialp.github.io/usdkrw-live/
+- 사이트(본): https://usdkrw-live.pages.dev  (Cloudflare Pages, 일반 사이트 — AI 서비스 연결 없음)
+- 같은 화면 백업: https://crucialp.github.io/usdkrw-live/
 
-- 1페이지 실시간: ① 드래그(TradingView FX_IDC:USDKRW, 실시간) ② 기간 설정·10분봉(최대 1개월, 한 화면 고정) ③ 하루 06:00~익일 06:00(1분 단위, 폭 전체에 맞춤)
-  - ②③ 데이터는 Yahoo Finance KRW=X를 GitHub Actions가 5분마다 받아 `intraday.json`으로 배포(저장소에는 커밋하지 않음). 약 5~15분 지연.
-- 2페이지 추이·전망: 서울외국환중개 매매기준율 일별(2000년~) + 국내외 기관 분기별 평균 전망
-- 3페이지 기관별 상세·출처
+## 구성
+- `docs/` 화면과 매매기준율 데이터의 원본. Cloudflare 사이트는 이 저장소의 `docs/index.html`, `docs/usdkrw_smbs.json` 을 1분 캐시로 그대로 보여 준다(저장소에 push 하면 바로 반영).
+- `cloudflare/` Cloudflare Pages Functions
+  - `/api/intraday` 장중 달러/원(Yahoo KRW=X) 1분봉·10분봉, 1분 캐시
+  - `/api/news` 환율 뉴스(연합인포맥스·연합뉴스 RSS, 구글 뉴스 검색) 제목·링크만, 2분 캐시
+  - 배포: `cd cloudflare && npx wrangler pages deploy` (함수 코드를 바꿀 때만 필요)
+- `.github/workflows/update.yml` 평일 아침 서울외국환중개 매매기준율 수집 → 커밋 → GitHub Pages 백업 배포
+- `scripts/forecast_check.py` 기관 전망 수치 일관성 검사
 
-GitHub Actions `update-data`가 5분마다 실행된다. 매매기준율은 KST 8~13시에 오늘 값이 없을 때만 요청한다. 서버·데이터 비용 없음.
-수동 실행: Actions 탭 → update-data → Run workflow (전체 재수집은 full 체크).
-기관 전망 수치는 `docs/index.html`을 직접 고친다.
+## 페이지
+1 실시간(① TradingView 드래그 ② 기간 설정·10분봉 ③ 하루 06:00~익일 06:00) · 2 추이·전망 · 3 기관별 상세·출처 · 4 뉴스
+
+비용: 0원 (Cloudflare·GitHub 무료 한도 안).
