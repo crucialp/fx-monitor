@@ -108,6 +108,9 @@ nav.toc a:hover{color:var(--ink)}
 .evlab .evv{fill:var(--ink-2)}
 .evarrow{stroke:var(--ev);stroke-width:1.25}
 .evhead{fill:var(--ev)}
+.evbadge{fill:var(--ev)}
+.evnum{fill:#fff;font-family:var(--font-num);font-size:10.5px;font-weight:600}
+.evlist .evr .nb{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--ev);color:#fff;font-family:var(--font-num);font-size:10.5px;font-weight:600;margin-right:6px;vertical-align:1px}
 .evlist{display:grid;gap:0;border:1px solid var(--rule);border-radius:6px;background:var(--surface);overflow:hidden}
 .evlist .evh{font-size:12.5px;font-weight:600;color:var(--ink-2);padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--rule)}
 .evlist .evr{display:grid;grid-template-columns:52px minmax(140px,1.4fr) repeat(3,minmax(70px,.6fr)) auto;gap:4px 12px;align-items:baseline;padding:7px 12px;border-bottom:1px solid var(--rule);font-size:13px}
@@ -115,6 +118,11 @@ nav.toc a:hover{color:var(--ink)}
 .evlist .evr b{font-family:var(--font-num);font-weight:500}
 .evlist .evr .num{font-family:var(--font-num);color:var(--ink-2)}
 .evlist .evr .st{font-size:12px;color:var(--muted)}
+.evlist.scroll{max-height:380px;overflow:auto}
+.evlist.multi .evr{grid-template-columns:96px minmax(140px,1.4fr) repeat(3,minmax(70px,.6fr)) auto}
+@media (max-width:600px){.evlist.multi .evr{grid-template-columns:90px 1fr}}
+.lwinfo{font-size:12.5px;color:var(--ink-2);min-height:1.5em}
+.lwinfo b{font-family:var(--font-num);font-weight:500;color:var(--ink)}
 .evlist .evnone{padding:10px 12px;font-size:13px;color:var(--muted)}
 @media (max-width:600px){.evlist .evr{grid-template-columns:44px 1fr;}.evlist .evr>span:nth-child(n+3){grid-column:2}}
 .sw.cu{width:7px;height:12px;border-radius:1px;background:var(--up)}
@@ -375,6 +383,15 @@ img{max-width:100%}
 
     <div class="mpanel" data-mode="drag" hidden>
       <div class="ctl">
+        <div class="seg" role="group" aria-label="차트 종류">
+          <button type="button" data-dk="lw" aria-pressed="true">지표 표시 차트</button>
+          <button type="button" data-dk="tv" aria-pressed="false">TradingView 원본(실시간)</button>
+        </div>
+        <div class="seg" role="group" aria-label="봉" id="lwInt">
+          <button type="button" data-li="1m" aria-pressed="true">1분봉 · 최근 3일</button>
+          <button type="button" data-li="10m" aria-pressed="false">10분봉 · 최근 1개월</button>
+        </div>
+        <div class="ctl" id="tvCtl" hidden style="margin:0">
         <div class="seg" role="group" aria-label="보기 기간">
           <button type="button" data-v="1d" aria-pressed="true">1일 · 1분봉</button>
           <button type="button" data-v="5d" aria-pressed="false">5일 · 5분봉</button>
@@ -385,9 +402,14 @@ img{max-width:100%}
           <button type="button" data-s="2" aria-pressed="true">선</button>
           <button type="button" data-s="1" aria-pressed="false">캔들</button>
         </div>
+        </div>
       </div>
-      <div class="rtchart"><div id="tv"></div></div>
-      <div class="credit">차트·시세 제공: <a href="https://www.tradingview.com/symbols/USDKRW/?exchange=FX_IDC" rel="noopener nofollow" target="_blank">TradingView</a> (FX_IDC:USDKRW) · 실시간 · 드래그로 이동, 휠·두 손가락으로 확대</div>
+      <div class="legend" id="lwLegend" aria-hidden="true"><span><span class="sw evsw"></span>▼ 주요 지표·금리 결정 (마우스를 올리면 발표·예상·이전)</span><span class="muted">끌어서 이동 · 휠·두 손가락으로 확대</span></div>
+      <div class="lwinfo" id="lwInfo"></div>
+      <div class="rtchart" id="lwbox"></div>
+      <div class="rtchart" id="tvbox" hidden><div id="tv"></div></div>
+      <div class="credit" id="dragCredit"></div>
+      <div class="evlist scroll" id="lwevents"></div>
     </div>
 
     <div class="mpanel" data-mode="range" hidden>
@@ -411,6 +433,7 @@ img{max-width:100%}
       <div class="legend" id="rlegend" aria-hidden="true"></div>
       <div class="rchart" id="rchart"><div class="msg">장중 데이터를 불러오는 중…</div></div>
       <div class="credit" id="rcredit"></div>
+      <div class="evlist scroll" id="revents"></div>
     </div>
 
     <div class="mpanel" data-mode="day">
@@ -1311,7 +1334,7 @@ img{max-width:100%}
   function panel(m){return document.querySelector('.mpanel[data-mode="'+m+'"]')}
   function mountTV(force){
     if(TV.mounted&&!force)return;
-    if($("p1").hidden||panel("drag").hidden)return;
+    if($("p1").hidden||panel("drag").hidden||$("tvbox").hidden)return;
     var v=TVV[TV.v], dk=isDark(), box=$("tv"); box.innerHTML="";
     var c=document.createElement("div"); c.className="tradingview-widget-container"; c.style.height="100%"; c.style.width="100%";
     var w=document.createElement("div"); w.className="tradingview-widget-container__widget"; w.style.height="100%"; w.style.width="100%";
@@ -1333,6 +1356,109 @@ img{max-width:100%}
 
   /* ---------- 서버(Cloudflare) 주소: pages.dev 에서는 같은 사이트, 그 밖(github.io 등)에서는 절대 주소 ---------- */
   var API=/\.pages\.dev$/.test(location.hostname)?"":"https://fx-monitor.pages.dev";
+
+
+  /* ---------- ① 드래그: 지표 표시 차트(Lightweight Charts, TradingView 오픈소스) / TradingView 원본 ---------- */
+  var DK="lw", LI="1m", LW=null;
+  try{var dk0=localStorage.getItem("usdkrw-dk"); if(dk0==="tv"||dk0==="lw")DK=dk0; var li0=localStorage.getItem("usdkrw-li"); if(li0==="1m"||li0==="10m")LI=li0}catch(e){}
+  function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+  function loadLWC(cb){
+    if(window.LightweightCharts)return cb();
+    var sc=document.createElement("script");
+    sc.src="https://unpkg.com/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js";
+    sc.onload=cb; sc.onerror=function(){$("lwbox").innerHTML='<div class="msg">차트 도구를 불러오지 못했습니다. 새로고침해 주세요.</div>'};
+    document.head.appendChild(sc);
+  }
+  function dragSync(){
+    [].forEach.call(document.querySelectorAll("[data-dk]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.dk===DK))});
+    [].forEach.call(document.querySelectorAll("[data-li]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.li===LI))});
+    var lw=DK==="lw";
+    $("lwbox").hidden=!lw; $("tvbox").hidden=lw; $("lwInt").hidden=!lw; $("tvCtl").hidden=lw; $("lwLegend").hidden=!lw; $("lwevents").hidden=!lw; $("lwInfo").hidden=!lw;
+    $("dragCredit").innerHTML=lw
+      ?'데이터: Yahoo Finance KRW=X(국제 시세, 약 1~2분 지연) · 지표·금리 결정: Nasdaq 경제 캘린더 · 차트: <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener nofollow">TradingView Lightweight Charts</a>'
+      :'차트·시세 제공: <a href="https://www.tradingview.com/symbols/USDKRW/?exchange=FX_IDC" rel="noopener nofollow" target="_blank">TradingView</a> (FX_IDC:USDKRW) · 실시간 · 지표 표시는 안 됨';
+  }
+  [].forEach.call(document.querySelectorAll("[data-dk]"),function(b){b.addEventListener("click",function(){DK=b.dataset.dk; try{localStorage.setItem("usdkrw-dk",DK)}catch(e){} renderDrag()})});
+  [].forEach.call(document.querySelectorAll("[data-li]"),function(b){b.addEventListener("click",function(){if(LI!==b.dataset.li){LI=b.dataset.li; try{localStorage.setItem("usdkrw-li",LI)}catch(e){} if(LW){LW.chart.remove();LW=null} renderDrag()}})});
+  function renderDrag(){
+    dragSync();
+    if(DK==="tv"){mountTV(false);return}
+    if(!ID){loadID();return}
+    loadLWC(drawLW);
+  }
+  var KS=9*3600;  /* 차트 축을 한국 시간으로 보이게 하는 보정(초) */
+  function lwData(){
+    if(LI==="1m")return ID.m1.t.map(function(tt,i){return {time:tt*60+KS,value:ID.m1.c[i]}});
+    var B=ID.m10; return B.t.map(function(tt,i){return {time:tt*60+KS,open:B.o[i],high:B.h[i],low:B.l[i],close:B.c[i]}});
+  }
+  function lwMarkers(){
+    if(!LW)return;
+    var T=LI==="1m"?ID.m1.t:ID.m10.t, n=T.length; if(!n)return;
+    var ev=getEvents(T[0],T[n-1]+10,function(){if(LW&&DK==="lw")lwMarkers()});
+    LW.ev=ev;
+    LW.mk=ev.map(function(e){
+      var j=LI==="1m"?lb(T,e.t):ub(T,e.t)-1; if(LI==="1m"&&j>0&&(j>=n||Math.abs(T[j-1]-e.t)<Math.abs(T[j]-e.t)))j--; j=Math.max(0,Math.min(n-1,j));
+      return {time:T[j]*60+KS,e:e};
+    }).sort(function(a,b){return a.time-b.time});
+    LW.mk.forEach(function(o,k){o.e._n=k+1});
+    lwApplyText();
+    eventList($("lwevents"),ev,"badge",(LI==="1m"?"최근 3일":"최근 1개월")+"의 주요 지표·금리 결정 (한국 시간 · Nasdaq 캘린더)",ev.loading);
+  }
+  /* 화면에서 가까운 지표는 한 표시로 묶는다: 자리가 있으면 '美 CPI 3.7% 외 3', 없으면 번호 '4~9',
+     그래도 붙으면 앞 표시에 합친다. 끌거나 확대할 때마다 다시 계산해서, 확대하면 다시 나뉜다 */
+  function lwApplyText(){
+    if(!LW||!LW.mk)return;
+    var ts=LW.chart.timeScale(), W=ts.width(), color=cssv("--ev");
+    var pts=LW.mk.map(function(o){return {o:o,x:ts.timeToCoordinate(o.time)}}).filter(function(p){return p.x!=null&&p.x>=-30&&p.x<=W+30});
+    var cl=[];
+    pts.forEach(function(p){var c=cl[cl.length-1]; if(c&&p.x-c.items[0].x<28)c.items.push(p); else cl.push({items:[p]})});
+    function label(items,compact){
+      var a=items[0].o.e, n=items.length, n1=a._n, n2=items[n-1].o.e._n;
+      if(!compact)return n===1?evShort(a):evShort(a)+" 외 "+(n-1);
+      return n===1?String(n1):n1+"~"+n2;
+    }
+    var placed=[];
+    cl.forEach(function(c){
+      var x=c.items[0].x, t=label(c.items,false), w=textW(t,false)+14, prev=placed[placed.length-1], prevR=prev?prev.r:-1e9;
+      if(x-w/2<=prevR+6||x+w/2>W){t=label(c.items,true); w=textW(t,false)+14}
+      if(prev&&x-w/2<=prevR+4){prev.items=prev.items.concat(c.items); prev.t=label(prev.items,true); prev.w=textW(prev.t,false)+14; prev.r=prev.x+prev.w/2; return}
+      placed.push({items:c.items,x:x,t:t,w:w,r:x+w/2});
+    });
+    var out=placed.map(function(p){return {time:p.items[0].o.time,position:"aboveBar",shape:"arrowDown",color:color,text:p.t}});
+    if(LW.markers)LW.markers.setMarkers(out); else LW.markers=LightweightCharts.createSeriesMarkers(LW.series,out);
+  }
+  function drawLW(){
+    var box=$("lwbox"); if(!box.clientWidth||!window.LightweightCharts)return;
+    if(LW&&LW.li===LI&&LW.dark===isDark()){LW.series.setData(lwData()); lwMarkers(); return}
+    if(LW){LW.chart.remove();LW=null}
+    box.innerHTML="";
+    var LC=window.LightweightCharts;
+    var chart=LC.createChart(box,{autoSize:true,
+      layout:{background:{type:"solid",color:cssv("--surface")},textColor:cssv("--ink-2"),fontFamily:"'IBM Plex Sans KR','Malgun Gothic',sans-serif",fontSize:11.5,attributionLogo:true},
+      grid:{vertLines:{color:cssv("--rule")},horzLines:{color:cssv("--rule")}},
+      rightPriceScale:{borderColor:cssv("--rule-strong")},
+      timeScale:{borderColor:cssv("--rule-strong"),timeVisible:true,secondsVisible:false,rightOffset:4},
+      localization:{locale:"ko-KR",priceFormatter:function(p){return p.toLocaleString("en-US",{minimumFractionDigits:1,maximumFractionDigits:1})}}});
+    var series=LI==="1m"
+      ?chart.addSeries(LC.LineSeries,{color:cssv("--ink"),lineWidth:2,priceLineVisible:false,lastValueVisible:true})
+      :chart.addSeries(LC.CandlestickSeries,{upColor:cssv("--up"),downColor:cssv("--down"),borderVisible:false,wickUpColor:cssv("--up"),wickDownColor:cssv("--down"),priceLineVisible:false});
+    var data=lwData(); series.setData(data);
+    LW={chart:chart,series:series,li:LI,dark:isDark(),markers:null,ev:[]};
+    /* 처음 보이는 구간: 1분봉은 최근 약 하루, 10분봉은 최근 약 1주. 오른쪽에 여백을 둬 최신 지표 글자가 잘리지 않게 */
+    if(data.length){var nb=data.length-1; chart.timeScale().setVisibleLogicalRange(LI==="1m"?{from:nb-1200,to:nb+70}:{from:nb-7*144,to:nb+30})}
+    lwMarkers();
+    var raf=0; chart.timeScale().subscribeVisibleTimeRangeChange(function(){if(raf)return; raf=requestAnimationFrame(function(){raf=0; lwApplyText()})});
+    chart.subscribeCrosshairMove(function(p){
+      var info=$("lwInfo");
+      if(!p||!p.time){info.innerHTML="";return}
+      var d=p.seriesData&&p.seriesData.get(series); if(!d){info.innerHTML="";return}
+      var tm=Math.round((p.time-KS)/60), v=d.value!=null?d.value:d.close;
+      var span=LI==="1m"?1:10, here=(LW.ev||[]).filter(function(e){var j=LI==="1m"?0:0; return e.t>=tm-(LI==="1m"?1:0)&&e.t<tm+span+(LI==="1m"?1:0)});
+      info.innerHTML='<b>'+mdhm(tm)+'</b> · <b>'+f1(v)+'</b>'+(d.high!=null?' (고 '+f1(d.high)+' · 저 '+f1(d.low)+')':'')+
+        here.map(function(e){return ' · <b style="color:var(--ev)">'+e.label+'</b> '+evRest(e)}).join("");
+    });
+  }
+  if(darkMQ&&darkMQ.addEventListener)darkMQ.addEventListener("change",function(){if(LW){LW.chart.remove();LW=null} if(MODE==="drag"&&DK==="lw"&&!$("p1").hidden)renderDrag()});
 
   /* ---------- 1페이지 ②③: 장중 데이터(Yahoo, 열 때마다 서버가 받아 옴) ---------- */
   var ID=null, MODE="day", KOFF=540, DAYM=1440;
@@ -1363,11 +1489,11 @@ img{max-width:100%}
   radios.forEach(function(r){r.addEventListener("change",function(){if(r.checked)setMode(r.value)})});
   function renderP1(){
     if($("p1").hidden)return;
-    if(MODE==="drag"){mountTV(false);return}
+    if(MODE==="drag"){renderDrag();return}
     if(!ID){loadID();return}
     if(MODE==="day")drawDay();else drawRange();
   }
-  setInterval(function(){if(!document.hidden&&MODE!=="drag"&&!$("p1").hidden)loadID()},60000);
+  setInterval(function(){if(!document.hidden&&!(MODE==="drag"&&DK==="tv")&&!$("p1").hidden)loadID()},60000);
 
   function frame(box,W,H,m){
     box.innerHTML="";
@@ -1399,14 +1525,29 @@ img{max-width:100%}
     hit.addEventListener("pointerleave",function(ev){if(ev.pointerType==="mouse")onClear()});
   }
 
-  /* ③ 하루 그래프의 주요 지표·금리 결정 (Nasdaq 캘린더, 서버 /api/events) */
-  var EVT={start:null,at:0,list:[],ok:false};
-  function loadEvents(start){
-    if(EVT.start===start&&Date.now()-EVT.at<120000)return;
-    EVT.start=start; EVT.at=Date.now();
-    fetch(API+"/api/events?from="+start+"&to="+(start+DAYM),{cache:"no-store"}).then(function(r){return r.json()})
-      .then(function(j){if(j&&j.events){EVT.list=j.events;EVT.ok=true;EVT.at=Date.now();if(MODE==="day"&&!$("p1").hidden&&ID)drawDay()}})
-      .catch(function(e){if(window.console)console.error("events",e)});
+  /* ---------- 주요 지표·금리 결정 (Nasdaq 캘린더, 서버 /api/events) : ①②③ 공용 ---------- */
+  var EVC={}, EVB=7*DAYM, EVBASE=dn("2026-01-01")*DAYM+360-KOFF;  /* 7일 단위(06:00 기준)로 받아 둔다 */
+  function getEvents(from,to,cb){
+    var out=[], nowM=Date.now()/60000, loading=false;
+    for(var k=Math.floor((from-EVBASE)/EVB);k<=Math.floor((to-EVBASE)/EVB);k++){
+      var cs=EVBASE+k*EVB, c=EVC[cs];
+      var stale=!c||(!c.loading&&cs+EVB>nowM-DAYM&&Date.now()-c.at>120000);
+      if(stale&&!(c&&c.loading)){
+        EVC[cs]={loading:true,at:Date.now(),list:c?c.list:[]};
+        (function(cs){
+          fetch(API+"/api/events?from="+cs+"&to="+(cs+EVB),{cache:"no-store"}).then(function(r){return r.json()})
+            .then(function(j){EVC[cs]={at:Date.now(),list:(j&&j.events)||[]}; if(cb)cb()})
+            .catch(function(e){EVC[cs]={at:Date.now(),list:[]}; if(window.console)console.error("events",e)});
+        })(cs);
+      }
+      if(EVC[cs].loading)loading=true;
+      out=out.concat(EVC[cs].list||[]);
+    }
+    var seen={};
+    out=out.filter(function(e){var key=e.label+"|"+e.t; if(seen[key])return false; seen[key]=1; return e.t>=from&&e.t<to});
+    out.sort(function(a,b){return a.t-b.t});
+    out.loading=loading;
+    return out;
   }
   function evShort(e){return e.label.replace(/\(.*$/,"")+" "+(e.actual||"발표 대기")}
   function evRest(e){var s=(e.actual||"발표 대기")+(e.note?" "+e.note:"");if(e.forecast)s+=" · 예상 "+e.forecast;if(e.previous)s+=" · 이전 "+e.previous;return s}
@@ -1414,16 +1555,80 @@ img{max-width:100%}
   function textW(str,bold){
     try{MCTX=MCTX||document.createElement("canvas").getContext("2d");MCTX.font=(bold?"600 ":"400 ")+"11.5px 'IBM Plex Sans KR','Malgun Gothic',sans-serif";return MCTX.measureText(str).width}catch(e){return str.length*8}
   }
-  function eventList(start){
-    var box=$("devents"); if(!box)return;
-    var L=EVT.start===start?EVT.list:[];
-    var h='<div class="evh">이 날의 주요 지표·금리 결정 ('+mdhm(start)+' ~ '+mdhm(start+DAYM)+', 한국 시간 · Nasdaq 캘린더)</div>';
-    if(!EVT.ok&&!L.length){box.innerHTML=h+'<div class="evnone">일정을 불러오는 중…</div>';return}
-    if(!L.length){box.innerHTML=h+'<div class="evnone">이 날은 지정한 주요 지표·금리 결정 일정이 없습니다.</div>';return}
-    var nowM=Date.now()/60000;
-    box.innerHTML=h+L.map(function(e){
-      var done=!!e.actual;
-      return '<div class="evr"><span class="ntime">'+hm(e.t)+'</span><span><b style="font-family:var(--font-body);font-weight:600">'+e.label+'</b></span>'+
+  /* 겹침 방지 배치: 5분 이내·화면상 14px 이내는 한 화살표에 여러 줄, 묶음끼리는
+     ① 같은 줄 글자 겹침 금지 ② 다른 화살표가 글자를 지나가지 않게 ③ 제 화살표가 제 글자를 지나가지 않게.
+     글자 라벨 → 짧은 라벨 → 번호 표시 순으로, 겹치지 않고 너무 높지 않은 첫 방식을 쓴다 */
+  function evLayout(evs,xOf,m,pw,H,narrow){
+    var LH=15;
+    function layout(mode){
+      var gs=[], forced=false;
+      evs.forEach(function(e){var x=xOf(e), g=null;
+        gs.forEach(function(q){if(Math.abs(q.x-x)<14||Math.abs(q.t-e.t)<=5)g=q}); if(g)g.ev.push(e); else gs.push({x:x,t:e.t,ev:[e]})});
+      gs.sort(function(a,b){return a.x-b.x});
+      var placed=[];
+      gs.forEach(function(g){
+        g.mode=mode; g.w=0;
+        if(mode==="badge"){g.w=18; g.h=18}
+        else{g.ev.forEach(function(e){var w=mode==="short"?textW(evShort(e),true):textW(e.label+" ",true)+textW(evRest(e),false); if(w>g.w)g.w=w}); g.w=Math.min(g.w,pw); g.h=g.ev.length*LH}
+        function xAt(right){var a=mode==="badge"?g.x-9:right?g.x+6:g.x-6-g.w; if(a<m.l)a=m.l; if(a+g.w>m.l+pw)a=m.l+pw-g.w; return a}
+        function clash(L,a,strict){var b=a+g.w;
+          if(strict&&mode!=="badge"&&g.x>=a-3&&g.x<=b+3)return true;
+          return placed.some(function(p){
+            if(p.L===L)return !(b+12<p.x1||a-12>p.x1+p.w);
+            if(!strict)return false;
+            if(p.L<L)return p.x>=a-8&&p.x<=b+8;
+            return g.x>=p.x1-8&&g.x<=p.x1+p.w+8;
+          })}
+        var sides=g.x<m.l+pw*0.62?[true,false]:[false,true], done=false, L, k;
+        for(L=0;L<8&&!done;L++)for(k=0;k<2&&!done;k++){var a1=xAt(sides[k]); if(!clash(L,a1,true)){g.L=L;g.x1=a1;done=true}}
+        if(!done)forced=true;
+        for(L=0;!done;L++)for(k=0;k<2&&!done;k++){var a2=xAt(sides[k]); if(!clash(L,a2,false)){g.L=L;g.x1=a2;done=true}}
+        placed.push(g);
+      });
+      var lh=[]; gs.forEach(function(g){lh[g.L]=Math.max(lh[g.L]||0,g.h)});
+      var tops=[], acc=8; for(var q=0;q<lh.length;q++){tops[q]=acc; acc+=(lh[q]||0)+6}
+      gs.forEach(function(g,k){g.num=k+1; g.ev.forEach(function(e){e._n=g.num})});
+      return {gs:gs,tops:tops,band:acc,forced:forced,mode:mode};
+    }
+    var modes=narrow?["short","badge"]:["full","short","badge"], LAY=null;
+    for(var mk=0;mk<modes.length;mk++){LAY=layout(modes[mk]); if(!LAY.forced&&LAY.band<=H*(narrow?0.30:0.34))break}
+    return LAY;
+  }
+  /* 화살표를 먼저 다 그리고 글자를 나중에 그려서, 혹시 지나가는 선이 있어도 글자 바탕이 덮는다 */
+  function evDraw(svg,LAY,yOf){
+    var LH=15;
+    LAY.gs.forEach(function(g){
+      var top=LAY.tops[g.L], py=yOf(g);
+      el("line",{x1:g.x,x2:g.x,y1:top+(g.mode==="badge"?16:2),y2:py-9,"class":"evarrow"},svg);
+      el("path",{d:"M"+(g.x-4)+","+(py-11)+"L"+(g.x+4)+","+(py-11)+"L"+g.x+","+(py-4)+"Z","class":"evhead"},svg);
+    });
+    LAY.gs.forEach(function(g){
+      var top=LAY.tops[g.L];
+      if(g.mode==="badge"){
+        var bg=el("g",{},svg);
+        el("circle",{cx:g.x,cy:top+8,r:8.5,"class":"evbadge"},bg);
+        var nt=el("text",{x:g.x,y:top+11.5,"class":"evnum","text-anchor":"middle"},bg); nt.textContent=String(g.num);
+        el("title",{},bg).textContent=g.ev.map(function(e){return mdhm(e.t)+" "+e.label+" "+evRest(e)}).join("\n");
+        return;
+      }
+      g.ev.forEach(function(e,k){
+        var tx=el("text",{x:g.x1,y:top+11+k*LH,"class":"evlab"},svg);
+        if(g.mode==="short"){el("tspan",{"class":"evn"},tx).textContent=evShort(e)}
+        else{el("tspan",{"class":"evn"},tx).textContent=e.label+" ";el("tspan",{"class":"evv"},tx).textContent=evRest(e)}
+      });
+    });
+  }
+  function eventList(box,list,mode,head,loading){
+    if(!box)return;
+    var h='<div class="evh">'+head+(mode==="badge"?" · 그래프의 번호와 같음":"")+'</div>';
+    if(!list.length){box.innerHTML=h+'<div class="evnone">'+(loading?"일정을 불러오는 중…":"이 기간에는 지정한 주요 지표·금리 결정 일정이 없습니다.")+'</div>';return}
+    var nowM=Date.now()/60000, multi=ymdK(list[0].t)!==ymdK(list[list.length-1].t);
+    box.classList.toggle("multi",multi);
+    box.innerHTML=h+list.map(function(e){
+      var done=!!e.actual, when=(multi?mdhm(e.t):hm(e.t))+(e.approx?"경":"");
+      var tm=when+(e.ts&&e.ts!==e.t?'<br><span class="st">예정 '+hm(e.ts)+'</span>':'');
+      var nb=(mode==="badge"&&e._n)?'<span class="nb">'+e._n+'</span>':'';
+      return '<div class="evr"><span class="ntime">'+tm+'</span><span>'+nb+'<b style="font-family:var(--font-body);font-weight:600">'+e.label+'</b></span>'+
         '<span>발표 <b>'+(e.actual||"–")+'</b>'+(e.note?' '+e.note:'')+'</span><span class="num">예상 '+(e.forecast||"–")+'</span><span class="num">이전 '+(e.previous||"–")+'</span>'+
         '<span class="st">'+(done?"발표됨":e.t>nowM?"예정":"발표 대기")+'</span></div>';
     }).join("");
@@ -1437,27 +1642,19 @@ img{max-width:100%}
     var stale=Date.now()/60000-last>120;
     if(stale&&last-start<180&&i0>0){start-=DAYM;i0=lb(t,start)}
     var i1=lb(t,start+DAYM)-1, endT=t[i1];
+    box.style.height="";
     var W=Math.max(280,box.clientWidth), H=box.clientHeight||380, narrow=W<600;
     if(!box.clientWidth)return;
     var m={l:narrow?46:58,r:narrow?12:18,t:18,b:34}, pw=W-m.l-m.r, ph;
     var x0=t[i0], span=Math.max(endT-x0,1);
     var X=function(tt){return m.l+(tt-x0)/span*pw};
-    /* 주요 지표 라벨: 그래프 위 띠에 겹치지 않게 층을 나눠 배치 */
-    loadEvents(start);
-    var evs=(EVT.start===start?EVT.list:[]).filter(function(e){return e.t>=x0-2&&e.t<=endT+2});
-    var LH=15, groups=[];
-    evs.forEach(function(e){var x=X(Math.max(x0,Math.min(endT,e.t))), g=null;
-      groups.forEach(function(q){if(Math.abs(q.x-x)<6)g=q}); if(g)g.ev.push(e); else groups.push({x:x,ev:[e]})});
-    var levels=[], levelH=[];
-    groups.sort(function(a,b){return a.x-b.x}).forEach(function(g){
-      g.w=0; g.ev.forEach(function(e){var w=narrow?textW(evShort(e),true):textW(e.label+" ",true)+textW(evRest(e),false); if(w>g.w)g.w=w});
-      g.h=g.ev.length*LH; var left=g.x<m.l+pw*0.62;
-      g.x1=left?g.x+5:g.x-5-g.w; if(g.x1<m.l)g.x1=m.l; if(g.x1+g.w>m.l+pw)g.x1=m.l+pw-g.w;
-      var L=0; while(levels[L]&&levels[L].some(function(r){return !(g.x1+g.w+10<r[0]||g.x1-10>r[1])}))L++;
-      (levels[L]=levels[L]||[]).push([g.x1,g.x1+g.w]); g.L=L; levelH[L]=Math.max(levelH[L]||0,g.h);
-    });
-    var levelTop=[], acc=8; levelH.forEach(function(hh,k){levelTop[k]=acc; acc+=hh+6});
-    if(groups.length)m.t=acc+10;
+    /* 주요 지표 라벨 (겹침 방지 배치는 evLayout) */
+    var dayEv=getEvents(start,start+DAYM,function(){if(MODE==="day"&&!$("p1").hidden&&ID)drawDay()});
+    var evs=dayEv.filter(function(e){return e.t>=x0-2&&e.t<=endT+2});
+    var LAY=evLayout(evs,function(e){return X(Math.max(x0,Math.min(endT,e.t)))},m,pw,H,narrow);
+    if(LAY.gs.length)m.t=LAY.band+10;
+    /* 라벨이 많아도 선 그래프 높이는 최소한 확보: 모자라면 그래프 상자를 그만큼 키운다 */
+    var phMin=narrow?210:280; if(H-m.t-m.b<phMin){H=m.t+m.b+phMin; box.style.height=H+"px"}
     ph=H-m.t-m.b;
     var lo=Infinity,hi=-Infinity,ih=i0,il=i0,i;
     for(i=i0;i<=i1;i++){if(c[i]<lo){lo=c[i];il=i}if(c[i]>hi){hi=c[i];ih=i}}
@@ -1472,17 +1669,7 @@ img{max-width:100%}
     for(i=i0;i<=i1;i++)pts.push(X(t[i]).toFixed(1)+","+Y(c[i]).toFixed(1));
     el("path",{d:"M"+pts.join("L")+"L"+X(endT).toFixed(1)+","+(m.t+ph)+"L"+X(t[i0]).toFixed(1)+","+(m.t+ph)+"Z","class":"darea"},svg);
     el("path",{d:"M"+pts.join("L"),"class":"dline"},svg);
-    groups.forEach(function(g){
-      var top=levelTop[g.L], tt=g.ev[0].t, j=lb(t,tt); if(j>i1)j=i1; if(j>i0&&Math.abs(t[j-1]-tt)<Math.abs(t[j]-tt))j--; if(j<i0)j=i0;
-      var py=Y(c[j]);
-      el("line",{x1:g.x,x2:g.x,y1:top+2,y2:py-9,"class":"evarrow"},svg);
-      el("path",{d:"M"+(g.x-4)+","+(py-11)+"L"+(g.x+4)+","+(py-11)+"L"+g.x+","+(py-4)+"Z","class":"evhead"},svg);
-      g.ev.forEach(function(e,k){
-        var tx=el("text",{x:g.x1,y:top+11+k*LH,"class":"evlab"},svg);
-        if(narrow){el("tspan",{"class":"evn"},tx).textContent=evShort(e)}
-        else{el("tspan",{"class":"evn"},tx).textContent=e.label+" ";el("tspan",{"class":"evv"},tx).textContent=evRest(e)}
-      });
-    });
+    evDraw(svg,LAY,function(g){var tt=g.ev[0].t, j=lb(t,tt); if(j>i1)j=i1; if(j>i0&&Math.abs(t[j-1]-tt)<Math.abs(t[j]-tt))j--; if(j<i0)j=i0; return Y(c[j])});
     var cross=el("line",{x1:0,x2:0,y1:m.t,y2:m.t+ph,"class":"cross",visibility:"hidden"},svg);
     var hv=el("circle",{cx:0,cy:0,r:4,"class":"hov",visibility:"hidden"},svg);
     hover(svg,m,pw,ph,function(px){
@@ -1500,7 +1687,7 @@ img{max-width:100%}
     $("dnowc").innerHTML="06:00 시가 대비 "+chg(open,now);
     $("dnowt").textContent=(stale?"마지막 거래 ":"")+mdhm(endT)+" 기준";
     $("dcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 1분 단위 · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연) · 지표·금리 결정: Nasdaq 경제 캘린더";
-    eventList(start);
+    eventList($("devents"),dayEv,LAY.mode,"이 날의 주요 지표·금리 결정 ("+mdhm(start)+" ~ "+mdhm(start+DAYM)+", 한국 시간 · Nasdaq 캘린더)",dayEv.loading);
   }
 
   /* ② 기간 설정: 10분봉, 기간 전체를 한 화면에(드래그 없음), 최대 1개월 */
@@ -1525,12 +1712,20 @@ img{max-width:100%}
     $("r0").value=ymdK(Math.max(s0,dayStart(t[0]))); $("r1").value=ymdK(e0-DAYM);
     var i0=lb(t,s0), i1=lb(t,e0)-1, N=i1-i0+1;
     if(N<1){msg(box,"선택한 기간에 거래 데이터가 없습니다.");$("rsum").innerHTML="";return}
+    box.style.height="";
     var W=Math.max(280,box.clientWidth), H=box.clientHeight||380, narrow=W<600;
     if(!box.clientWidth)return;
     var m={l:narrow?46:58,r:14,t:18,b:34}, pw=W-m.l-m.r, ph=H-m.t-m.b;
     var bw=pw/N, X=function(k){return m.l+(k-i0+0.5)*bw};
     var lo=Infinity,hi=-Infinity,ih=i0,il=i0,i;
     for(i=i0;i<=i1;i++){if(B.l[i]<lo){lo=B.l[i];il=i}if(B.h[i]>hi){hi=B.h[i];ih=i}}
+    /* 주요 지표: 그 시각이 들어 있는 10분봉 위에 표시 */
+    var rEv=getEvents(t[i0],t[i1]+10,function(){if(MODE==="range"&&!$("p1").hidden&&ID)drawRange()});
+    var kOf=function(tt){return Math.max(i0,Math.min(i1,ub(t,tt)-1))};
+    var rLAY=evLayout(rEv,function(e){return X(kOf(e.t))},m,pw,H,narrow);
+    if(rLAY.gs.length)m.t=rLAY.band+10;
+    var phMinR=narrow?210:260; if(H-m.t-m.b<phMinR){H=m.t+m.b+phMinR; box.style.height=H+"px"}
+    ph=H-m.t-m.b;
     var f=frame(box,W,H,m), svg=f.svg, Y=yAxis(svg,m,pw,ph,lo,hi,narrow);
     /* 눈금: 하루(06시) 경계, 짧으면 3시간 */
     var spanD=(t[i1]-t[i0])/DAYM, maxN=Math.max(3,Math.floor(pw/64)), marks=[];
@@ -1546,6 +1741,7 @@ img{max-width:100%}
         var x0=kd(dayStart(t[k])); marks.push({k:k,a:(x0.getUTCMonth()+1)+"/"+x0.getUTCDate(),left:true});
       });
     }
+    marks=marks.reduce(function(acc,mk){var x=mk.left?Math.max(m.l,X(mk.k)-bw/2):X(mk.k); if(acc.length&&x-acc[acc.length-1]._x<44)acc.pop(); mk._x=x; acc.push(mk); return acc},[]);
     marks.forEach(function(mk){
       var x=mk.left?Math.max(m.l,X(mk.k)-bw/2):X(mk.k), nearR=x>m.l+pw-34;
       el("line",{x1:x,x2:x,y1:m.t+ph,y2:m.t+ph+4,"class":"tickmark"},svg);
@@ -1554,6 +1750,7 @@ img{max-width:100%}
     $("rlegend").innerHTML=N<=240
       ?'<span><span class="sw cu"></span>상승 10분봉(시가→종가)</span><span><span class="sw cd"></span>하락 10분봉</span><span class="muted">위아래 가는 선은 그 10분의 고가·저가</span>'
       :'<span><span class="sw line"></span>10분봉 종가</span><span><span class="sw band"></span>10분봉 고가~저가 범위</span><span class="muted">세로 점선은 하루(06:00) 경계</span>';
+    $("rlegend").innerHTML+='<span><span class="sw evsw"></span>주요 지표·금리 결정</span>';
     if(N<=240){
       var cw=Math.max(1,Math.min(10,bw*0.62));
       for(i=i0;i<=i1;i++){
@@ -1568,6 +1765,7 @@ img{max-width:100%}
       el("path",{d:"M"+top.join("L")+"L"+bot.join("L")+"Z","class":"band"},svg);
       el("path",{d:"M"+cl2.join("L"),"class":"cline"},svg);
     }
+    evDraw(svg,rLAY,function(g){return Y(B.h[kOf(g.ev[0].t)])});
     var cross=el("line",{x1:0,x2:0,y1:m.t,y2:m.t+ph,"class":"cross",visibility:"hidden"},svg);
     hover(svg,m,pw,ph,function(px){
       var j=i0+Math.floor((px-m.l)/bw); if(j<i0)j=i0; if(j>i1)j=i1;
@@ -1580,6 +1778,7 @@ img{max-width:100%}
       '<span>고가 <b>'+f1(hi)+'</b> ('+mdhm(t[ih])+')</span><span>저가 <b>'+f1(lo)+'</b> ('+mdhm(t[il])+')</span>'+
       (N>240?'<span class="muted">봉이 많아 종가 선과 고저 범위로 표시</span>':'');
     $("rcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 10분봉(5분봉 2개 묶음) · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)";
+    eventList($("revents"),rEv,rLAY.mode,"이 기간의 주요 지표·금리 결정 (한국 시간 · Nasdaq 캘린더)",rEv.loading);
   }
   if(window.ResizeObserver){
     ["dchart","rchart"].forEach(function(id){var bx=$(id),w0=bx.clientWidth;new ResizeObserver(function(){if(bx.clientWidth!==w0){w0=bx.clientWidth;if(ID&&!$("p1").hidden){if(id==="dchart"&&MODE==="day")drawDay();if(id==="rchart"&&MODE==="range")drawRange()}}}).observe(bx)});

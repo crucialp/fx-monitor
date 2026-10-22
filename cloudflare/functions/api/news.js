@@ -87,14 +87,15 @@ async function build() {
     keep.set(k, { t: title, u: link, s: src, m: Math.floor((ts || now) / 60000), lv });
   };
   for (const [src, xml] of direct) for (const [t, l, ts] of items(xml)) add(src, t, l, ts);
-  for (const xml of bing) for (const [t, l, ts, src] of items(xml)) add(src || "빙 뉴스", t, l, ts);
+  // 빙 뉴스의 pubDate 는 시간대가 틀려(실제보다 9~18시간 이르게 표기) 처음 수집한 시각을 쓴다
+  for (const xml of bing) for (const [t, l, ts, src] of items(xml)) add(src || "빙 뉴스", t, l, null);
   for (const xml of google) for (const [t0, l, ts] of items(xml)) {
     const m = t0.match(/^(.*) - ([^-]+)$/);
     add(m ? m[2].trim() : "구글 뉴스", m ? m[1].trim() : t0, l, ts);
   }
   // 일시적으로 일부 출처가 실패해도 목록이 줄지 않도록 직전 성공본과 합친다(최근 7일)
   try {
-    const last = await caches.default.match(new Request("https://cache.usdkrw.local/news-v2-last-good"));
+    const last = await caches.default.match(new Request("https://cache.usdkrw.local/news-v3-last-good"));
     if (last) for (const v of (await last.json()).items || []) { const k = norm(v.t); if (!keep.has(k)) keep.set(k, v); }
   } catch {}
   const cut = Math.floor(now / 60000) - 7 * 1440;
@@ -108,6 +109,6 @@ export const onRequestGet = async (ctx) => {
     try { return new Response(JSON.stringify(await build()), { headers: { "content-type": "application/json; charset=utf-8" } }); }
     catch (e) { return new Response(JSON.stringify({ error: String(e && e.stack || e) }), { status: 500, headers: { "content-type": "application/json; charset=utf-8" } }); }
   }
-  return cached(ctx, "news-v2", 120, build, 86400);
+  return cached(ctx, "news-v3", 120, build, 86400);
 };
 export const onRequestOptions = options;

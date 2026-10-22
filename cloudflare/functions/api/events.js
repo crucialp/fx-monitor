@@ -90,11 +90,13 @@ function normalize(rows) {
       const d = Math.round(((num(actual) ?? 0) - (num(previous) ?? 0)) * 100) / 100;
       note = d === 0 ? "동결" : d > 0 ? `인상 +${d.toFixed(2)}%p` : `인하 ${d.toFixed(2)}%p`;
     }
-    out.push({ t, cc: rule.cc, k: rule.k, label, actual, forecast, previous, note });
+    out.push({ t, cc: rule.cc, k: rule.k, label, actual, forecast, previous, note, approx: rule.cc === "JP" && rule.k === "rate" });
   }
   return out.sort((a, b) => a.t - b.t);
 }
 
+// 발표 시각은 일정표(Nasdaq) 기준. 뉴스 피드 시각은 언론사·검색엔진마다 틀리거나(미리 써 둔 기사, 시간대 오류) 늦게 수집돼
+// 실제 결정 시각을 잡는 데 쓰지 않는다(2026-10-22 확인). 일본은행은 정해진 발표 시각이 없어 '대략'으로 표시.
 export async function onRequestGet(ctx) {
   const u = new URL(ctx.request.url);
   const now = Math.floor(Date.now() / 60000);
