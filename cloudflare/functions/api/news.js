@@ -51,20 +51,24 @@ function* items(xml) {
   }
 }
 
-async function get(url) {
+const STATS = [];
+async function get(url, label) {
   try {
-    const r = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" } });
-    return r.ok ? await r.text() : "";
-  } catch { return ""; }
+    const r = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "accept-language": "ko-KR,ko;q=0.9" } });
+    const text = r.ok ? await r.text() : "";
+    STATS.push({ src: label, http: r.status, items: (text.match(/<item>/g) || []).length });
+    return text;
+  } catch (e) { STATS.push({ src: label, http: 0, err: String(e).slice(0, 80) }); return ""; }
 }
 
 const norm = (t) => t.replace(/[^\p{L}\p{N}]+/gu, "").slice(0, 60);
 
 async function build() {
   const now = Date.now();
-  const direct = await Promise.all(FEEDS.map(([s, u]) => get(u).then((x) => [s, x])));
-  const google = await Promise.all(GOOGLE.map((q) => get("https://news.google.com/rss/search?" +
-    new URLSearchParams({ q, hl: "ko", gl: "KR", ceid: "KR:ko" }))));
+  STATS.length = 0;
+  const direct = await Promise.all(FEEDS.map(([s, u]) => get(u, u.replace(/^https:\/\/(www\.)?/, "")).then((x) => [s, x])));
+  const google = await Promise.all(GOOGLE.map((q, i) => get("https://news.google.com/rss/search?" +
+    new URLSearchParams({ q, hl: "ko", gl: "KR", ceid: "KR:ko" }), "google#" + i)));
   const keep = new Map();
   const add = (src, title, link, ts) => {
     const lv = classify(title);
@@ -82,10 +86,15 @@ async function build() {
     const m = t0.match(/^(.*) - ([^-]+)$/);
     add(m ? m[2].trim() : "구글 뉴스", m ? m[1].trim() : t0, l, ts);
   }
+  // 일시적으로 일부 출처가 실패해도 목록이 줄지 않도록 직전 성공본과 합친다(최근 7일)
+  try {
+    const last = await caches.default.match(new Request("https://cache.usdkrw.local/news-v2-last-good"));
+    if (last) for (const v of (await last.json()).items || []) { const k = norm(v.t); if (!keep.has(k)) keep.set(k, v); }
+  } catch {}
   const cut = Math.floor(now / 60000) - 7 * 1440;
   const out = [...keep.values()].filter((v) => v.m >= cut && v.m <= Math.floor(now / 60000) + 10).sort((a, b) => b.m - a.m).slice(0, 500);
-  return { updated: kstNow().iso, items: out };
+  return { updated: kstNow().iso, sources: STATS.slice(), items: out };
 }
 
-export const onRequestGet = (ctx) => cached(ctx, "news-v1", 120, build);
+export const onRequestGet = (ctx) => cached(ctx, "news-v2", 120, build, 86400);
 export const onRequestOptions = options;

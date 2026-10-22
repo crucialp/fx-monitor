@@ -51,5 +51,5 @@ async function build() {
   };
 }
 
-export const onRequestGet = (ctx) => cached(ctx, "intraday-v1", 60, build);
+export const onRequestGet = (ctx) => cached(ctx, "intraday-v1", 60, build, 600);
 export const onRequestOptions = options;

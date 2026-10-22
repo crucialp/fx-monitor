@@ -77,6 +77,8 @@ nav.toc ul{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:au
 .pager button:hover{color:var(--ink)}
 .pager button[aria-selected="true"]{background:var(--ink);color:var(--surface)}
 .pager .pn{font-family:var(--font-num);font-size:12px;opacity:.7}
+.pager{max-width:100%;overflow-x:auto;scrollbar-width:none}
+@media (max-width:480px){.pager button{padding:6px 9px;font-size:12.5px;gap:4px}.pager .pn{display:none}}
 nav.toc ul::-webkit-scrollbar{display:none}
 nav.toc a{display:block;white-space:nowrap;text-decoration:none;font-size:13px;padding:5px 11px;border-radius:999px;background:var(--chip);color:var(--ink-2)}
 nav.toc a::after{content:none}
@@ -214,11 +216,13 @@ footer{margin-top:48px;padding-top:18px;border-top:1px solid var(--rule);font-si
 html{scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 [hidden]{display:none!important}
+section > *,.mpanel > *,.card,.two > *{min-width:0}
+.rchart,#chart,.rtchart{width:100%;min-width:0;overflow:hidden}
 html,body{margin:0}
 img{max-width:100%}
 #rt{padding-top:20px}
 .rt-bar{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 18px}
-.rtchart{height:max(440px,calc(100vh - 250px));height:max(440px,calc(100dvh - 250px));background:var(--surface);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.rtchart{height:clamp(380px,calc(100vh - 380px),760px);height:clamp(380px,calc(100dvh - 380px),760px);background:var(--surface);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
 #tv{height:100%;width:100%}
 .credit{font-size:12px;color:var(--muted);margin-top:-8px}
 .p2intro{display:grid;gap:12px;padding-top:28px}
@@ -232,7 +236,7 @@ img{max-width:100%}
 .mpanel{display:grid;gap:10px}
 .spec{font-size:13px;color:var(--ink-2);background:var(--chip);border-radius:6px;padding:7px 11px;margin:0;max-width:none}
 .spec b{color:var(--ink);font-weight:600}
-.rchart{position:relative;height:max(380px,calc(100vh - 340px));height:max(380px,calc(100dvh - 340px));background:var(--surface);border:1px solid var(--rule);border-radius:6px;touch-action:pan-y}
+.rchart{position:relative;height:clamp(320px,calc(100vh - 470px),640px);height:clamp(320px,calc(100dvh - 470px),640px);background:var(--surface);border:1px solid var(--rule);border-radius:6px;touch-action:pan-y}
 .rchart svg{display:block}
 .rchart .msg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:13px;text-align:center;padding:16px}
 .rtip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--rule-strong);border-radius:6px;padding:9px 11px;font-size:12.5px;line-height:1.5;min-width:170px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:3}
@@ -243,7 +247,7 @@ img{max-width:100%}
 .dline{fill:none;stroke:var(--ink);stroke-width:1.75;stroke-linejoin:round;stroke-linecap:round}
 .darea{fill:var(--ink);fill-opacity:.06;stroke:none}
 .oline{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:4 4}
-.olab{fill:var(--ink-2);font-family:var(--font-num);font-size:11px}
+.olab{fill:var(--ink-2);font-family:var(--font-num);font-size:11px;paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
 .toprow{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 20px}
 .updbox{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
 .updbtn{font:inherit;font-size:14px;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--surface);cursor:pointer}
@@ -1396,7 +1400,6 @@ img{max-width:100%}
     for(i=i0;i<=i1;i++)pts.push(X(t[i]).toFixed(1)+","+Y(c[i]).toFixed(1));
     el("path",{d:"M"+pts.join("L")+"L"+X(endT).toFixed(1)+","+(m.t+ph)+"L"+X(t[i0]).toFixed(1)+","+(m.t+ph)+"Z","class":"darea"},svg);
     el("line",{x1:m.l,x2:m.l+pw,y1:Y(open),y2:Y(open),"class":"oline"},svg);
-    var ol=el("text",{x:m.l+6,y:Y(open)+(Y(open)-m.t<16?14:-6),"class":"olab"},svg); ol.textContent="시가 "+f1(open);
     el("path",{d:"M"+pts.join("L"),"class":"dline"},svg);
     var cross=el("line",{x1:0,x2:0,y1:m.t,y2:m.t+ph,"class":"cross",visibility:"hidden"},svg);
     var hv=el("circle",{cx:0,cy:0,r:4,"class":"hov",visibility:"hidden"},svg);
@@ -1408,7 +1411,7 @@ img{max-width:100%}
       placeTip(f.tip,x,W,m.t+6);
     },function(){f.tip.hidden=true;cross.setAttribute("visibility","hidden");hv.setAttribute("visibility","hidden")});
     $("dsum").innerHTML='<span>하루 <b>'+mdhm(start)+' ~ '+mdhm(start+DAYM)+'</b></span>'+
-      '<span>시가(06:00~) <b>'+f1(open)+'</b></span>'+
+      '<span>시가(06:00~, 점선) <b>'+f1(open)+'</b></span>'+
       '<span>고가 <b>'+f1(hi)+'</b> ('+hm(t[ih])+')</span><span>저가 <b>'+f1(lo)+'</b> ('+hm(t[il])+')</span>'+
       (stale?'<span class="muted">지금은 거래가 없는 시간이라 마지막 거래일을 보여 줍니다</span>':'');
     $("dnowv").textContent=f1(now);
@@ -1460,9 +1463,9 @@ img{max-width:100%}
       });
     }
     marks.forEach(function(mk){
-      var x=mk.left?Math.max(m.l,X(mk.k)-bw/2):X(mk.k);
+      var x=mk.left?Math.max(m.l,X(mk.k)-bw/2):X(mk.k), nearR=x>m.l+pw-34;
       el("line",{x1:x,x2:x,y1:m.t+ph,y2:m.t+ph+4,"class":"tickmark"},svg);
-      var tx=el("text",{x:x,y:m.t+ph+17,"class":"xt","text-anchor":mk.left?"start":"middle"},svg); tx.textContent=mk.a;
+      var tx=el("text",{x:nearR?m.l+pw:x,y:m.t+ph+17,"class":"xt","text-anchor":nearR?"end":mk.left?"start":"middle"},svg); tx.textContent=mk.a;
     });
     if(N<=240){
       var cw=Math.max(1,Math.min(10,bw*0.62));
@@ -1496,24 +1499,25 @@ img{max-width:100%}
   }
 
   /* ---------- 4페이지: 환율 뉴스 ---------- */
-  var NEWS=null, NF="all", NS="all", NSEEN=null;
+  var NEWS=null, NF="all", NSRC="all", NSEEN=null;
   try{NSEEN=+localStorage.getItem("usdkrw-news-seen")||null}catch(e){}
   function esc(x){return String(x).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
   function loadNews(){
     return fetch(API+"/api/news",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})
       .then(function(j){if(j&&j.items){NEWS=j;renderNews()}})
-      .catch(function(){if(!NEWS)$("nlist").innerHTML='<div class="msg">뉴스를 불러오지 못했습니다. 잠시 후 다시 열어 주세요.</div>'});
+      .catch(function(e){if(window.console)console.error("news",e&&e.stack||e);if(!NEWS)$("nlist").innerHTML='<div class="msg">뉴스를 불러오지 못했습니다. 잠시 후 다시 열어 주세요.</div>'});
   }
   function renderNews(){
     if(!NEWS)return;
     var q=($("nq").value||"").trim().toLowerCase(), it=NEWS.items, nowM=Date.now()/60000;
     var isIM=function(x){return /인포맥스|KB Think/.test(x.s)};
-    var list=it.filter(function(x){return (NF==="all"||x.lv===NF)&&(NS==="all"||isIM(x))&&(!q||x.t.toLowerCase().indexOf(q)>=0)});
+    var list=it.filter(function(x){return (NF==="all"||x.lv===NF)&&(NSRC==="all"||isIM(x))&&(!q||x.t.toLowerCase().indexOf(q)>=0)});
     var urg=it.filter(function(x){return x.lv==="긴급"&&nowM-x.m<=24*60}).slice(0,5);
     var ub=$("nurgent");
     if(urg.length&&NF==="all"&&!q){
       ub.hidden=false;
-      ub.innerHTML='<div class="uh">최근 24시간 긴급·속보</div>'+urg.map(function(x){return '<a class="nitem" style="border:0;padding:4px 0" href="'+esc(x.u)+'" target="_blank" rel="noopener"><span class="ntime">'+hm(x.m)+'</span><span class="nbadge lv-긴급">긴급</span><span class="ntitle">'+esc(x.t)+'</span><span class="nsrc">'+esc(x.s)+'</span></a>'}).join("");
+      var todayK=ymdK(Date.now()/60000);
+      ub.innerHTML='<div class="uh">최근 24시간 긴급·속보</div>'+urg.map(function(x){return '<a class="nitem" style="border:0;padding:4px 0" href="'+esc(x.u)+'" target="_blank" rel="noopener"><span class="ntime">'+(ymdK(x.m)===todayK?hm(x.m):mdhm(x.m))+'</span><span class="nbadge lv-긴급">긴급</span><span class="ntitle">'+esc(x.t)+'</span><span class="nsrc">'+esc(x.s)+'</span></a>'}).join("");
     }else ub.hidden=true;
     if(!list.length){$("nlist").innerHTML='<div class="msg">조건에 맞는 기사가 없습니다.</div>';return}
     var h="", day="";
@@ -1527,9 +1531,10 @@ img{max-width:100%}
     if(!$("p4").hidden&&it.length){try{localStorage.setItem("usdkrw-news-seen",String(it[0].m))}catch(e){}}
   }
   [].forEach.call(document.querySelectorAll("[data-nf]"),function(b){b.addEventListener("click",function(){NF=b.dataset.nf;[].forEach.call(document.querySelectorAll("[data-nf]"),function(x){x.setAttribute("aria-pressed",String(x===b))});renderNews()})});
-  [].forEach.call(document.querySelectorAll("[data-ns]"),function(b){b.addEventListener("click",function(){NS=b.dataset.ns;[].forEach.call(document.querySelectorAll("[data-ns]"),function(x){x.setAttribute("aria-pressed",String(x===b))});renderNews()})});
+  [].forEach.call(document.querySelectorAll("[data-ns]"),function(b){b.addEventListener("click",function(){NSRC=b.dataset.ns;[].forEach.call(document.querySelectorAll("[data-ns]"),function(x){x.setAttribute("aria-pressed",String(x===b))});renderNews()})});
   $("nq").addEventListener("input",renderNews);
   setInterval(function(){if(!document.hidden&&!$("p4").hidden)loadNews()},60000);
+  setTimeout(function(){if(!NEWS)loadNews()},2500);  /* 4페이지를 열기 전에 미리 받아 둔다 */
 
   /* ---------- 상단 '업데이트' 버튼: 하루 한 번, 누르면 그날은 모두 잠김 ---------- */
   var UPD=null;
