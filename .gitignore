@@ -1,5 +1,6 @@
 docs/intraday.json
 docs/news.json
 __pycache__/
-cloudflare/.wrangler/
-cloudflare/node_modules/
+**/.wrangler/
+**/node_modules/
+*.json.tmp
