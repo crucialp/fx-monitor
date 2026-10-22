@@ -249,6 +249,7 @@ html,body{margin:0}
 img{max-width:100%}
 #rt{padding-top:20px}
 .rt-bar{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 18px}
+.lwov{position:absolute;left:0;top:0;pointer-events:none;z-index:3;overflow:visible}
 .rtchart{height:clamp(380px,calc(100vh - 380px),760px);height:clamp(380px,calc(100dvh - 380px),760px);background:var(--surface);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
 #tv{height:100%;width:100%}
 .credit{font-size:12px;color:var(--muted);margin-top:-8px}
@@ -404,7 +405,7 @@ img{max-width:100%}
         </div>
         </div>
       </div>
-      <div class="legend" id="lwLegend" aria-hidden="true"><span><span class="sw evsw"></span>▼ 주요 지표·금리 결정 (마우스를 올리면 발표·예상·이전)</span><span class="muted">끌어서 이동 · 휠·두 손가락으로 확대</span></div>
+      <div class="legend" id="lwLegend" aria-hidden="true"><span><span class="sw evsw"></span>주요 지표·금리 결정 (발표·예상·이전은 아래 목록, 그 시각에 마우스를 올려도 보임)</span><span class="muted">끌어서 이동 · 휠·두 손가락으로 확대</span></div>
       <div class="lwinfo" id="lwInfo"></div>
       <div class="rtchart" id="lwbox"></div>
       <div class="rtchart" id="tvbox" hidden><div id="tv"></div></div>
@@ -1375,7 +1376,7 @@ img{max-width:100%}
     var lw=DK==="lw";
     $("lwbox").hidden=!lw; $("tvbox").hidden=lw; $("lwInt").hidden=!lw; $("tvCtl").hidden=lw; $("lwLegend").hidden=!lw; $("lwevents").hidden=!lw; $("lwInfo").hidden=!lw;
     $("dragCredit").innerHTML=lw
-      ?'데이터: Yahoo Finance KRW=X(국제 시세, 약 1~2분 지연) · 지표: Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각: 언론 첫 속보 · 차트: <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener nofollow">TradingView Lightweight Charts</a>'
+      ?'데이터: Yahoo Finance KRW=X(국제 시세, 약 1~2분 지연) · 지표: Nasdaq 경제 캘린더 · 한은 결정·의결문 시각: 언론 첫 속보 · 차트: <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener nofollow">TradingView Lightweight Charts</a>'
       :'차트·시세 제공: <a href="https://www.tradingview.com/symbols/USDKRW/?exchange=FX_IDC" rel="noopener nofollow" target="_blank">TradingView</a> (FX_IDC:USDKRW) · 실시간 · 지표 표시는 안 됨';
   }
   [].forEach.call(document.querySelectorAll("[data-dk]"),function(b){b.addEventListener("click",function(){DK=b.dataset.dk; try{localStorage.setItem("usdkrw-dk",DK)}catch(e){} renderDrag()})});
@@ -1398,34 +1399,27 @@ img{max-width:100%}
     LW.ev=ev;
     LW.mk=ev.map(function(e){
       var j=LI==="1m"?lb(T,e.t):ub(T,e.t)-1; if(LI==="1m"&&j>0&&(j>=n||Math.abs(T[j-1]-e.t)<Math.abs(T[j]-e.t)))j--; j=Math.max(0,Math.min(n-1,j));
-      return {time:T[j]*60+KS,e:e};
+      return {time:T[j]*60+KS,e:e,p:LI==="1m"?ID.m1.c[j]:ID.m10.h[j]};   /* 화살표 끝: 1분봉은 그 시각 시세, 10분봉은 그 봉의 고가 */
     }).sort(function(a,b){return a.time-b.time});
     LW.mk.forEach(function(o,k){o.e._n=k+1});
-    lwApplyText();
+    lwSched();
     eventList($("lwevents"),ev,"badge",(LI==="1m"?"최근 3일":"최근 1개월")+"의 주요 지표·금리 결정 (한국 시간 · Nasdaq 캘린더)",ev.loading);
   }
-  /* 화면에서 가까운 지표는 한 표시로 묶는다: 자리가 있으면 '美 CPI 3.7% 외 3', 없으면 번호 '4~9',
-     그래도 붙으면 앞 표시에 합친다. 끌거나 확대할 때마다 다시 계산해서, 확대하면 다시 나뉜다 */
+  /* 그래프 위쪽 25%는 비워 두고(가격 눈금 여백) 그 띠에 ③과 같은 방식으로 라벨을 놓고 화살표로 그 시각의 시세를 가리킨다.
+     라벨이 선·캔들과 겹치지 않음. 끌거나 확대할 때마다 다시 배치(가까우면 짧은 라벨 → 번호, 번호는 아래 목록과 같음) */
+  var LWRO=null;
+  function lwSched(){if(!LW||LW.raf)return; LW.raf=requestAnimationFrame(function(){LW.raf=requestAnimationFrame(function(){LW.raf=0; lwApplyText()})})}
   function lwApplyText(){
-    if(!LW||!LW.mk)return;
-    var ts=LW.chart.timeScale(), W=ts.width(), color=cssv("--ev");
-    var pts=LW.mk.map(function(o){return {o:o,x:ts.timeToCoordinate(o.time)}}).filter(function(p){return p.x!=null&&p.x>=-30&&p.x<=W+30});
-    var cl=[];
-    pts.forEach(function(p){var c=cl[cl.length-1]; if(c&&p.x-c.items[0].x<28)c.items.push(p); else cl.push({items:[p]})});
-    function label(items,compact){
-      var a=items[0].o.e, n=items.length, n1=a._n, n2=items[n-1].o.e._n;
-      if(!compact)return n===1?evShort(a):evShort(a)+" 외 "+(n-1);
-      return n===1?String(n1):n1+"~"+n2;
-    }
-    var placed=[];
-    cl.forEach(function(c){
-      var x=c.items[0].x, t=label(c.items,false), w=textW(t,false)+14, prev=placed[placed.length-1], prevR=prev?prev.r:-1e9;
-      if(x-w/2<=prevR+6||x+w/2>W){t=label(c.items,true); w=textW(t,false)+14}
-      if(prev&&x-w/2<=prevR+4){prev.items=prev.items.concat(c.items); prev.t=label(prev.items,true); prev.w=textW(prev.t,false)+14; prev.r=prev.x+prev.w/2; return}
-      placed.push({items:c.items,x:x,t:t,w:w,r:x+w/2});
-    });
-    var out=placed.map(function(p){return {time:p.items[0].o.time,position:"aboveBar",shape:"arrowDown",color:color,text:p.t}});
-    if(LW.markers)LW.markers.setMarkers(out); else LW.markers=LightweightCharts.createSeriesMarkers(LW.series,out);
+    if(!LW||!LW.mk||!LW.ov)return;
+    var box=$("lwbox"), ts=LW.chart.timeScale(), W=ts.width(), PH=box.clientHeight-ts.height(), svg=LW.ov;
+    while(svg.firstChild)svg.removeChild(svg.firstChild);
+    if(!(W>0&&PH>0))return;
+    svg.setAttribute("width",W); svg.setAttribute("height",PH); svg.setAttribute("viewBox","0 0 "+W+" "+PH);
+    var vis=[];
+    LW.mk.forEach(function(o){var x=ts.timeToCoordinate(o.time); if(x!=null&&x>=2&&x<=W-2){o.e._x=x; o.e._p=o.p; vis.push(o.e)}});
+    if(!vis.length)return;
+    var LAY=evLayout(vis,function(e){return e._x},{l:0,r:0,t:0,b:0},W,PH*0.62,W<520,true);
+    evDraw(svg,LAY,function(g){var y=LW.series.priceToCoordinate(g.ev[0]._p); return y==null?PH*0.6:y});
   }
   function drawLW(){
     var box=$("lwbox"); if(!box.clientWidth||!window.LightweightCharts)return;
@@ -1436,18 +1430,21 @@ img{max-width:100%}
     var chart=LC.createChart(box,{autoSize:true,
       layout:{background:{type:"solid",color:cssv("--surface")},textColor:cssv("--ink-2"),fontFamily:"'IBM Plex Sans KR','Malgun Gothic',sans-serif",fontSize:11.5,attributionLogo:true},
       grid:{vertLines:{color:cssv("--rule")},horzLines:{color:cssv("--rule")}},
-      rightPriceScale:{borderColor:cssv("--rule-strong")},
+      rightPriceScale:{borderColor:cssv("--rule-strong"),scaleMargins:{top:0.25,bottom:0.08}},
+      crosshair:{vertLine:{style:0,width:1,color:cssv("--rule-strong"),labelBackgroundColor:cssv("--ink-2")},horzLine:{style:0,width:1,color:cssv("--rule-strong"),labelBackgroundColor:cssv("--ink-2")}},
       timeScale:{borderColor:cssv("--rule-strong"),timeVisible:true,secondsVisible:false,rightOffset:4},
       localization:{locale:"ko-KR",priceFormatter:function(p){return p.toLocaleString("en-US",{minimumFractionDigits:1,maximumFractionDigits:1})}}});
     var series=LI==="1m"
       ?chart.addSeries(LC.LineSeries,{color:cssv("--ink"),lineWidth:2,priceLineVisible:false,lastValueVisible:true})
       :chart.addSeries(LC.CandlestickSeries,{upColor:cssv("--up"),downColor:cssv("--down"),borderVisible:false,wickUpColor:cssv("--up"),wickDownColor:cssv("--down"),priceLineVisible:false});
     var data=lwData(); series.setData(data);
-    LW={chart:chart,series:series,li:LI,dark:isDark(),markers:null,ev:[]};
+    box.style.position="relative";
+    LW={chart:chart,series:series,li:LI,dark:isDark(),ev:[],raf:0,ov:el("svg",{"class":"lwov","aria-hidden":"true"},box)};
+    if(!LWRO&&window.ResizeObserver){LWRO=new ResizeObserver(lwSched); LWRO.observe(box)}
     /* 처음 보이는 구간: 1분봉은 최근 약 하루, 10분봉은 최근 약 1주. 오른쪽에 여백을 둬 최신 지표 글자가 잘리지 않게 */
     if(data.length){var nb=data.length-1; chart.timeScale().setVisibleLogicalRange(LI==="1m"?{from:nb-1200,to:nb+70}:{from:nb-7*144,to:nb+30})}
     lwMarkers();
-    var raf=0; chart.timeScale().subscribeVisibleTimeRangeChange(function(){if(raf)return; raf=requestAnimationFrame(function(){raf=0; lwApplyText()})});
+    chart.timeScale().subscribeVisibleLogicalRangeChange(lwSched);
     chart.subscribeCrosshairMove(function(p){
       var info=$("lwInfo");
       if(!p||!p.time){info.innerHTML="";return}
@@ -1549,16 +1546,16 @@ img{max-width:100%}
     out.loading=loading;
     return out;
   }
-  function evShort(e){return e.label.replace(/\(.*$/,"")+" "+(e.actual||"발표 대기")}
-  function evRest(e){var s=(e.actual||"발표 대기")+(e.note?" "+e.note:"");if(e.forecast)s+=" · 예상 "+e.forecast;if(e.previous)s+=" · 이전 "+e.previous;return s}
+  function evShort(e){if(e.info)return e.label+(e.note?" ("+e.note+")":"");return e.label.replace(/\(.*$/,"")+" "+(e.actual||"발표 대기")}
+  function evRest(e){if(e.info)return e.note?"("+e.note+")":"";var s=(e.actual||"발표 대기")+(e.note?" "+e.note:"");if(e.forecast)s+=" · 예상 "+e.forecast;if(e.previous)s+=" · 이전 "+e.previous;return s}
   var MCTX=null;
   function textW(str,bold){
     try{MCTX=MCTX||document.createElement("canvas").getContext("2d");MCTX.font=(bold?"600 ":"400 ")+"11.5px 'IBM Plex Sans KR','Malgun Gothic',sans-serif";return MCTX.measureText(str).width}catch(e){return str.length*8}
   }
-  /* 겹침 방지 배치: 5분 이내·화면상 14px 이내는 한 화살표에 여러 줄, 묶음끼리는
-     ① 같은 줄 글자 겹침 금지 ② 다른 화살표가 글자를 지나가지 않게 ③ 제 화살표가 제 글자를 지나가지 않게.
+  /* 겹침 방지 배치: 5분 이내·화면상 14px 이내는 한 화살표에 여러 줄, 글자는 화살표 위 가운데(화살표는 글자 바로 아래에서 시작).
+     묶음끼리는 ① 같은 줄 글자 겹침 금지 ② 다른 화살표가 글자를 지나가지 않게. 가운데로는 안 되면 같은 줄에서 조금 옆으로 비켜 놓는다.
      글자 라벨 → 짧은 라벨 → 번호 표시 순으로, 겹치지 않고 너무 높지 않은 첫 방식을 쓴다 */
-  function evLayout(evs,xOf,m,pw,H,narrow){
+  function evLayout(evs,xOf,m,pw,H,narrow,keepNum){
     var LH=15;
     function layout(mode){
       var gs=[], forced=false;
@@ -1566,28 +1563,28 @@ img{max-width:100%}
         gs.forEach(function(q){if(Math.abs(q.x-x)<14||Math.abs(q.t-e.t)<=5)g=q}); if(g)g.ev.push(e); else gs.push({x:x,t:e.t,ev:[e]})});
       gs.sort(function(a,b){return a.x-b.x});
       var placed=[];
-      gs.forEach(function(g){
+      gs.forEach(function(g,gi){
         g.mode=mode; g.w=0;
-        if(mode==="badge"){g.w=18; g.h=18}
+        g.num=keepNum?g.ev[0]._n:gi+1; g.num2=keepNum?g.ev[g.ev.length-1]._n:g.num; g.btxt=g.num2!==g.num?g.num+"~"+g.num2:String(g.num);
+        if(mode==="badge"){g.w=Math.max(18,textW(g.btxt,true)+10); g.h=18}
         else{g.ev.forEach(function(e){var w=mode==="short"?textW(evShort(e),true):textW(e.label+" ",true)+textW(evRest(e),false); if(w>g.w)g.w=w}); g.w=Math.min(g.w,pw); g.h=g.ev.length*LH}
-        function xAt(right){var a=mode==="badge"?g.x-9:right?g.x+6:g.x-6-g.w; if(a<m.l)a=m.l; if(a+g.w>m.l+pw)a=m.l+pw-g.w; return a}
+        function xAt(f){var a=g.x-g.w*f; if(a<m.l)a=m.l; if(a+g.w>m.l+pw)a=m.l+pw-g.w; return a}
         function clash(L,a,strict){var b=a+g.w;
-          if(strict&&mode!=="badge"&&g.x>=a-3&&g.x<=b+3)return true;
           return placed.some(function(p){
             if(p.L===L)return !(b+12<p.x1||a-12>p.x1+p.w);
             if(!strict)return false;
             if(p.L<L)return p.x>=a-8&&p.x<=b+8;
             return g.x>=p.x1-8&&g.x<=p.x1+p.w+8;
           })}
-        var sides=g.x<m.l+pw*0.62?[true,false]:[false,true], done=false, L, k;
-        for(L=0;L<8&&!done;L++)for(k=0;k<2&&!done;k++){var a1=xAt(sides[k]); if(!clash(L,a1,true)){g.L=L;g.x1=a1;done=true}}
+        var fs=mode==="badge"?[0.5]:[0.5,0.35,0.65,0.2,0.8,0.08,0.92], done=false, L, k;   /* 화살표가 글자 폭의 어디 아래에 올지: 가운데부터 */
+        for(L=0;L<8&&!done;L++)for(k=0;k<fs.length&&!done;k++){var a1=xAt(fs[k]); if(!clash(L,a1,true)){g.L=L;g.x1=a1;done=true}}
         if(!done)forced=true;
-        for(L=0;!done;L++)for(k=0;k<2&&!done;k++){var a2=xAt(sides[k]); if(!clash(L,a2,false)){g.L=L;g.x1=a2;done=true}}
+        for(L=0;!done;L++)for(k=0;k<fs.length&&!done;k++){var a2=xAt(fs[k]); if(!clash(L,a2,false)){g.L=L;g.x1=a2;done=true}}
         placed.push(g);
       });
       var lh=[]; gs.forEach(function(g){lh[g.L]=Math.max(lh[g.L]||0,g.h)});
       var tops=[], acc=8; for(var q=0;q<lh.length;q++){tops[q]=acc; acc+=(lh[q]||0)+6}
-      gs.forEach(function(g,k){g.num=k+1; g.ev.forEach(function(e){e._n=g.num})});
+      if(!keepNum)gs.forEach(function(g){g.ev.forEach(function(e){e._n=g.num})});
       return {gs:gs,tops:tops,band:acc,forced:forced,mode:mode};
     }
     var modes=narrow?["short","badge"]:["full","short","badge"], LAY=null;
@@ -1599,20 +1596,20 @@ img{max-width:100%}
     var LH=15;
     LAY.gs.forEach(function(g){
       var top=LAY.tops[g.L], py=yOf(g);
-      el("line",{x1:g.x,x2:g.x,y1:top+(g.mode==="badge"?16:2),y2:py-9,"class":"evarrow"},svg);
+      el("line",{x1:g.x,x2:g.x,y1:top+(g.mode==="badge"?16:g.h+1),y2:py-9,"class":"evarrow"},svg);
       el("path",{d:"M"+(g.x-4)+","+(py-11)+"L"+(g.x+4)+","+(py-11)+"L"+g.x+","+(py-4)+"Z","class":"evhead"},svg);
     });
     LAY.gs.forEach(function(g){
       var top=LAY.tops[g.L];
       if(g.mode==="badge"){
         var bg=el("g",{},svg);
-        el("circle",{cx:g.x,cy:top+8,r:8.5,"class":"evbadge"},bg);
-        var nt=el("text",{x:g.x,y:top+11.5,"class":"evnum","text-anchor":"middle"},bg); nt.textContent=String(g.num);
+        el("rect",{x:g.x1,y:top-0.5,width:g.w,height:17,rx:8.5,"class":"evbadge"},bg);
+        var nt=el("text",{x:g.x1+g.w/2,y:top+11.5,"class":"evnum","text-anchor":"middle"},bg); nt.textContent=g.btxt;
         el("title",{},bg).textContent=g.ev.map(function(e){return mdhm(e.t)+" "+e.label+" "+evRest(e)}).join("\n");
         return;
       }
       g.ev.forEach(function(e,k){
-        var tx=el("text",{x:g.x1,y:top+11+k*LH,"class":"evlab"},svg);
+        var tx=el("text",{x:g.x1+g.w/2,y:top+11+k*LH,"class":"evlab","text-anchor":"middle"},svg);
         if(g.mode==="short"){el("tspan",{"class":"evn"},tx).textContent=evShort(e)}
         else{el("tspan",{"class":"evn"},tx).textContent=e.label+" ";el("tspan",{"class":"evv"},tx).textContent=evRest(e)}
       });
@@ -1625,12 +1622,13 @@ img{max-width:100%}
     var nowM=Date.now()/60000, multi=ymdK(list[0].t)!==ymdK(list[list.length-1].t);
     box.classList.toggle("multi",multi);
     box.innerHTML=h+list.map(function(e){
-      var done=!!e.actual, when=(multi?mdhm(e.t):hm(e.t))+(e.approx?"경":"");
+      var done=!!e.actual||e.info, when=(multi?mdhm(e.t):hm(e.t))+(e.approx?"경":"");
       var tm=when+(e.ts&&e.ts!==e.t?'<br><span class="st">예정 '+hm(e.ts)+'</span>':'');
       var nb=(mode==="badge"&&e._n)?'<span class="nb">'+e._n+'</span>':'';
       return '<div class="evr"><span class="ntime">'+tm+'</span><span>'+nb+'<b style="font-family:var(--font-body);font-weight:600">'+e.label+'</b></span>'+
-        '<span>발표 <b>'+(e.actual||"–")+'</b>'+(e.note?' '+e.note:'')+'</span><span class="num">예상 '+(e.forecast||"–")+'</span><span class="num">이전 '+(e.previous||"–")+'</span>'+
-        '<span class="st">'+(done?"발표됨":e.t>nowM?"예정":"발표 대기")+(e.tsrc?' · <a href="'+e.turl+'" target="_blank" rel="noopener nofollow" title="이 시각은 언론사들의 첫 속보 입력 시각(네이버 뉴스)으로 확인함">'+e.tsrc+'</a>':'')+'</span></div>';
+        (e.info?'<span>'+(e.note?'('+e.note+')':'')+'</span><span class="num"></span><span class="num"></span>':
+        '<span>발표 <b>'+(e.actual||"–")+'</b>'+(e.note?' '+e.note:'')+'</span><span class="num">예상 '+(e.forecast||"–")+'</span><span class="num">이전 '+(e.previous||"–")+'</span>')+
+        '<span class="st">'+(e.info?"공개됨":done?"발표됨":e.t>nowM?"예정":"발표 대기")+(e.tsrc?' · <a href="'+e.turl+'" target="_blank" rel="noopener nofollow" title="이 시각은 언론사들의 첫 속보 입력 시각(네이버 뉴스)으로 확인함">'+e.tsrc+'</a>':'')+'</span></div>';
     }).join("");
   }
 
@@ -1686,7 +1684,7 @@ img{max-width:100%}
     $("dnowv").textContent=f1(now);
     $("dnowc").innerHTML="06:00 시가 대비 "+chg(open,now);
     $("dnowt").textContent=(stale?"마지막 거래 ":"")+mdhm(endT)+" 기준";
-    $("dcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 1분 단위 · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연) · 지표: Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각: 언론 첫 속보(네이버 뉴스 입력 시각)";
+    $("dcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 1분 단위 · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연) · 지표: Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각과 한은 의결문 공개 시각: 언론 첫 속보(네이버 뉴스 입력 시각)";
     eventList($("devents"),dayEv,LAY.mode,"이 날의 주요 지표·금리 결정 ("+mdhm(start)+" ~ "+mdhm(start+DAYM)+", 한국 시간 · Nasdaq 캘린더)",dayEv.loading);
   }
 
