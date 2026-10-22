@@ -104,8 +104,8 @@ nav.toc a:hover{color:var(--ink)}
 .sw.band{width:18px;height:10px;border-radius:2px;background:var(--ink);opacity:.14}
 .sw.evsw{width:2px;height:13px;border-radius:0;background:var(--ev)}
 .evlab{font-family:var(--font-body);font-size:11.5px;fill:var(--ink);paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}
-.evlab .evn{font-weight:600}
-.evlab .evv{fill:var(--ink-2)}
+.evlab .evn,.evlab.evn{font-weight:600}
+.evlab .evv,.evlab.evv{fill:var(--ink-2)}
 .evarrow{stroke:var(--ev);stroke-width:1.25}
 .evhead{fill:var(--ev)}
 .evbadge{fill:var(--ev)}
@@ -1418,7 +1418,7 @@ img{max-width:100%}
     var vis=[];
     LW.mk.forEach(function(o){var x=ts.timeToCoordinate(o.time); if(x!=null&&x>=2&&x<=W-2){o.e._x=x; o.e._p=o.p; vis.push(o.e)}});
     if(!vis.length)return;
-    var LAY=evLayout(vis,function(e){return e._x},{l:0,r:0,t:0,b:0},W,PH*0.62,W<520,true);
+    var LAY=evLayout(vis,function(e){return e._x},{l:0,r:0,t:0,b:0},W,PH*0.70,W<520,true);
     evDraw(svg,LAY,function(g){var y=LW.series.priceToCoordinate(g.ev[0]._p); return y==null?PH*0.6:y});
   }
   function drawLW(){
@@ -1430,7 +1430,7 @@ img{max-width:100%}
     var chart=LC.createChart(box,{autoSize:true,
       layout:{background:{type:"solid",color:cssv("--surface")},textColor:cssv("--ink-2"),fontFamily:"'IBM Plex Sans KR','Malgun Gothic',sans-serif",fontSize:11.5,attributionLogo:true},
       grid:{vertLines:{color:cssv("--rule")},horzLines:{color:cssv("--rule")}},
-      rightPriceScale:{borderColor:cssv("--rule-strong"),scaleMargins:{top:0.25,bottom:0.08}},
+      rightPriceScale:{borderColor:cssv("--rule-strong"),scaleMargins:{top:0.28,bottom:0.08}},
       crosshair:{vertLine:{style:0,width:1,color:cssv("--rule-strong"),labelBackgroundColor:cssv("--ink-2")},horzLine:{style:0,width:1,color:cssv("--rule-strong"),labelBackgroundColor:cssv("--ink-2")}},
       timeScale:{borderColor:cssv("--rule-strong"),timeVisible:true,secondsVisible:false,rightOffset:4},
       localization:{locale:"ko-KR",priceFormatter:function(p){return p.toLocaleString("en-US",{minimumFractionDigits:1,maximumFractionDigits:1})}}});
@@ -1552,11 +1552,14 @@ img{max-width:100%}
   function textW(str,bold){
     try{MCTX=MCTX||document.createElement("canvas").getContext("2d");MCTX.font=(bold?"600 ":"400 ")+"11.5px 'IBM Plex Sans KR','Malgun Gothic',sans-serif";return MCTX.measureText(str).width}catch(e){return str.length*8}
   }
-  /* 겹침 방지 배치: 5분 이내·화면상 14px 이내는 한 화살표에 여러 줄, 글자는 화살표 위 가운데(화살표는 글자 바로 아래에서 시작).
-     묶음끼리는 ① 같은 줄 글자 겹침 금지 ② 다른 화살표가 글자를 지나가지 않게. 가운데로는 안 되면 같은 줄에서 조금 옆으로 비켜 놓는다.
+  /* 라벨은 두 줄: 윗줄 굵은 이름, 아랫줄 가는 값(발표·예상·이전), 둘 다 화살표 위 가운데. 화살표는 라벨 바로 아래에서 시세까지.
+     5분 이내·화면상 14px 이내(같이 발표)는 한 화살표 위에 라벨을 쌓고, 따로 발표된 것끼리는
+     ① 같은 줄에서 26px 이상 띄우고 ② 다른 화살표와 글자 사이도 16px 이상 띄운다. 가운데로 안 되면 같은 줄에서 조금 비켜 놓는다.
      글자 라벨 → 짧은 라벨 → 번호 표시 순으로, 겹치지 않고 너무 높지 않은 첫 방식을 쓴다 */
+  var EV_EH=30, EV_EG=4, EV_GAP=26, EV_AC=16, EV_RG=10;   /* 라벨 한 개 높이·쌓을 때 간격·옆 간격·화살표와 간격·줄 간격 */
+  function evL1(e,mode){return mode==="short"?e.label.replace(/\(.*$/,""):e.label}
+  function evL2(e,mode){if(mode!=="short")return evRest(e); return e.info?(e.note?"("+e.note+")":""):(e.actual||"발표 대기")+(e.note?" "+e.note:"")}
   function evLayout(evs,xOf,m,pw,H,narrow,keepNum){
-    var LH=15;
     function layout(mode){
       var gs=[], forced=false;
       evs.forEach(function(e){var x=xOf(e), g=null;
@@ -1567,14 +1570,14 @@ img{max-width:100%}
         g.mode=mode; g.w=0;
         g.num=keepNum?g.ev[0]._n:gi+1; g.num2=keepNum?g.ev[g.ev.length-1]._n:g.num; g.btxt=g.num2!==g.num?g.num+"~"+g.num2:String(g.num);
         if(mode==="badge"){g.w=Math.max(18,textW(g.btxt,true)+10); g.h=18}
-        else{g.ev.forEach(function(e){var w=mode==="short"?textW(evShort(e),true):textW(e.label+" ",true)+textW(evRest(e),false); if(w>g.w)g.w=w}); g.w=Math.min(g.w,pw); g.h=g.ev.length*LH}
+        else{g.ev.forEach(function(e){var w=Math.max(textW(evL1(e,mode),true),textW(evL2(e,mode),false)); if(w>g.w)g.w=w}); g.w=Math.min(g.w,pw); g.h=g.ev.length*(EV_EH+EV_EG)-EV_EG}
         function xAt(f){var a=g.x-g.w*f; if(a<m.l)a=m.l; if(a+g.w>m.l+pw)a=m.l+pw-g.w; return a}
         function clash(L,a,strict){var b=a+g.w;
           return placed.some(function(p){
-            if(p.L===L)return !(b+12<p.x1||a-12>p.x1+p.w);
+            if(p.L===L)return !(b+EV_GAP<p.x1||a-EV_GAP>p.x1+p.w);
             if(!strict)return false;
-            if(p.L<L)return p.x>=a-8&&p.x<=b+8;
-            return g.x>=p.x1-8&&g.x<=p.x1+p.w+8;
+            if(p.L<L)return p.x>=a-EV_AC&&p.x<=b+EV_AC;
+            return g.x>=p.x1-EV_AC&&g.x<=p.x1+p.w+EV_AC;
           })}
         var fs=mode==="badge"?[0.5]:[0.5,0.35,0.65,0.2,0.8,0.08,0.92], done=false, L, k;   /* 화살표가 글자 폭의 어디 아래에 올지: 가운데부터 */
         for(L=0;L<8&&!done;L++)for(k=0;k<fs.length&&!done;k++){var a1=xAt(fs[k]); if(!clash(L,a1,true)){g.L=L;g.x1=a1;done=true}}
@@ -1583,7 +1586,7 @@ img{max-width:100%}
         placed.push(g);
       });
       var lh=[]; gs.forEach(function(g){lh[g.L]=Math.max(lh[g.L]||0,g.h)});
-      var tops=[], acc=8; for(var q=0;q<lh.length;q++){tops[q]=acc; acc+=(lh[q]||0)+6}
+      var tops=[], acc=8; for(var q=0;q<lh.length;q++){tops[q]=acc; acc+=(lh[q]||0)+EV_RG}
       if(!keepNum)gs.forEach(function(g){g.ev.forEach(function(e){e._n=g.num})});
       return {gs:gs,tops:tops,band:acc,forced:forced,mode:mode};
     }
@@ -1593,10 +1596,9 @@ img{max-width:100%}
   }
   /* 화살표를 먼저 다 그리고 글자를 나중에 그려서, 혹시 지나가는 선이 있어도 글자 바탕이 덮는다 */
   function evDraw(svg,LAY,yOf){
-    var LH=15;
     LAY.gs.forEach(function(g){
       var top=LAY.tops[g.L], py=yOf(g);
-      el("line",{x1:g.x,x2:g.x,y1:top+(g.mode==="badge"?16:g.h+1),y2:py-9,"class":"evarrow"},svg);
+      el("line",{x1:g.x,x2:g.x,y1:top+(g.mode==="badge"?16:g.h+2),y2:py-9,"class":"evarrow"},svg);
       el("path",{d:"M"+(g.x-4)+","+(py-11)+"L"+(g.x+4)+","+(py-11)+"L"+g.x+","+(py-4)+"Z","class":"evhead"},svg);
     });
     LAY.gs.forEach(function(g){
@@ -1609,9 +1611,9 @@ img{max-width:100%}
         return;
       }
       g.ev.forEach(function(e,k){
-        var tx=el("text",{x:g.x1+g.w/2,y:top+11+k*LH,"class":"evlab","text-anchor":"middle"},svg);
-        if(g.mode==="short"){el("tspan",{"class":"evn"},tx).textContent=evShort(e)}
-        else{el("tspan",{"class":"evn"},tx).textContent=e.label+" ";el("tspan",{"class":"evv"},tx).textContent=evRest(e)}
+        var cx=g.x1+g.w/2, base=top+k*(EV_EH+EV_EG);
+        el("text",{x:cx,y:base+11,"class":"evlab evn","text-anchor":"middle"},svg).textContent=evL1(e,g.mode);
+        var l2=evL2(e,g.mode); if(l2)el("text",{x:cx,y:base+26,"class":"evlab evv","text-anchor":"middle"},svg).textContent=l2;
       });
     });
   }
