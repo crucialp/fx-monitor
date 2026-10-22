@@ -1,6 +1,6 @@
 // 공용 도우미: 한국 시간, JSON 응답(CORS 허용), 캐시
 
-export const REPO = "crucialp/usdkrw-live";
+export const REPO = "crucialp/fx-monitor";
 export const RAW = `https://raw.githubusercontent.com/${REPO}/main/docs/`;
 
 export function kstNow() {

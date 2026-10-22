@@ -1,7 +1,7 @@
-# 달러/원 실시간·전망
+# 환율 조회 (fx-monitor)
 
-- 사이트(본): https://usdkrw-live.pages.dev  (Cloudflare Pages, 일반 사이트 — AI 서비스 연결 없음)
-- 같은 화면 백업: https://crucialp.github.io/usdkrw-live/
+- 사이트(본): https://fx-monitor.pages.dev  (Cloudflare Pages, 일반 사이트 — AI 서비스 연결 없음)
+- 같은 화면 백업: https://crucialp.github.io/fx-monitor/
 
 ## 구성
 - `docs/` 화면과 매매기준율 데이터의 원본. Cloudflare 사이트는 이 저장소의 `docs/index.html`, `docs/usdkrw_smbs.json` 을 1분 캐시로 그대로 보여 준다(저장소에 push 하면 바로 반영).

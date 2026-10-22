@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="달러/원 실시간 1분봉, 서울외국환중개 매매기준율 일별 추이, 국내외 기관 분기별 전망 모음.">
-<title>달러/원 실시간·전망</title>
+<title>환율 조회</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap">
@@ -100,6 +100,9 @@ nav.toc a:hover{color:var(--ink)}
 .sw.dash{width:18px;height:0;border-radius:0;background:none;border-top:2px dashed var(--ink-2)}
 .sw.dash.f{border-top-color:var(--foreign)} .sw.dash.d{border-top-color:var(--domestic)} .sw.dash.b{border-top-color:var(--bbg)}
 .sw.dot{width:8px;height:8px;opacity:.5}
+.sw.band{width:18px;height:10px;border-radius:2px;background:var(--ink);opacity:.14}
+.sw.cu{width:7px;height:12px;border-radius:1px;background:var(--up)}
+.sw.cd{width:7px;height:12px;border-radius:1px;background:var(--down)}
 
 /* sections */
 section{padding-block:40px 8px;display:grid;gap:16px;scroll-margin-top:120px}
@@ -297,7 +300,7 @@ img{max-width:100%}
   <header class="top">
     <div class="eyebrow">USD/KRW · 실시간 시세 · 서울외국환중개 매매기준율 · 기관 전망</div>
     <div class="toprow">
-      <h1>달러/원 실시간·전망</h1>
+      <h1>환율 조회</h1>
       <div class="updbox">
         <button type="button" class="updbtn" id="updBtn" disabled>업데이트</button>
         <span class="updmsg" id="updMsg">상태 확인 중…</span>
@@ -389,6 +392,7 @@ img{max-width:100%}
       </div>
       <p class="spec"><b>10분봉 기준</b>으로, 선택한 기간 전체를 <b>한 화면에 드래그 없이</b> 보여 줍니다. 최대 1개월. 하루는 06:00~익일 06:00이고, 주말처럼 거래가 없는 시간은 건너뛰고 이어 그립니다.</p>
       <div class="sumrow" id="rsum"></div>
+      <div class="legend" id="rlegend" aria-hidden="true"></div>
       <div class="rchart" id="rchart"><div class="msg">장중 데이터를 불러오는 중…</div></div>
       <div class="credit" id="rcredit"></div>
     </div>
@@ -397,6 +401,7 @@ img{max-width:100%}
       <p class="spec"><b>하루 = 06:00 ~ 익일 06:00 (1분 단위).</b> 06:00부터 지금까지를 화면 폭 전체에 맞춰 그립니다. 시간이 흐를수록 같은 폭에 더 많은 움직임이 담겨 선의 굴곡이 늘어납니다.</p>
       <div class="nowbox" aria-live="polite"><span class="nlab">현재 달러/원</span><span class="nval"><span id="dnowv">–</span><span class="nunit">원</span></span><span class="nchg" id="dnowc"></span><span class="ntime" id="dnowt"></span></div>
       <div class="sumrow" id="dsum"></div>
+      <div class="legend" aria-hidden="true"><span><span class="sw line"></span>1분 시세(국제 시세)</span><span><span class="sw dash"></span>06:00 시가</span><span class="muted">시세가 없던 구간은 직선으로 이어 그림 · 연한 가로선은 눈금</span></div>
       <div class="rchart" id="dchart"><div class="msg">장중 데이터를 불러오는 중…</div></div>
       <div class="credit" id="dcredit"></div>
     </div>
@@ -1310,7 +1315,7 @@ img{max-width:100%}
   if(darkMQ&&darkMQ.addEventListener)darkMQ.addEventListener("change",function(){if(TV.mounted){TV.mounted=false;mountTV(true)}});
 
   /* ---------- 서버(Cloudflare) 주소: pages.dev 에서는 같은 사이트, 그 밖(github.io 등)에서는 절대 주소 ---------- */
-  var API=/\.pages\.dev$/.test(location.hostname)?"":"https://usdkrw-live.pages.dev";
+  var API=/\.pages\.dev$/.test(location.hostname)?"":"https://fx-monitor.pages.dev";
 
   /* ---------- 1페이지 ②③: 장중 데이터(Yahoo, 열 때마다 서버가 받아 옴) ---------- */
   var ID=null, MODE="day", KOFF=540, DAYM=1440;
@@ -1470,6 +1475,9 @@ img{max-width:100%}
       el("line",{x1:x,x2:x,y1:m.t+ph,y2:m.t+ph+4,"class":"tickmark"},svg);
       var tx=el("text",{x:nearR?m.l+pw:x,y:m.t+ph+17,"class":"xt","text-anchor":nearR?"end":mk.left?"start":"middle"},svg); tx.textContent=mk.a;
     });
+    $("rlegend").innerHTML=N<=240
+      ?'<span><span class="sw cu"></span>상승 10분봉(시가→종가)</span><span><span class="sw cd"></span>하락 10분봉</span><span class="muted">위아래 가는 선은 그 10분의 고가·저가</span>'
+      :'<span><span class="sw line"></span>10분봉 종가</span><span><span class="sw band"></span>10분봉 고가~저가 범위</span><span class="muted">세로 점선은 하루(06:00) 경계</span>';
     if(N<=240){
       var cw=Math.max(1,Math.min(10,bw*0.62));
       for(i=i0;i<=i1;i++){

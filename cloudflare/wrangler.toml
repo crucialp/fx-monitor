@@ -1,6 +1,6 @@
-# Cloudflare Pages: https://usdkrw-live.pages.dev
+# Cloudflare Pages: https://fx-monitor.pages.dev
 # 배포: cd cloudflare && npx wrangler pages deploy (이 폴더에서 실행)
-name = "usdkrw-live"
+name = "fx-monitor"
 pages_build_output_dir = "public"
 compatibility_date = "2026-10-01"
 

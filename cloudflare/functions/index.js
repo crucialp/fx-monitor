@@ -4,7 +4,7 @@ async function page(ctx, file, type) {
   const key = new Request(`https://cache.usdkrw.local/static-${file}`);
   const hit = await cache.match(key);
   if (hit) return hit;
-  const r = await fetch(`https://raw.githubusercontent.com/crucialp/usdkrw-live/main/docs/${file}?t=${Math.floor(Date.now() / 60000)}`);
+  const r = await fetch(`https://raw.githubusercontent.com/crucialp/fx-monitor/main/docs/${file}?t=${Math.floor(Date.now() / 60000)}`);
   if (!r.ok) return new Response("잠시 후 다시 열어 주세요.", { status: 502, headers: { "content-type": "text/plain; charset=utf-8" } });
   const resp = new Response(await r.arrayBuffer(), { headers: { "content-type": type, "cache-control": "public, max-age=60" } });
   ctx.waitUntil(cache.put(key, resp.clone()));

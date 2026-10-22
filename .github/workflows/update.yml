@@ -3,7 +3,7 @@ name: update-data
 on:
   schedule:
     # 시간은 UTC. 평일 KST 09:20·10:20·12:20 (매매기준율은 아침에 한 번 고시, 나머지는 재시도·지연 대비)
-    # 장중 시세·뉴스는 Cloudflare(usdkrw-live.pages.dev)가 열 때마다 받아 오므로 여기서 하지 않는다.
+    # 장중 시세·뉴스는 Cloudflare(fx-monitor.pages.dev)가 열 때마다 받아 오므로 여기서 하지 않는다.
     - cron: "20 0,1,3 * * 1-5"
   workflow_dispatch:
     inputs:
