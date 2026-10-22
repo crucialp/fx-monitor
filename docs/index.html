@@ -275,6 +275,9 @@ img{max-width:100%}
 .nitem .nsrc{font-size:12px;color:var(--muted);white-space:nowrap}
 .nitem.fresh .ntitle{font-weight:600}
 @media (max-width:600px){.nitem{grid-template-columns:40px auto 1fr}.nitem .nsrc{grid-column:3}}
+.ntime{white-space:nowrap}
+.urgent .nitem{grid-template-columns:76px auto 1fr auto}
+@media (max-width:600px){.urgent .nitem{grid-template-columns:76px auto 1fr}}
 .nowbox{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;padding-inline:2px}
 .nowbox .nlab{font-size:13px;color:var(--muted);font-weight:500}
 .nowbox .nval{font-family:var(--font-num);font-size:clamp(28px,4vw,36px);font-weight:500;letter-spacing:-.02em;line-height:1.1;color:var(--ink)}
