@@ -7,7 +7,10 @@ const FEEDS = [
   ["연합인포맥스", "https://news.einfomax.co.kr/rss/S1N16.xml"],
   ["연합인포맥스", "https://news.einfomax.co.kr/rss/S1N9.xml"],
   ["연합뉴스", "https://www.yna.co.kr/rss/economy.xml"],
+  ["연합뉴스", "https://www.yna.co.kr/rss/market.xml"],
 ];
+// 검색 출처: 빙 뉴스 RSS (구글 뉴스는 클라우드 서버 요청을 막음)
+const BING = ["달러-원 환율", "외환-마감 OR 외환-오전 OR 외환-개장", "원·달러 환율 마감", "외환당국 OR 환율 속보", "서울 외환시장"];
 const GOOGLE = [
   '"외환-마감" OR "외환-오전" OR "외환-개장" OR "외환-오후" when:7d',
   "site:kbthink.com 외환 when:3d",
@@ -47,14 +50,15 @@ function* items(xml) {
   for (const it of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
     const x = it[1];
     const t = x.match(/<title>([\s\S]*?)<\/title>/), l = x.match(/<link>([\s\S]*?)<\/link>/), d = x.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
-    if (t && l) yield [unesc(t[1]), unesc(l[1]), when(d && d[1])];
+    const src = x.match(/<News:Source>([\s\S]*?)<\/News:Source>/i);
+    if (t && l) yield [unesc(t[1]), unesc(l[1]), when(d && d[1]), src ? unesc(src[1]) : null];
   }
 }
 
 const STATS = [];
 async function get(url, label) {
   try {
-    const r = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "accept-language": "ko-KR,ko;q=0.9" } });
+    const r = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "accept-language": "ko-KR,ko;q=0.9" }, signal: AbortSignal.timeout(5000) });
     const text = r.ok ? await r.text() : "";
     STATS.push({ src: label, http: r.status, items: (text.match(/<item>/g) || []).length });
     return text;
@@ -67,8 +71,9 @@ async function build() {
   const now = Date.now();
   STATS.length = 0;
   const direct = await Promise.all(FEEDS.map(([s, u]) => get(u, u.replace(/^https:\/\/(www\.)?/, "")).then((x) => [s, x])));
-  const google = await Promise.all(GOOGLE.map((q, i) => get("https://news.google.com/rss/search?" +
-    new URLSearchParams({ q, hl: "ko", gl: "KR", ceid: "KR:ko" }), "google#" + i)));
+  const google = []; // 구글 뉴스는 Cloudflare 서버 요청을 503 으로 막아서(2026-10-22 확인) 쓰지 않는다
+  const bing = await Promise.all(BING.map((q, i) => get("https://www.bing.com/news/search?" +
+    new URLSearchParams({ q, format: "rss", setlang: "ko-KR", cc: "KR", qft: "sortbydate=\"1\"" }), "bing#" + i)));
   const keep = new Map();
   const add = (src, title, link, ts) => {
     const lv = classify(title);
@@ -76,12 +81,13 @@ async function build() {
     const k = norm(title);
     const old = keep.get(k);
     if (old) {
-      if (old.u.includes("news.google.com") && !link.includes("news.google.com")) { old.u = link; old.s = src; }
+      if (/news\.google\.com|bing\.com/.test(old.u) && !/news\.google\.com|bing\.com/.test(link)) { old.u = link; old.s = src; }
       return;
     }
     keep.set(k, { t: title, u: link, s: src, m: Math.floor((ts || now) / 60000), lv });
   };
   for (const [src, xml] of direct) for (const [t, l, ts] of items(xml)) add(src, t, l, ts);
+  for (const xml of bing) for (const [t, l, ts, src] of items(xml)) add(src || "빙 뉴스", t, l, ts);
   for (const xml of google) for (const [t0, l, ts] of items(xml)) {
     const m = t0.match(/^(.*) - ([^-]+)$/);
     add(m ? m[2].trim() : "구글 뉴스", m ? m[1].trim() : t0, l, ts);
@@ -96,5 +102,12 @@ async function build() {
   return { updated: kstNow().iso, sources: STATS.slice(), items: out };
 }
 
-export const onRequestGet = (ctx) => cached(ctx, "news-v2", 120, build, 86400);
+export const onRequestGet = async (ctx) => {
+  // 점검용: ?fresh=1 이면 캐시 없이 바로 만들어 결과나 오류를 그대로 보여 준다
+  if (new URL(ctx.request.url).searchParams.get("fresh") === "1") {
+    try { return new Response(JSON.stringify(await build()), { headers: { "content-type": "application/json; charset=utf-8" } }); }
+    catch (e) { return new Response(JSON.stringify({ error: String(e && e.stack || e) }), { status: 500, headers: { "content-type": "application/json; charset=utf-8" } }); }
+  }
+  return cached(ctx, "news-v2", 120, build, 86400);
+};
 export const onRequestOptions = options;
