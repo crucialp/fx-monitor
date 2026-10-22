@@ -401,7 +401,7 @@ img{max-width:100%}
       <p class="spec"><b>하루 = 06:00 ~ 익일 06:00 (1분 단위).</b> 06:00부터 지금까지를 화면 폭 전체에 맞춰 그립니다. 시간이 흐를수록 같은 폭에 더 많은 움직임이 담겨 선의 굴곡이 늘어납니다.</p>
       <div class="nowbox" aria-live="polite"><span class="nlab">현재 달러/원</span><span class="nval"><span id="dnowv">–</span><span class="nunit">원</span></span><span class="nchg" id="dnowc"></span><span class="ntime" id="dnowt"></span></div>
       <div class="sumrow" id="dsum"></div>
-      <div class="legend" aria-hidden="true"><span><span class="sw line"></span>1분 시세(국제 시세)</span><span><span class="sw dash"></span>06:00 시가</span><span class="muted">시세가 없던 구간은 직선으로 이어 그림 · 연한 가로선은 눈금</span></div>
+      <div class="legend" aria-hidden="true"><span><span class="sw line"></span>1분 시세(국제 시세)</span><span class="muted">시세가 없던 구간은 직선으로 이어 그림 · 연한 가로선은 눈금</span></div>
       <div class="rchart" id="dchart"><div class="msg">장중 데이터를 불러오는 중…</div></div>
       <div class="credit" id="dcredit"></div>
     </div>
@@ -1407,7 +1407,6 @@ img{max-width:100%}
     var pts=[];
     for(i=i0;i<=i1;i++)pts.push(X(t[i]).toFixed(1)+","+Y(c[i]).toFixed(1));
     el("path",{d:"M"+pts.join("L")+"L"+X(endT).toFixed(1)+","+(m.t+ph)+"L"+X(t[i0]).toFixed(1)+","+(m.t+ph)+"Z","class":"darea"},svg);
-    el("line",{x1:m.l,x2:m.l+pw,y1:Y(open),y2:Y(open),"class":"oline"},svg);
     el("path",{d:"M"+pts.join("L"),"class":"dline"},svg);
     var cross=el("line",{x1:0,x2:0,y1:m.t,y2:m.t+ph,"class":"cross",visibility:"hidden"},svg);
     var hv=el("circle",{cx:0,cy:0,r:4,"class":"hov",visibility:"hidden"},svg);
@@ -1419,7 +1418,7 @@ img{max-width:100%}
       placeTip(f.tip,x,W,m.t+6);
     },function(){f.tip.hidden=true;cross.setAttribute("visibility","hidden");hv.setAttribute("visibility","hidden")});
     $("dsum").innerHTML='<span>하루 <b>'+mdhm(start)+' ~ '+mdhm(start+DAYM)+'</b></span>'+
-      '<span>시가(06:00~, 점선) <b>'+f1(open)+'</b></span>'+
+      '<span>시가(06:00~) <b>'+f1(open)+'</b></span>'+
       '<span>고가 <b>'+f1(hi)+'</b> ('+hm(t[ih])+')</span><span>저가 <b>'+f1(lo)+'</b> ('+hm(t[il])+')</span>'+
       (stale?'<span class="muted">지금은 거래가 없는 시간이라 마지막 거래일을 보여 줍니다</span>':'');
     $("dnowv").textContent=f1(now);
