@@ -1328,7 +1328,7 @@ img{max-width:100%}
   function ymdK(m){return kd(m).toISOString().slice(0,10)}
   function d6(dateStr){return dn(dateStr)*DAYM+360-KOFF}          /* 그 날짜 06:00 KST (epoch 분) */
   function dayStart(m){var k=m+KOFF, s0=Math.floor(k/DAYM)*DAYM+360; if(k<s0)s0-=DAYM; return s0-KOFF}
-  function chg(a,b){var d=b-a, cls=d>0.0001?"up":d<-0.0001?"down":"";return '<b class="'+cls+'">'+sg(d,1)+' ('+sg(d/a*100,2)+'%)</b>'}
+  function chg(a,b){var d=Math.round((b-a)*10)/10, cls=d>0?"up":d<0?"down":"";return '<b class="'+cls+'">'+(d===0?"0.0 (0.00%)":sg(d,1)+' ('+sg(d/a*100,2)+'%)')+'</b>'}
   function msg(box,t){box.innerHTML='<div class="msg">'+t+'</div>'}
 
   function loadID(){
