@@ -54,8 +54,8 @@ const RULES = [
   { c: "Euro Zone", re: /ECB Interest Rate Decision/i, cc: "EU", k: "rate", label: "ECB 기준금리" },
 ];
 
-async function day(dateStr) {
-  const r = await fetch(`https://api.nasdaq.com/api/calendar/economicevents?date=${dateStr}`, {
+async function day(dateStr, bust) {
+  const r = await fetch(`https://api.nasdaq.com/api/calendar/economicevents?date=${dateStr}${bust ? "&_=" + Date.now() + bust : ""}`, {
     headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", accept: "application/json", "accept-language": "en-US,en;q=0.9" },
     signal: AbortSignal.timeout(6000),
   });
@@ -212,21 +212,38 @@ export async function onRequestGet(ctx) {
   }
   const cache = caches.default;
   let misses = 0;
-  const results = await Promise.all(dates.slice(0, 12).map(async (ds) => {
-    const key = new Request(`https://cache.usdkrw.local/nasdaq-${ds}`);
-    const hit = await cache.match(key);
-    if (hit) return hit.json();
+  const ckey = (name) => new Request(`https://cache.usdkrw.local/${name}`);
+  const put = (name, rows, ttl) => ctx.waitUntil(cache.put(ckey(name), new Response(JSON.stringify(rows), { headers: { "content-type": "application/json", "cache-control": `public, max-age=${ttl}` } })));
+  const list = dates.slice(0, 12);
+  const got = await Promise.all(list.map(async (ds) => {
+    const hit = await cache.match(ckey(`nasdaq-${ds}`));
+    if (hit) return { ds, rows: await hit.json() };
     misses++;
-    try {
-      const rows = await day(ds);
-      // 지난 날짜는 1일, 오늘·앞으로는 2분 캐시 (발표 직후 실제치가 들어옴)
-      const ttl = ds < kstNow().date ? 86400 : 120;
-      ctx.waitUntil(cache.put(key, new Response(JSON.stringify(rows), { headers: { "content-type": "application/json", "cache-control": `public, max-age=${ttl}` } })));
-      return rows;
-    } catch (e) {
-      return [{ _error: String(e && e.message || e), _date: ds }];
-    }
+    try { return { ds, rows: await day(ds), fresh: true }; } catch (e) { return { ds, error: String((e && e.message) || e) }; }
   }));
+  // Nasdaq 은 '오늘' 날짜를 물으면 서버에 따라 다음 날 내용을 그대로 돌려줄 때가 있다(2026-10-22: date=10-22 가 10-23 과 똑같이 와서 한은 금리 결정이 빠짐).
+  // 다음 날과 똑같으면 틀린 것으로 보고 두 번까지 다시 받고, 그래도 같으면 마지막으로 맞았던 사본을 쓴다. 맞는 것만 캐시.
+  const sig = (rows) => rows.map((r) => `${r.gmt}|${r.country}|${r.eventName}`).join("~");
+  const nextDs = (ds) => new Date(Date.parse(ds + "T00:00:00Z") + 86400e3).toISOString().slice(0, 10);
+  const same = (g) => { const n = got.find((x) => x.ds === nextDs(g.ds)); return !!(g.rows && n && n.rows && g.rows.length >= 5 && sig(g.rows) === sig(n.rows)); };
+  for (const g of got) {
+    if (!same(g)) continue;
+    g.fresh = false; g.rows = null;
+    for (let k = 1; k <= 2 && !g.rows; k++) {
+      misses++;
+      try { const rows = await day(g.ds, k); if (sig(rows) !== sig(got.find((x) => x.ds === nextDs(g.ds)).rows)) { g.rows = rows; g.fresh = true; } } catch {}
+    }
+    if (!g.rows) {
+      const good = await cache.match(ckey(`nasdaq-good-${g.ds}`));
+      if (good) g.rows = await good.json(); else g.error = "Nasdaq 이 다음 날 내용을 보냄";
+    }
+  }
+  for (const g of got) if (g.fresh && g.rows) {
+    // 지난 날짜는 1일, 오늘·앞으로는 2분 캐시 (발표 직후 실제치가 들어옴). 맞았던 사본은 1주일
+    put(`nasdaq-${g.ds}`, g.rows, g.ds < kstNow().date ? 86400 : 120);
+    put(`nasdaq-good-${g.ds}`, g.rows, 7 * 86400);
+  }
+  const results = got.map((g) => (g.rows ? g.rows.map((x) => ({ ...x, _date: g.ds })) : [{ _error: g.error, _date: g.ds }]));
   const errors = results.flat().filter((x) => x._error).map((x) => x._date + " " + x._error);
   const events = normalize(results.flat().filter((x) => !x._error)).filter((e) => e.t >= from - 240 && e.t <= to + 240);
   // 금리 결정 실제 시각(+한은 의결문 공개)을 차례로 확인. 점검용: ?fresh=1 이면 캐시 없이 다시 찾고 과정(_check)을 보여 줌
@@ -252,7 +269,8 @@ export async function onRequestGet(ctx) {
   }
   for (let i = events.length - 1; i >= 0; i--) if (events[i].t < from || events[i].t > to) events.splice(i, 1);
   events.sort((a, b) => a.t - b.t);
-  return new Response(JSON.stringify({ updated: kstNow().iso, source: "Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각과 한은 의결문 공개 시각은 언론 첫 속보(네이버 뉴스 입력 시각)", from, to, errors, events }), {
+  const diag = fresh ? { nasdaq: list.map((ds, i) => [ds, results[i].length, results[i].filter((x) => x.country === "South Korea").map((x) => `${x.gmt} ${x.eventName} ${x.actual}`)]), budget: budget.left, misses } : undefined;
+  return new Response(JSON.stringify({ diag, updated: kstNow().iso, source: "Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각과 한은 의결문 공개 시각은 언론 첫 속보(네이버 뉴스 입력 시각)", from, to, errors, events }), {
     headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*" },
   });
 }
