@@ -1375,7 +1375,7 @@ img{max-width:100%}
     var lw=DK==="lw";
     $("lwbox").hidden=!lw; $("tvbox").hidden=lw; $("lwInt").hidden=!lw; $("tvCtl").hidden=lw; $("lwLegend").hidden=!lw; $("lwevents").hidden=!lw; $("lwInfo").hidden=!lw;
     $("dragCredit").innerHTML=lw
-      ?'데이터: Yahoo Finance KRW=X(국제 시세, 약 1~2분 지연) · 지표·금리 결정: Nasdaq 경제 캘린더 · 차트: <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener nofollow">TradingView Lightweight Charts</a>'
+      ?'데이터: Yahoo Finance KRW=X(국제 시세, 약 1~2분 지연) · 지표: Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각: 언론 첫 속보 · 차트: <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener nofollow">TradingView Lightweight Charts</a>'
       :'차트·시세 제공: <a href="https://www.tradingview.com/symbols/USDKRW/?exchange=FX_IDC" rel="noopener nofollow" target="_blank">TradingView</a> (FX_IDC:USDKRW) · 실시간 · 지표 표시는 안 됨';
   }
   [].forEach.call(document.querySelectorAll("[data-dk]"),function(b){b.addEventListener("click",function(){DK=b.dataset.dk; try{localStorage.setItem("usdkrw-dk",DK)}catch(e){} renderDrag()})});
@@ -1630,7 +1630,7 @@ img{max-width:100%}
       var nb=(mode==="badge"&&e._n)?'<span class="nb">'+e._n+'</span>':'';
       return '<div class="evr"><span class="ntime">'+tm+'</span><span>'+nb+'<b style="font-family:var(--font-body);font-weight:600">'+e.label+'</b></span>'+
         '<span>발표 <b>'+(e.actual||"–")+'</b>'+(e.note?' '+e.note:'')+'</span><span class="num">예상 '+(e.forecast||"–")+'</span><span class="num">이전 '+(e.previous||"–")+'</span>'+
-        '<span class="st">'+(done?"발표됨":e.t>nowM?"예정":"발표 대기")+'</span></div>';
+        '<span class="st">'+(done?"발표됨":e.t>nowM?"예정":"발표 대기")+(e.tsrc?' · <a href="'+e.turl+'" target="_blank" rel="noopener nofollow" title="이 시각은 언론사들의 첫 속보 입력 시각(네이버 뉴스)으로 확인함">'+e.tsrc+'</a>':'')+'</span></div>';
     }).join("");
   }
 
@@ -1686,7 +1686,7 @@ img{max-width:100%}
     $("dnowv").textContent=f1(now);
     $("dnowc").innerHTML="06:00 시가 대비 "+chg(open,now);
     $("dnowt").textContent=(stale?"마지막 거래 ":"")+mdhm(endT)+" 기준";
-    $("dcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 1분 단위 · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연) · 지표·금리 결정: Nasdaq 경제 캘린더";
+    $("dcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 1분 단위 · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연) · 지표: Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각: 언론 첫 속보(네이버 뉴스 입력 시각)";
     eventList($("devents"),dayEv,LAY.mode,"이 날의 주요 지표·금리 결정 ("+mdhm(start)+" ~ "+mdhm(start+DAYM)+", 한국 시간 · Nasdaq 캘린더)",dayEv.loading);
   }
 

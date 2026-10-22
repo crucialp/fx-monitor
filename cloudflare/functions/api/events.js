@@ -95,8 +95,76 @@ function normalize(rows) {
   return out.sort((a, b) => a.t - b.t);
 }
 
-// 발표 시각은 일정표(Nasdaq) 기준. 뉴스 피드 시각은 언론사·검색엔진마다 틀리거나(미리 써 둔 기사, 시간대 오류) 늦게 수집돼
-// 실제 결정 시각을 잡는 데 쓰지 않는다(2026-10-22 확인). 일본은행은 정해진 발표 시각이 없어 '대략'으로 표시.
+// 한은·일본은행 금리 결정의 실제 발표 시각: 그날 네이버 뉴스에 실린 [속보]/[1보] 기사들의 '입력' 시각(기사 페이지에 초 단위로 박힘)을 모아
+// 서로 다른 언론사 2곳 이상이 10분 안에 몰린 가장 이른 시각을 쓴다. 못 찾으면 일정표 시각 그대로.
+// (2026-10-22 한은 동결: 연합·경향·아시아경제·뉴스1·뉴시스·마이데일리·중앙 7곳이 09:50:00~09:50:25.
+//  RSS·검색 목록의 시각, 인포맥스 공개 사이트(약 2시간 늦게 게시), 기사 '수정' 시각은 틀리므로 쓰지 않는다.)
+const CONFIRM = {
+  KR: { q: "속보 한은 기준금리", who: /한은|한국은행|금통위/, what: /금리/, act: /동결|인상|인하/, before: 60, after: 240 },
+  JP: { q: "속보 일본은행 금리", who: /일본은행|日銀|일은|BOJ/i, what: /금리/, act: /동결|인상|인하/, before: 180, after: 300 },
+};
+const UA = { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36", "accept-language": "ko-KR,ko;q=0.9" };
+const kstDate = (min) => new Date(min * 60000 + 9 * 3600e3).toISOString().slice(0, 10);
+
+const isFlash = (cf, title) => /속보|1보/.test(title) && cf.who.test(title) && cf.what.test(title) && cf.act.test(title);
+
+// 검색 결과 카드마다 '네이버뉴스' 링크 → 제목(.tit) 순서로 나온다. 제목으로 먼저 거르고 남은 기사만 열어 본다(요청 수 절약).
+// 정확도순과 오래된순을 함께 본다: 오래된순만 보면 아침 '오늘 금통위…' 예고 기사가 첫 쪽을 채우는 날이 있다(2026-08-27).
+async function naverFirst(cf, ds, sched) {
+  const d = ds.replace(/-/g, ".");
+  const cand = new Map();
+  const pages = await Promise.all([0, 2].map(async (sort) => {
+    const url = `https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(cf.q)}&sort=${sort}&pd=3&ds=${d}&de=${d}`;
+    const r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(6000) });
+    if (!r.ok) throw new Error(`네이버 검색 HTTP ${r.status}`);
+    return r.text();
+  }));
+  for (const h of [pages[1], pages[0]]) {   // 오래된순 먼저(첫 속보가 앞에 옴)
+    const links = [...h.matchAll(/https:\/\/n\.news\.naver\.com\/mnews\/article\/\d+\/\d+/g)].map((m) => [m.index, m[0]]);
+    for (const m of h.matchAll(/data-heatmap-target="\.tit"><span[^>]*>(.*?)<\/span>/g)) {
+      const title = m[1].replace(/<[^>]+>/g, "").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
+      let link = null;
+      for (const [p, l] of links) { if (p < m.index && m.index - p < 4000) link = l; if (p > m.index) break; }
+      if (link && isFlash(cf, title) && !cand.has(link)) cand.set(link, title);
+    }
+  }
+  // 제목 짝을 못 찾은 오래된순 링크도 자리가 남으면 연다(제목은 기사 페이지에서 다시 거른다)
+  for (const m of pages[1].matchAll(/https:\/\/n\.news\.naver\.com\/mnews\/article\/\d+\/\d+/g)) if (cand.size < 12 && !cand.has(m[0])) cand.set(m[0], "");
+  const arts = await Promise.all([...cand.keys()].slice(0, 12).map(async (l) => {
+    try {
+      const h = await (await fetch(l, { headers: UA, signal: AbortSignal.timeout(5000) })).text();
+      const t = /data-date-time="(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})"/.exec(h);   // 입력 시각 (한국 시간)
+      const ti = /<meta property="og:title" content="([^"]+)"/.exec(h);
+      if (!t || !ti) return null;
+      const sec = (Date.UTC(+t[1], t[2] - 1, +t[3], +t[4], +t[5], +t[6]) - 9 * 3600e3) / 1000;
+      return { sec, title: ti[1].replace(/&quot;/g, '"').replace(/&amp;/g, "&"), press: l.split("/")[5], url: l };
+    } catch (err) { return { fail: l.split("/").slice(5).join("/") + " " + String((err && err.message) || err) }; }
+  }));
+  const fails = arts.filter((a) => a && a.fail).map((a) => a.fail);
+  const ok = arts.filter((a) => a && !a.fail && isFlash(cf, a.title)
+    && a.sec / 60 >= sched - cf.before && a.sec / 60 <= sched + cf.after).sort((a, b) => a.sec - b.sec);
+  for (const a of ok) {
+    const near = ok.filter((b) => b.sec >= a.sec && b.sec - a.sec <= 600);
+    const press = new Set(near.map((b) => b.press));
+    if (press.size >= 2) return { t: Math.floor(a.sec / 60), n: press.size, title: a.title, url: a.url, checked: cand.size, fails };
+  }
+  return { t: null, n: ok.length, checked: cand.size, fails };
+}
+
+async function confirmTime(ctx, e, fresh) {
+  const cf = CONFIRM[e.cc];
+  if (!cf || e.k !== "rate" || Date.now() / 60000 < e.t - cf.before) return null;
+  const key = new Request(`https://cache.usdkrw.local/confirm-v5-${e.cc}-${kstDate(e.t)}`);
+  const hit = fresh ? null : await caches.default.match(key);
+  if (hit) return hit.json();
+  let res;
+  try { res = await naverFirst(cf, kstDate(e.t), e.t); } catch (err) { res = { t: null, error: String((err && err.message) || err) }; }
+  // 찾았고 기사를 모두 열어 봤으면 한 달 고정. 일부 기사를 못 열었으면 1시간 뒤(더 이른 속보가 빠졌을 수 있음), 못 찾았으면 5분 뒤 다시
+  const ttl = res.t == null ? 300 : (res.fails && res.fails.length) ? 3600 : 30 * 86400;
+  ctx.waitUntil(caches.default.put(key, new Response(JSON.stringify(res), { headers: { "content-type": "application/json", "cache-control": `public, max-age=${ttl}` } })));
+  return res;
+}
+
 export async function onRequestGet(ctx) {
   const u = new URL(ctx.request.url);
   const now = Math.floor(Date.now() / 60000);
@@ -124,8 +192,16 @@ export async function onRequestGet(ctx) {
     }
   }));
   const errors = results.flat().filter((x) => x._error).map((x) => x._date + " " + x._error);
-  const events = normalize(results.flat().filter((x) => !x._error)).filter((e) => e.t >= from && e.t <= to);
-  return new Response(JSON.stringify({ updated: kstNow().iso, source: "Nasdaq 경제 캘린더", from, to, errors, events }), {
+  const events = normalize(results.flat().filter((x) => !x._error)).filter((e) => e.t >= from - 240 && e.t <= to + 240);
+  await Promise.all(events.map(async (e) => {
+    const c = await confirmTime(ctx, e, u.searchParams.has("fresh"));
+    if (c && u.searchParams.has("fresh")) e._check = c;   // 점검용: ?fresh=1 이면 캐시 없이 다시 찾고 과정을 보여 줌
+    if (c && c.t != null) { e.ts = e.t; e.t = c.t; e.approx = false; e.tsrc = `언론 ${c.n}곳 첫 속보`; e.turl = c.url; }
+    else if (c && c.error) errors.push(e.cc + " 발표 시각 확인 실패: " + c.error);
+  }));
+  for (let i = events.length - 1; i >= 0; i--) if (events[i].t < from || events[i].t > to) events.splice(i, 1);
+  events.sort((a, b) => a.t - b.t);
+  return new Response(JSON.stringify({ updated: kstNow().iso, source: "Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각은 언론 첫 속보(네이버 뉴스 입력 시각)", from, to, errors, events }), {
     headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*" },
   });
 }
