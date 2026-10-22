@@ -1460,7 +1460,8 @@ img{max-width:100%}
     /* 눈금: 하루(06시) 경계, 짧으면 3시간 */
     var spanD=(t[i1]-t[i0])/DAYM, maxN=Math.max(3,Math.floor(pw/64)), marks=[];
     if(spanD<=1.5){
-      for(i=i0;i<=i1;i++){var hh=kd(t[i]).getUTCHours(), mi=kd(t[i]).getUTCMinutes(); if(mi===0&&hh%3===0)marks.push({k:i,a:hm(t[i])})}
+      var hrs=Math.max(1,(t[i1]-t[i0])/60), hstep=[1,2,3,6].filter(function(k){return hrs/k<=maxN})[0]||6;
+      for(i=i0;i<=i1;i++){var hh=kd(t[i]).getUTCHours(), mi=kd(t[i]).getUTCMinutes(); if(mi===0&&hh%hstep===0)marks.push({k:i,a:hm(t[i])})}
     }else{
       var bd=[]; for(i=i0;i<=i1;i++){if(i===i0||dayStart(t[i])!==dayStart(t[i-1]))bd.push(i)}
       var st=[1,2,3,5,7].filter(function(k){return bd.length/k<=maxN})[0]||7;
