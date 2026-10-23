@@ -1,4 +1,6 @@
-// 환율 관련 뉴스: 연합인포맥스·연합뉴스 RSS + 구글 뉴스 검색. 제목·링크·출처·시각만. 2분 캐시.
+// 환율 관련 뉴스: 연합인포맥스·연합뉴스 RSS + 빙 뉴스 검색. 제목·링크·출처·시각만. 2분 캐시.
+// 빙 뉴스의 pubDate 는 기사마다 2시간 늦거나 7시간 이르거나 제각각이라(2026-10-23 확인) 쓰지 않고,
+// 기사 페이지에 적힌 입력 시각을 한 번 읽어 저장해 쓴다. 시각을 확인 못 한 검색 기사는 보여 주지 않는다.
 // 분류(키워드 규칙): 긴급 = 속보·개입 등 + 환율/영향 요인, 외환 = 외환시장 기사, 영향 = 환율을 움직일 재료.
 import { cached, kstNow, options } from "../../lib/common.js";
 
@@ -67,7 +69,50 @@ async function get(url, label) {
 
 const norm = (t) => t.replace(/[^\p{L}\p{N}]+/gu, "").slice(0, 60);
 
-async function build() {
+// 빙 링크(apiclick.aspx?...&url=원래주소)에서 언론사 주소를 꺼낸다
+function realUrl(l) {
+  try { const u = new URL(l); return /bing\.com$/.test(u.hostname) && u.searchParams.get("url") ? u.searchParams.get("url") : l; } catch { return l; }
+}
+// 기사 페이지의 입력 시각: 메타 태그·JSON-LD·네이버·'입력 2026.10.22 18:06' 순으로 찾는다. 시간대가 없으면 한국 시간.
+const PT = [
+  /property="article:published_time"\s+content="([^"]+)"/, /content="([^"]+)"\s+property="article:published_time"/,
+  /"datePublished"\s*:\s*"([^"]+)"/, /data-date-time="([^"]+)"/, /property="og:regDate"\s+content="([^"]+)"/,
+  /property="dable:published_time"\s+content="([^"]+)"/, /name="pubdate"\s+content="([^"]+)"/, /itemprop="datePublished"\s+content="([^"]+)"/,
+  /(?:기사입력|입력|등록|승인)\s*:?\s*(20\d\d[.\-/]\s?\d{1,2}[.\-/]\s?\d{1,2}\.?\s+(?:오[전후]\s*)?\d{1,2}:\d{2})/,
+];
+function parsePT(raw) {
+  raw = raw.trim();
+  if (/^20\d\d-\d\d-\d\dT\d\d:\d\d/.test(raw) && /(Z|[+-]\d\d:?\d\d)$/.test(raw)) { const t = Date.parse(raw); return isNaN(t) ? null : t; }
+  const m = raw.match(/(20\d\d)[.\-/]\s?(\d{1,2})[.\-/]\s?(\d{1,2})\.?[T\s]+(오[전후])?\s*(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  let h = +m[5];
+  if (m[4] === "오후" && h < 12) h += 12;
+  if (m[4] === "오전" && h === 12) h = 0;
+  return Date.UTC(+m[1], +m[2] - 1, +m[3], h - 9, +m[6]);
+}
+async function pubTime(url, ctx) {
+  const key = new Request("https://cache.usdkrw.local/pt-v2/" + encodeURIComponent(url));
+  const hit = await caches.default.match(key);
+  if (hit) return (await hit.json()).t;
+  let t = null;
+  try {
+    const r = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36", "accept-language": "ko-KR,ko;q=0.9" }, signal: AbortSignal.timeout(5000) });
+    const h = r.ok ? await r.text() : "";
+    for (const p of PT) {
+      const m = h.match(p); if (!m) continue;
+      const v = parsePT(m[1]);
+      // 날짜만 있는 값(한국 시간 00:00 정각)은 시각을 모르는 것으로 보고 다음 방법으로
+      if (v && (v + 9 * 3600e3) % 86400e3 === 0) continue;
+      if (v) { t = v; break; }
+    }
+  } catch {}
+  if (t && t > Date.now() + 10 * 60000) t = null;
+  // 찾은 시각은 30일, 못 찾은 페이지는 하루 동안 다시 열지 않는다
+  ctx.waitUntil(caches.default.put(key, new Response(JSON.stringify({ t }), { headers: { "content-type": "application/json", "cache-control": `public, max-age=${t ? 30 * 86400 : 86400}` } })));
+  return t;
+}
+
+async function build(ctx) {
   const now = Date.now();
   STATS.length = 0;
   const direct = await Promise.all(FEEDS.map(([s, u]) => get(u, u.replace(/^https:\/\/(www\.)?/, "")).then((x) => [s, x])));
@@ -87,15 +132,28 @@ async function build() {
     keep.set(k, { t: title, u: link, s: src, m: Math.floor((ts || now) / 60000), lv });
   };
   for (const [src, xml] of direct) for (const [t, l, ts] of items(xml)) add(src, t, l, ts);
-  // 빙 뉴스의 pubDate 는 시간대가 틀려(실제보다 9~18시간 이르게 표기) 처음 수집한 시각을 쓴다
-  for (const xml of bing) for (const [t, l, ts, src] of items(xml)) add(src || "빙 뉴스", t, l, null);
+  // 빙 뉴스: 이미 RSS 로 받은 기사가 아니면 기사 페이지의 입력 시각을 확인해서만 넣는다.
+  // 한 번에 여는 페이지 수는 요청당 외부 호출 한도(50회) 안에서 28개까지, 빙 표기 시각이 최근인 것부터. 나머지는 다음 갱신 때.
+  const cand = new Map();
+  for (const xml of bing) for (const [t, l, ts, src] of items(xml)) {
+    if (!classify(t) || keep.has(norm(t)) || cand.has(norm(t))) continue;
+    cand.set(norm(t), { t, u: realUrl(l), s: src || "빙 뉴스", hint: ts || 0 });
+  }
+  const list = [...cand.values()].sort((a, b) => b.hint - a.hint);
+  let opened = 0;
+  await Promise.all(list.map(async (c) => {
+    const k = "https://cache.usdkrw.local/pt-v2/" + encodeURIComponent(c.u);
+    if (!(await caches.default.match(new Request(k)))) { if (opened >= 28) return; opened++; }
+    const t = await pubTime(c.u, ctx);
+    if (t) add(c.s.replace(/ on MSN$/, ""), c.t, c.u, t);
+  }));
   for (const xml of google) for (const [t0, l, ts] of items(xml)) {
     const m = t0.match(/^(.*) - ([^-]+)$/);
     add(m ? m[2].trim() : "구글 뉴스", m ? m[1].trim() : t0, l, ts);
   }
   // 일시적으로 일부 출처가 실패해도 목록이 줄지 않도록 직전 성공본과 합친다(최근 7일)
   try {
-    const last = await caches.default.match(new Request("https://cache.usdkrw.local/news-v3-last-good"));
+    const last = await caches.default.match(new Request("https://cache.usdkrw.local/news-v4-last-good"));
     if (last) for (const v of (await last.json()).items || []) { const k = norm(v.t); if (!keep.has(k)) keep.set(k, v); }
   } catch {}
   const cut = Math.floor(now / 60000) - 7 * 1440;
@@ -106,9 +164,9 @@ async function build() {
 export const onRequestGet = async (ctx) => {
   // 점검용: ?fresh=1 이면 캐시 없이 바로 만들어 결과나 오류를 그대로 보여 준다
   if (new URL(ctx.request.url).searchParams.get("fresh") === "1") {
-    try { return new Response(JSON.stringify(await build()), { headers: { "content-type": "application/json; charset=utf-8" } }); }
+    try { return new Response(JSON.stringify(await build(ctx)), { headers: { "content-type": "application/json; charset=utf-8" } }); }
     catch (e) { return new Response(JSON.stringify({ error: String(e && e.stack || e) }), { status: 500, headers: { "content-type": "application/json; charset=utf-8" } }); }
   }
-  return cached(ctx, "news-v3", 120, build, 86400);
+  return cached(ctx, "news-v4", 120, () => build(ctx), 86400);
 };
 export const onRequestOptions = options;

@@ -928,7 +928,7 @@ img{max-width:100%}
   </main>
 
   <main id="p4" data-page="4" hidden>
-    <div class="pagehead"><span class="eyebrow">4페이지</span><h2>환율 뉴스</h2><p class="muted small">환율에 영향을 줄 수 있는 기사를 자동으로 모읍니다(연합인포맥스·연합뉴스 RSS, 구글 뉴스 검색). 제목과 링크만 보여 주며 본문은 각 언론사에서 보세요. 화면을 열어 두면 1분마다 새 기사를 확인합니다.</p></div>
+    <div class="pagehead"><span class="eyebrow">4페이지</span><h2>환율 뉴스</h2><p class="muted small">환율에 영향을 줄 수 있는 기사를 자동으로 모읍니다(연합인포맥스·연합뉴스 RSS, 빙 뉴스 검색 — 검색 기사는 기사에 적힌 입력 시각으로 표시). 제목과 링크만 보여 주며 본문은 각 언론사에서 보세요. 화면을 열어 두면 1분마다 새 기사를 확인합니다.</p></div>
     <section id="news" style="padding-top:16px">
       <div class="ctl">
         <div class="seg" role="group" aria-label="분류">
@@ -958,6 +958,7 @@ img{max-width:100%}
     <span>기관 전망을 모아 정리한 자료이며 투자 권유가 아니다. 수치는 각 출처 원문 기준이고, 확인하지 못한 값은 "–"로 비웠다.</span>
     <span>환율 데이터: 서울외국환중개 매매기준율 (<a href="https://www.smbs.biz/ExRate/StdExRate.jsp" target="_blank" rel="noopener">smbs.biz</a>) · 최종 갱신 <span id="updStamp">2026-10-21</span></span>
     <span>실시간 시세: TradingView (FX_IDC:USDKRW) · 전망 작성 기준일 2026-10-21 · 공개 웹 출처 기반 조사 · Claude 작성</span>
+    <span>방문 통계를 위해 접속 IP·대략적 위치·브라우저 정보를 90일간 기록합니다(사이트 운영자만 열람).</span>
   </footer>
 </div>
 
@@ -1357,6 +1358,15 @@ img{max-width:100%}
 
   /* ---------- 서버(Cloudflare) 주소: pages.dev 에서는 같은 사이트, 그 밖(github.io 등)에서는 절대 주소 ---------- */
   var API=/\.pages\.dev$/.test(location.hostname)?"":"https://fx-monitor.pages.dev";
+  /* 방문 기록(사이트 주인만 /admin 에서 조회): 화면을 열 때 한 번 보낸다 */
+  (function(){
+    try{
+      var vid=null, own=false;
+      try{vid=localStorage.getItem("fx-vid"); if(!vid){vid=Math.random().toString(36).slice(2,10)+Date.now().toString(36); localStorage.setItem("fx-vid",vid)}; own=localStorage.getItem("fx-owner")==="1"}catch(e){}
+      var body=JSON.stringify({v:vid,r:document.referrer||"",o:own?1:0,w:screen.width||0}), hu=API+"/api/hit";
+      if(!(navigator.sendBeacon&&navigator.sendBeacon(hu,body)))fetch(hu,{method:"POST",mode:"no-cors",body:body,keepalive:true}).catch(function(){});
+    }catch(e){}
+  })();
 
 
   /* ---------- ① 드래그: 지표 표시 차트(Lightweight Charts, TradingView 오픈소스) / TradingView 원본 ---------- */
