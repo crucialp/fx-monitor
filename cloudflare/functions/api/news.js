@@ -90,10 +90,18 @@ function parsePT(raw) {
   if (m[4] === "오전" && h === 12) h = 0;
   return Date.UTC(+m[1], +m[2] - 1, +m[3], h - 9, +m[6]);
 }
-async function pubTime(url, ctx) {
-  const key = new Request("https://cache.usdkrw.local/pt-v2/" + encodeURIComponent(url));
-  const hit = await caches.default.match(key);
-  if (hit) return (await hit.json()).t;
+// 기사별 입력 시각은 주소→[시각, 확인한 때] 하나의 묶음으로 엣지 캐시에 둔다(기사마다 따로 두면 캐시 호출만으로
+// 요청당 외부 호출 한도 50회를 넘어 오류가 났음, 2026-10-23). 8일 지난 기사, 하루 지난 '못 찾음'은 지워서 다시 확인.
+const PT_KEY = "https://cache.usdkrw.local/pt-map-v1";
+async function loadPT() {
+  try { const r = await caches.default.match(new Request(PT_KEY)); return r ? await r.json() : {}; } catch { return {}; }
+}
+function savePT(ctx, map) {
+  const now = Date.now();
+  for (const [u, [t, at]] of Object.entries(map)) if ((t && t < now - 8 * 86400e3) || (!t && at < now - 86400e3)) delete map[u];
+  ctx.waitUntil(caches.default.put(new Request(PT_KEY), new Response(JSON.stringify(map), { headers: { "content-type": "application/json", "cache-control": "public, max-age=2592000" } })).catch(() => {}));
+}
+async function pageTime(url) {
   let t = null;
   try {
     const r = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36", "accept-language": "ko-KR,ko;q=0.9" }, signal: AbortSignal.timeout(5000) });
@@ -106,10 +114,7 @@ async function pubTime(url, ctx) {
       if (v) { t = v; break; }
     }
   } catch {}
-  if (t && t > Date.now() + 10 * 60000) t = null;
-  // 찾은 시각은 30일, 못 찾은 페이지는 하루 동안 다시 열지 않는다
-  ctx.waitUntil(caches.default.put(key, new Response(JSON.stringify({ t }), { headers: { "content-type": "application/json", "cache-control": `public, max-age=${t ? 30 * 86400 : 86400}` } })));
-  return t;
+  return t && t <= Date.now() + 10 * 60000 ? t : null;
 }
 
 async function build(ctx) {
@@ -140,20 +145,18 @@ async function build(ctx) {
     cand.set(norm(t), { t, u: realUrl(l), s: src || "빙 뉴스", hint: ts || 0 });
   }
   const list = [...cand.values()].sort((a, b) => b.hint - a.hint);
-  let opened = 0;
-  await Promise.all(list.map(async (c) => {
-    const k = "https://cache.usdkrw.local/pt-v2/" + encodeURIComponent(c.u);
-    if (!(await caches.default.match(new Request(k)))) { if (opened >= 28) return; opened++; }
-    const t = await pubTime(c.u, ctx);
-    if (t) add(c.s.replace(/ on MSN$/, ""), c.t, c.u, t);
-  }));
+  const pt = await loadPT();
+  const need = list.filter((c) => !(c.u in pt)).slice(0, 25);
+  await Promise.all(need.map(async (c) => { pt[c.u] = [await pageTime(c.u), Date.now()]; }));
+  if (need.length) savePT(ctx, pt);
+  for (const c of list) { const e = pt[c.u]; if (e && e[0]) add(c.s.replace(/ on MSN$/, ""), c.t, c.u, e[0]); }
   for (const xml of google) for (const [t0, l, ts] of items(xml)) {
     const m = t0.match(/^(.*) - ([^-]+)$/);
     add(m ? m[2].trim() : "구글 뉴스", m ? m[1].trim() : t0, l, ts);
   }
   // 일시적으로 일부 출처가 실패해도 목록이 줄지 않도록 직전 성공본과 합친다(최근 7일)
   try {
-    const last = await caches.default.match(new Request("https://cache.usdkrw.local/news-v4-last-good"));
+    const last = await caches.default.match(new Request("https://cache.usdkrw.local/news-v5-last-good"));
     if (last) for (const v of (await last.json()).items || []) { const k = norm(v.t); if (!keep.has(k)) keep.set(k, v); }
   } catch {}
   const cut = Math.floor(now / 60000) - 7 * 1440;
@@ -167,6 +170,6 @@ export const onRequestGet = async (ctx) => {
     try { return new Response(JSON.stringify(await build(ctx)), { headers: { "content-type": "application/json; charset=utf-8" } }); }
     catch (e) { return new Response(JSON.stringify({ error: String(e && e.stack || e) }), { status: 500, headers: { "content-type": "application/json; charset=utf-8" } }); }
   }
-  return cached(ctx, "news-v4", 120, () => build(ctx), 86400);
+  return cached(ctx, "news-v5", 120, () => build(ctx), 86400);
 };
 export const onRequestOptions = options;
