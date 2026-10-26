@@ -69,6 +69,33 @@ def ad(label="광고"):
     return f'<div class="adslot" role="complementary" aria-label="광고"><div><b>{label}</b></div></div>'
 
 
+def side_ads(w, top=56):
+    # 양옆 세로 광고(스크롤해도 따라오는 고정 칸). 본문(최대 폭 w)을 가리지 않게 자리가 있을 때만 보인다:
+    # 300×600(하프 페이지) 이 들어가면 300, 아니면 160×600(와이드 스카이스크래퍼), 그보다 좁은 화면은 숨김.
+    gap, edge = 24, 16
+    bp1, bp2 = w + 2 * (160 + gap + edge), w + 2 * (300 + gap + edge)
+    half = w // 2
+    return f"""<style>
+.v2side{{display:none}}
+@media (min-width:{bp1}px){{
+  .v2side{{display:block;position:fixed;top:{top}px;z-index:4;width:160px}}
+  .v2side.l{{left:calc(50% - {half}px - {gap}px - 160px)}}
+  .v2side.r{{right:calc(50% - {half}px - {gap}px - 160px)}}
+  .v2side .adslot{{min-height:600px;margin:0}}
+  .v2side .s300{{display:none}}
+}}
+@media (min-width:{bp2}px){{
+  .v2side{{width:300px}}
+  .v2side.l{{left:calc(50% - {half}px - {gap}px - 300px)}}
+  .v2side.r{{right:calc(50% - {half}px - {gap}px - 300px)}}
+  .v2side .s160{{display:none}}.v2side .s300{{display:inline}}
+}}
+</style>
+<div class="v2side l"><div class="adslot" role="complementary" aria-label="광고"><div><b>측면 광고</b><span class="s160">160×600</span><span class="s300">300×600</span></div></div></div>
+<div class="v2side r"><div class="adslot" role="complementary" aria-label="광고"><div><b>측면 광고</b><span class="s160">160×600</span><span class="s300">300×600</span></div></div></div>
+"""
+
+
 TV_ADV = """<div class="tvbox" style="height:560px"><div class="tradingview-widget-container" style="height:100%"><div class="tradingview-widget-container__widget" style="height:100%"></div>
 <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
 {"autosize":true,"symbol":"FX_IDC:USDKRW","interval":"1","timezone":"Asia/Seoul","theme":"light","style":"2","locale":"kr","allow_symbol_change":false,"hide_side_toolbar":true,"calendar":false,"support_host":"https://www.tradingview.com"}
@@ -396,6 +423,11 @@ def main():
     fx, rates = build_fx(), build_rates()
     assert FONT_ABS in fx and FONT_ABS in rates
     com = build_com()
+    # 양옆 광고: 환율 조회·커뮤니티 본문 1120px, 금리 모니터 1180px(흰 상단 바가 붙어 있어 그 아래 108px 부터)
+    def sides(page, w, top=56):
+        assert page.count("<body>") == 1
+        return page.replace("<body>", "<body>\n" + side_ads(w, top), 1)
+    fx, rates, com = sides(fx, 1120), sides(rates, 1180, 108), sides(com, 1120)
     (OUT / "community").mkdir(exist_ok=True)
     (OUT / "community" / "index.html").write_text(com, encoding="utf-8")
     (OUT / "index.html").write_text(fx.replace(FONT_ABS, "/fonts/pretendard/"), encoding="utf-8")
