@@ -19,7 +19,7 @@ export async function onRequestPost(ctx) {
   ctx.waitUntil((async () => {
     await env.DB.prepare("INSERT INTO visits (ts, ip, country, region, city, asn, org, ua, ref, host, vid, me, w, bot) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
       .bind(Date.now(), req.headers.get("cf-connecting-ip"), cf.country || null, cf.region || null, cf.city || null, cf.asn || null,
-        cut(cf.asOrganization, 120), cut(req.headers.get("user-agent"), 300), cut(b.r, 300), origin.replace(/^https:\/\//, ""),
+        cut(cf.asOrganization, 120), cut(req.headers.get("user-agent"), 300), cut(b.r, 300), origin.replace(/^https:\/\//, "") + (b.p === "community" ? "/community" : ""),
         cut(b.v, 40), b.o ? 1 : 0, Number.isFinite(b.w) ? Math.round(b.w) : null, isBot(req.headers.get("user-agent") || "", cf.asOrganization || "") ? 1 : 0)
       .run();
     if (Math.random() < 0.02) await env.DB.prepare("DELETE FROM visits WHERE ts < ?").bind(Date.now() - 90 * 86400e3).run();

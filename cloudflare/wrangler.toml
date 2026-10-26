@@ -20,3 +20,9 @@ database_id = "b0a080bc-ecea-437e-995a-993de1d2d14f"
 binding = "RATE_DB"
 database_name = "rate-monitor-visits"
 database_id = "c0d6c9bb-7f3b-4360-87b0-468d75485c96"
+
+# 커뮤니티(/community/) 글·댓글 — 가입 없이 닉네임+비밀번호. 표 구조는 schema/community.sql
+[[d1_databases]]
+binding = "CDB"
+database_name = "fx-community"
+database_id = "0d599547-a8b6-4fa9-8074-9620bfdc4b0a"

@@ -6,3 +6,4 @@ __pycache__/
 *.json.tmp
 docs/_evtest.html
 v2/dist/
+**/.dev.vars

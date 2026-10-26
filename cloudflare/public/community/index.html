@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="달러/원과 금리 이야기를 나누는 게시판. 가입 없이 닉네임과 비밀번호로 글을 씁니다.">
+<title>커뮤니티 · 환율 조회</title>
+<link rel="stylesheet" href="/fonts/pretendard/pretendardvariable-dynamic-subset.css">
+<style>
+/* 커뮤니티: 환율 조회·금리 모니터와 같은 색·글꼴. 목록 → 글 보기 → 댓글, 가입 없이 닉네임+비밀번호. */
+:root{
+  --bg:#f3f5f7;--surface:#ffffff;--ink:#12161b;--ink-2:#46505b;--muted:#6c7581;
+  --rule:#dee2e7;--rule-strong:#c3c9d1;--chip:#eaeef2;--accent:#2a6fd6;--up:#d6453d;--notice:#fff8e6;--notice-rule:#f0dca8;
+  --font:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1215;--surface:#171b20;--ink:#eef1f4;--ink-2:#b4bcc6;--muted:#8a939e;
+    --rule:#2a3038;--rule-strong:#3b434d;--chip:#232930;--accent:#5596ee;--up:#ec6a62;--notice:#2a2516;--notice-rule:#4a3f22;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1215;--surface:#171b20;--ink:#eef1f4;--ink-2:#b4bcc6;--muted:#8a939e;
+  --rule:#2a3038;--rule-strong:#3b434d;--chip:#232930;--accent:#5596ee;--up:#ec6a62;--notice:#2a2516;--notice-rule:#4a3f22;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;letter-spacing:-.015em;text-wrap:pretty;word-break:keep-all}
+h1{font-size:clamp(28px,4.4vw,40px);line-height:1.2;font-weight:700}
+h2{font-size:clamp(20px,2.6vw,25px);line-height:1.35;font-weight:700}
+h3{font-size:16px;font-weight:600}
+p{margin:0}
+a{color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+.muted{color:var(--muted)} .small{font-size:13px}
+.sitebar{background:#16181d;font-size:13px;line-height:1.4}
+.sitebar-in{max-width:1180px;margin:0 auto;padding:6px 16px;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.sitebar a{color:#c9ced8;text-decoration:none;padding:4px 12px;border-radius:999px;font-weight:500}
+.sitebar a:hover{color:#fff}
+.sitebar a[aria-current=page]{background:#fff;color:#16181d;font-weight:600}
+.wrap{max-width:920px;margin:0 auto;padding:28px 20px 64px}
+@media (max-width:480px){.wrap{padding-inline:16px}}
+.top{display:grid;gap:8px;padding-bottom:20px;border-bottom:1px solid var(--rule);margin-bottom:20px}
+.eyebrow{font-size:12px;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.lede{color:var(--ink-2);max-width:62ch}
+
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 13px;font-size:14px;cursor:pointer;text-decoration:none;white-space:nowrap;line-height:1.4}
+.btn:hover{background:var(--chip)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.primary:hover{filter:brightness(1.07);background:var(--accent)}
+.btn.warn{color:var(--up)}
+.lnk{border:0;background:none;padding:0 2px;color:var(--muted);font-size:12.5px;cursor:pointer}
+.lnk:hover{color:var(--ink);text-decoration:underline}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;margin-bottom:12px}
+.cats{display:flex;gap:6px;flex-wrap:wrap}
+.cats button{border:1px solid var(--rule-strong);background:var(--surface);border-radius:999px;padding:3px 13px;font-size:13.5px;color:var(--ink-2);cursor:pointer}
+.cats button:hover{background:var(--chip)}
+.cats button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg);font-weight:600}
+.search{margin-left:auto;display:flex;gap:6px}
+.search input{width:220px;border:1px solid var(--rule-strong);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:14px;line-height:1.4}
+@media (max-width:640px){.cats{flex:1 1 100%}.search{margin-left:0;flex:1 1 0;min-width:0}.search input{flex:1;width:auto;min-width:0}}
+.admbar{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-2);background:var(--chip);border-radius:8px;padding:6px 12px;margin-bottom:12px}
+
+.board{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.row+.row{border-top:1px solid var(--rule)}
+.rowlink{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 10px;padding:11px 16px 12px;text-decoration:none;color:var(--ink)}
+.rowlink:hover{background:var(--chip)}
+.rowlink:visited .t{color:var(--muted)}
+.row.notice .rowlink{background:var(--notice)}
+.row.hid .rowlink{opacity:.6}
+.cat{grid-row:span 2;align-self:start;margin-top:2px;font-size:11.5px;font-weight:600;border:1px solid var(--rule-strong);border-radius:4px;padding:0 6px;color:var(--ink-2);white-space:nowrap}
+.cat.c-공지{border-color:#c9a13b;color:#8a6a12}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .cat.c-공지{color:#e0bd62;border-color:#7a6326}}
+.cat.c-환율{color:#2a6fd6;border-color:color-mix(in srgb,#2a6fd6 45%,transparent)}
+.cat.c-금리{color:#1a9a6c;border-color:color-mix(in srgb,#1a9a6c 45%,transparent)}
+.cat.c-질문{color:#8a55d6;border-color:color-mix(in srgb,#8a55d6 45%,transparent)}
+.ttl{font-size:15px;font-weight:500;line-height:1.45;min-width:0;overflow-wrap:anywhere}
+.ttl .nc{color:var(--accent);font-size:13px;font-weight:600;margin-left:5px}
+.ttl .new{display:inline-grid;place-items:center;width:15px;height:15px;margin-left:5px;border-radius:3px;background:var(--up);color:#fff;font-size:10px;font-weight:700;vertical-align:2px}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:0 6px;font-size:12.5px;color:var(--muted);min-width:0}
+.meta .sep{opacity:.6}
+.nick{color:var(--ink-2);font-weight:500}
+.nick .tag{margin-left:4px;font-size:11px;color:var(--muted);font-weight:400;border:1px solid var(--rule);border-radius:3px;padding:0 3px}
+.nick.adm{color:#fff;background:var(--accent);font-weight:600;font-size:11.5px;border-radius:3px;padding:0 6px}
+.flag{color:var(--up);font-weight:600}
+.ip{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.empty{padding:36px 16px;text-align:center;color:var(--muted);list-style:none}
+.more{text-align:center;margin-top:14px}
+
+.back{display:inline-block;margin-bottom:14px;font-size:14px;color:var(--ink-2);text-decoration:none}
+.back:hover{color:var(--ink)}
+.post{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:22px 24px}
+@media (max-width:480px){.post{padding:18px 16px}}
+.phead{display:grid;gap:8px;padding-bottom:14px;border-bottom:1px solid var(--rule)}
+.phead .cat{justify-self:start;grid-row:auto}
+.pbody{padding:18px 0 22px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15.5px;line-height:1.75}
+.pbody a,.cbody a{color:var(--accent);word-break:break-all}
+.pact{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid var(--rule);padding-top:14px}
+.grow{flex:1}
+.like.on{border-color:var(--up);color:var(--up);font-weight:600}
+.edited{font-size:12px}
+
+.comments{margin-top:22px}
+.comments h3{margin-bottom:10px}
+.clist{list-style:none;margin:0 0 16px;padding:0;background:var(--surface);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.c{padding:12px 16px}
+.c+.c{border-top:1px solid var(--rule)}
+.c.hid{opacity:.6}
+.c .meta{margin-bottom:3px}
+.cbody{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14.5px;line-height:1.65}
+.cform,.form{display:grid;gap:10px;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.who{grid-template-columns:1fr}}
+:where(input:not([type=checkbox]):not([type=radio]),select,textarea){width:100%;border:1px solid var(--rule-strong);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:15px}
+textarea{resize:vertical;line-height:1.6}
+.field{display:grid;gap:5px;font-size:13.5px;color:var(--ink-2);font-weight:500}
+.factions{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.err{color:var(--up);font-size:13.5px;min-height:0}
+.err:empty{display:none}
+.hp{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;opacity:0}
+.note{font-size:13px;color:var(--muted);line-height:1.6}
+.count{justify-self:end;font-size:12px;color:var(--muted)}
+
+dialog{border:1px solid var(--rule-strong);border-radius:12px;background:var(--surface);color:var(--ink);padding:20px;width:min(420px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(10,12,16,.45)}
+dialog form{display:grid;gap:12px}
+.dact{display:flex;justify-content:flex-end;gap:8px}
+.reasons{display:grid;gap:6px;font-size:14px}
+.reasons label{display:flex;gap:8px;align-items:center}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#16181d;color:#fff;border-radius:999px;padding:9px 18px;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.2);z-index:10;max-width:calc(100vw - 32px)}
+.toast[hidden]{display:none}
+
+.queue h3{margin:22px 0 8px}
+.qt{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--rule);font-size:13.5px}
+.qt th,.qt td{border-bottom:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top}
+.qt th{font-size:12px;color:var(--muted);font-weight:600}
+.qt td.act{white-space:nowrap}
+.qt .lnk+.lnk{margin-left:10px}
+.qt td:nth-child(3){white-space:nowrap}
+.tblwrap{overflow-x:auto}
+
+.rules{margin-top:36px;border-top:1px solid var(--rule);padding-top:20px;display:grid;gap:14px;color:var(--ink-2);font-size:13.5px}
+.rules details{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:12px 16px}
+.rules summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.rules ul{margin:10px 0 2px;padding-left:18px;display:grid;gap:5px}
+</style>
+</head>
+<body>
+<nav class="sitebar" aria-label="사이트"><div class="sitebar-in"><a href="/" id="sb-fx">환율 조회</a><a href="/rates/" id="sb-rates">금리 모니터</a><a href="/community/" id="sb-com" aria-current="page">커뮤니티</a></div></nav>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">환율 조회 · 금리 모니터 이용자 게시판</span>
+    <h1><a href="/community/" data-nav style="color:inherit;text-decoration:none">커뮤니티</a></h1>
+    <p class="lede">달러/원과 금리 이야기를 나누는 곳입니다. 가입 없이 닉네임과 비밀번호로 쓰고, 그 비밀번호로 고치거나 지웁니다.</p>
+  </header>
+
+  <main id="v-list">
+    <div class="toolbar">
+      <div class="cats" id="cats" role="group" aria-label="말머리"></div>
+      <form class="search" id="sform" role="search"><input type="search" id="q" placeholder="제목·내용 검색" aria-label="검색"><button class="btn" type="submit">검색</button></form>
+      <a class="btn primary" id="bwrite" href="/community/?write" data-nav>글쓰기</a>
+    </div>
+    <div class="admbar" id="admbar" hidden>관리자로 보는 중 · 가려진 글도 보입니다 <span class="grow"></span><a class="btn" href="/community/?queue" data-nav>신고·가림 목록</a></div>
+    <ol class="board" id="list" aria-live="polite"></ol>
+    <div class="more"><button class="btn" id="bmore" hidden>더 보기</button></div>
+  </main>
+
+  <main id="v-post" hidden>
+    <a class="back" href="/community/" data-nav id="back">← 목록으로</a>
+    <article class="post" id="post"></article>
+    <section class="comments" id="comments" aria-label="댓글"></section>
+  </main>
+
+  <main id="v-write" hidden>
+    <a class="back" href="/community/" data-nav>← 목록으로</a>
+    <form id="wform" class="form" novalidate>
+      <h2 id="wtitle">글쓰기</h2>
+      <label class="field">말머리<select id="wcat" required></select></label>
+      <label class="field">제목<input id="wt" maxlength="80" required autocomplete="off"></label>
+      <label class="field">내용<textarea id="wb" rows="12" maxlength="5000" required></textarea></label>
+      <span class="count" id="wcount">0 / 5,000</span>
+      <div class="who" id="wwho">
+        <label class="field" id="wnick">닉네임<input id="wn" maxlength="12" autocomplete="nickname"></label>
+        <label class="field" id="wpw"><span id="wpwl">비밀번호 (4자 이상, 고치거나 지울 때 씀)</span><input id="wp" type="password" maxlength="64" autocomplete="new-password"></label>
+      </div>
+      <input type="text" id="whp" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <p class="note">글을 올리면 스팸·불법 게시물 대응을 위해 접속 IP와 브라우저 정보가 함께 저장되고 90일 뒤 지워집니다. 연락처·리딩방 홍보, 투자 권유, 욕설·비방은 지워집니다.</p>
+      <div class="factions"><span class="err" id="werr" role="alert"></span><span class="grow"></span><a class="btn" href="/community/" data-nav id="wcancel">취소</a><button class="btn primary" type="submit" id="wsubmit">올리기</button></div>
+    </form>
+  </main>
+
+  <main id="v-queue" hidden class="queue">
+    <a class="back" href="/community/" data-nav>← 목록으로</a>
+    <h2>신고·가림 목록</h2>
+    <div id="queue"></div>
+  </main>
+
+  <section class="rules" aria-label="운영 원칙">
+    <details>
+      <summary>운영 원칙</summary>
+      <ul>
+        <li>욕설·비방, 특정인을 겨냥한 공격, 차별·혐오 표현은 쓸 수 없습니다.</li>
+        <li>특정 종목·코인 매수 권유, 리딩방·유료 정보방 홍보, 연락처(전화번호·오픈채팅·텔레그램) 올리기는 금지입니다. 이 게시판의 글은 투자 권유가 아니며 투자 판단과 책임은 각자에게 있습니다.</li>
+        <li>광고·도배, 다른 사람의 개인정보 노출, 기사 전문처럼 남의 저작물을 통째로 옮기는 것도 금지입니다(링크와 짧은 인용은 괜찮습니다).</li>
+        <li>위반한 글은 예고 없이 가리거나 지우고, 되풀이하면 글쓰기를 막습니다. 서로 다른 세 사람이 신고한 글은 운영자가 확인할 때까지 자동으로 가려집니다.</li>
+        <li>명예훼손·저작권 침해 같은 권리 침해는 글의 <b>신고</b> 버튼으로 사유를 적어 알려 주세요. 확인한 뒤 가림·삭제 등 필요한 조치를 합니다.</li>
+        <li>글의 저작권은 쓴 사람에게 있고, 이 게시판에 보여 주는 데 동의한 것으로 봅니다.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>개인정보 안내</summary>
+      <ul>
+        <li>가입이 없어 이름·이메일·전화번호는 받지 않습니다.</li>
+        <li>글·댓글을 쓰면 닉네임·내용·쓴 시각과 함께 스팸·불법 게시물 대응을 위해 접속 IP와 브라우저 정보가 저장되며, 90일 뒤 지워집니다. 글쓰기가 막힌 IP는 차단을 풀 때까지 보관합니다.</li>
+        <li>비밀번호는 되돌릴 수 없는 방식(HMAC-SHA256)으로만 저장해 운영자도 알 수 없습니다. 잊어버렸다면 신고 버튼에 '본인 글 삭제 요청'으로 알려 주세요.</li>
+        <li>닉네임 옆 네 글자는 같은 접속에서 쓴 글을 알아보게 하는 표시입니다. IP로 만들지만 이 글자로 IP를 알아낼 수는 없습니다.</li>
+        <li>추천·신고는 한 사람이 한 번만 하도록 IP로 만든 같은 방식의 값만 남깁니다.</li>
+        <li>지운 글과 댓글은 바로 완전히 지워집니다. 수사기관이 법령에 따른 절차로 요청하면 보관 중인 정보를 제공할 수 있습니다.</li>
+      </ul>
+    </details>
+  </section>
+</div>
+<dialog id="dlg"></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id)};
+  var CATS=["환율","금리","자유","질문"], BASE="/community/";
+  var ME={admin:false}, S={cat:"",q:"",before:0};
+
+  function el(tag,attrs){
+    var e=document.createElement(tag);
+    if(attrs)for(var k in attrs){var v=attrs[k];if(v==null||v===false)continue;
+      if(k==="class")e.className=v;else if(k.slice(0,2)==="on")e.addEventListener(k.slice(2),v);else e.setAttribute(k,v===true?"":v)}
+    for(var i=2;i<arguments.length;i++)add(e,arguments[i]);
+    return e;
+  }
+  function add(e,c){if(c==null||c===false)return;if(Array.isArray(c)){c.forEach(function(x){add(e,x)});return}e.append(c.nodeType?c:document.createTextNode(String(c)))}
+  function sep(){return el("span",{class:"sep"},"·")}
+
+  /* 시각(한국 시간) */
+  var F=new Intl.DateTimeFormat("ko-KR",{timeZone:"Asia/Seoul",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"});
+  function parts(ms){var o={};F.formatToParts(new Date(ms)).forEach(function(p){o[p.type]=p.value});return o}
+  function short(ms){var a=parts(ms),b=parts(Date.now());if(a.year===b.year&&a.month===b.month&&a.day===b.day)return a.hour+":"+a.minute;if(a.year===b.year)return a.month+"."+a.day;return a.year.slice(2)+"."+a.month+"."+a.day}
+  function full(ms){var a=parts(ms);return a.year+"-"+a.month+"-"+a.day+" "+a.hour+":"+a.minute}
+  function rel(ms){var d=(Date.now()-ms)/60000;if(d<1)return "방금";if(d<60)return Math.floor(d)+"분 전";if(d<1440)return Math.floor(d/60)+"시간 전";return short(ms)}
+
+  /* 저장(이 브라우저에만): 닉네임, 이미 본 글(조회수 한 번만) */
+  function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+  function getNick(){return ls("fx-com-nick")||""}
+  function setNick(n){if(n)ls("fx-com-nick",n)}
+  function viewed(id){var a=(ls("fx-com-seen")||"").split(",");return a.indexOf(String(id))>=0}
+  function markViewed(id){var a=(ls("fx-com-seen")||"").split(",").filter(Boolean);a.push(String(id));ls("fx-com-seen",a.slice(-500).join(","))}
+
+  function api(path,body){
+    var init={method:body?"POST":"GET",credentials:"same-origin",headers:{}};
+    if(body){init.headers["content-type"]="application/json";init.body=JSON.stringify(body)}
+    return fetch("/api/community/"+path,init).then(function(r){
+      return r.json().catch(function(){return {}}).then(function(j){if(!r.ok&&!j.error)j.error="문제가 생겼습니다 ("+r.status+"). 잠시 뒤 다시 해 주세요.";return j});
+    }).catch(function(){return {error:"연결이 끊겼습니다. 잠시 뒤 다시 해 주세요."}});
+  }
+  var TT=0;
+  function toast(msg){var t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(TT);TT=setTimeout(function(){t.hidden=true},2600)}
+  function setMe(m){if(m){ME=m;$("admbar").hidden=!ME.admin}}
+
+  /* 본문: 글자로만 넣고 http(s) 주소만 링크로 */
+  function linkify(text){
+    var f=document.createDocumentFragment(),re=/https?:\/\/[^\s<>"]+/gi,last=0,m;
+    while((m=re.exec(text))){
+      var url=m[0].replace(/[),.!?'"\]]+$/,"");
+      var ok=false;try{ok=/^https?:$/.test(new URL(url).protocol)}catch(e){}
+      f.append(text.slice(last,m.index));
+      f.append(ok?el("a",{href:url,target:"_blank",rel:"nofollow ugc noopener noreferrer"},url):url);
+      last=m.index+url.length;re.lastIndex=last;
+    }
+    f.append(text.slice(last));
+    return f;
+  }
+  function nickEl(x){
+    if(x.admin)return el("span",{class:"nick adm"},x.nick);
+    return el("span",{class:"nick"},x.nick,x.tag?el("span",{class:"tag",title:"같은 접속에서 쓴 글에는 같은 네 글자가 붙습니다"},x.tag):null);
+  }
+  function flags(x){
+    if(!ME.admin||!(x.hidden||x.reports))return null;
+    return [sep(),el("span",{class:"flag"},(x.hidden===2?"신고 누적으로 자동 가림":x.hidden?"가림":"")+(x.hidden&&x.reports?" · ":"")+(x.reports?"신고 "+x.reports:""))];
+  }
+
+  /* ---------- 화면 전환(주소: ?p=글번호, ?write, ?edit=글번호, ?queue, ?cat=&q=) ---------- */
+  function show(v){["list","post","write","queue"].forEach(function(k){$("v-"+k).hidden=(k!==v)})}
+  function nav(url){history.pushState(null,"",url);route();window.scrollTo(0,0)}
+  document.addEventListener("click",function(e){
+    var a=e.target.closest&&e.target.closest("a[data-nav]");
+    if(!a||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+    e.preventDefault();nav(a.getAttribute("href"));
+  });
+  window.addEventListener("popstate",route);
+  function route(){
+    var u=new URLSearchParams(location.search);
+    if(+u.get("p")>0)return showPost(+u.get("p"));
+    if(u.has("write"))return showWrite(0);
+    if(+u.get("edit")>0)return showWrite(+u.get("edit"));
+    if(u.has("queue"))return showQueue();
+    S.cat=CATS.indexOf(u.get("cat"))>=0?u.get("cat"):"";S.q=u.get("q")||"";
+    showList();
+  }
+  function listUrl(){var q=new URLSearchParams();if(S.cat)q.set("cat",S.cat);if(S.q)q.set("q",S.q);var s=q.toString();return BASE+(s?"?"+s:"")}
+
+  /* ---------- 목록 ---------- */
+  function renderCats(){
+    $("cats").replaceChildren.apply($("cats"),[""].concat(CATS).map(function(c){
+      return el("button",{type:"button","aria-pressed":String(S.cat===c),onclick:function(){S.cat=c;nav(listUrl())}},c||"전체");
+    }));
+  }
+  function rowEl(x,notice){
+    var fresh=!notice&&Date.now()-x.created<86400e3;
+    return el("li",{class:"row"+(notice?" notice":"")+(x.hidden?" hid":"")},
+      el("a",{class:"rowlink",href:BASE+"?p="+x.id,"data-nav":true},
+        el("span",{class:"cat c-"+x.cat},x.cat),
+        el("span",{class:"ttl"},el("span",{class:"t"},x.title),x.nc?el("span",{class:"nc","aria-label":"댓글 "+x.nc+"개"},"["+x.nc+"]"):null,fresh?el("span",{class:"new",title:"24시간 안에 올라온 글"},"N"):null),
+        el("span",{class:"meta"},nickEl(x),sep(),el("time",{datetime:new Date(x.created).toISOString(),title:full(x.created)},short(x.created)),sep(),"조회 "+x.views,x.likes?[sep(),"추천 "+x.likes]:null,flags(x))));
+  }
+  function showList(){
+    show("list");document.title="커뮤니티 · 환율 조회";
+    renderCats();$("q").value=S.q;S.before=0;
+    $("list").replaceChildren(el("li",{class:"empty"},"불러오는 중…"));$("bmore").hidden=true;
+    loadMore(true);
+  }
+  function loadMore(reset){
+    var q=new URLSearchParams();if(S.cat)q.set("cat",S.cat);if(S.q)q.set("q",S.q);if(!reset&&S.before)q.set("before",S.before);
+    $("bmore").disabled=true;
+    return api("posts?"+q).then(function(j){
+      $("bmore").disabled=false;
+      var L=$("list");
+      if(j.error){if(reset)L.replaceChildren(el("li",{class:"empty"},j.error));else toast(j.error);return}
+      setMe(j.me);
+      if(reset){L.replaceChildren();(j.notices||[]).forEach(function(x){L.append(rowEl(x,true))})}
+      j.items.forEach(function(x){L.append(rowEl(x))});
+      if(reset&&!j.items.length)L.append(el("li",{class:"empty"},S.q||S.cat?"조건에 맞는 글이 없습니다.":"아직 글이 없습니다. 첫 글을 써 보세요."));
+      if(j.items.length)S.before=j.items[j.items.length-1].id;
+      $("bmore").hidden=!j.more;
+    });
+  }
+  $("bmore").addEventListener("click",function(){loadMore(false)});
+  $("sform").addEventListener("submit",function(e){e.preventDefault();S.q=$("q").value.trim();nav(listUrl())});
+
+  /* ---------- 글 보기 ---------- */
+  function showPost(id,focus){
+    show("post");$("back").setAttribute("href",BASE);
+    var box=$("post");if(!focus){box.replaceChildren(el("p",{class:"muted"},"불러오는 중…"));$("comments").replaceChildren()}
+    var first=!viewed(id);
+    return api("post/"+id+(first&&!focus?"?v=1":"")).then(function(j){
+      if(j.error){box.replaceChildren(el("p",{class:"empty"},j.error));$("comments").replaceChildren();document.title="커뮤니티 · 환율 조회";return}
+      if(first)markViewed(id);
+      setMe(j.me);var p=j.post;document.title=p.title+" · 커뮤니티";
+      var likeN=el("span",{class:"n"},p.likes);
+      var likeB=el("button",{class:"btn like"+(j.liked?" on":""),type:"button","aria-pressed":String(!!j.liked),onclick:function(){
+        api("post/"+p.id+"/like",{}).then(function(r){if(r.error)return toast(r.error);likeB.classList.add("on");likeB.setAttribute("aria-pressed","true");likeN.textContent=r.likes;if(r.already)toast("이미 추천한 글입니다.")});
+      }},"추천 ",likeN);
+      var own=[];
+      if(!ME.admin||p.admin)own.push(el("a",{class:"btn",href:BASE+"?edit="+p.id,"data-nav":true},"고치기"));
+      own.push(el("button",{class:"btn warn",type:"button",onclick:function(){delPost(p)}},"지우기"));
+      if(ME.admin){
+        own.push(p.hidden?el("button",{class:"btn",type:"button",onclick:function(){adm("unhide","post",p.id)}},"보이기"):el("button",{class:"btn",type:"button",onclick:function(){adm("hide","post",p.id)}},"가리기"));
+        if(!p.admin)own.push(el("button",{class:"btn warn",type:"button",onclick:function(){adm("ban","post",p.id)}},"IP 차단"));
+      }
+      box.replaceChildren(
+        el("div",{class:"phead"},el("span",{class:"cat c-"+p.cat},p.cat),el("h2",{},p.title),
+          el("div",{class:"meta"},nickEl(p),sep(),el("time",{datetime:new Date(p.created).toISOString()},full(p.created)),p.updated?el("span",{class:"edited",title:"고친 시각 "+full(p.updated)},"(고침)"):null,sep(),"조회 "+p.views,ME.admin&&p.ip?[sep(),el("span",{class:"ip"},p.ip)]:null,flags(p))),
+        el("div",{class:"pbody"},linkify(p.body)),
+        el("div",{class:"pact"},likeB,el("button",{class:"btn",type:"button",onclick:function(){reportDlg("post",p.id)}},"신고"),el("span",{class:"grow"}),own));
+      renderComments(p,j.comments);
+      if(focus){var t=$(focus);if(t)t.scrollIntoView({block:"center"})}
+    });
+  }
+  function renderComments(p,cs){
+    var sec=$("comments"),ol=el("ol",{class:"clist"});
+    cs.forEach(function(c){
+      var tools=[el("button",{class:"lnk",type:"button",onclick:function(){reportDlg("comment",c.id)}},"신고"),el("button",{class:"lnk",type:"button",onclick:function(){delComment(c,p)}},"지우기")];
+      if(ME.admin){
+        tools.push(c.hidden?el("button",{class:"lnk",type:"button",onclick:function(){adm("unhide","comment",c.id)}},"보이기"):el("button",{class:"lnk",type:"button",onclick:function(){adm("hide","comment",c.id)}},"가리기"));
+        if(!c.admin)tools.push(el("button",{class:"lnk",type:"button",onclick:function(){adm("ban","comment",c.id)}},"IP 차단"));
+      }
+      ol.append(el("li",{class:"c"+(c.hidden?" hid":""),id:"c"+c.id},
+        el("div",{class:"meta"},nickEl(c),sep(),el("time",{title:full(c.created)},rel(c.created)),ME.admin&&c.ip?[sep(),el("span",{class:"ip"},c.ip)]:null,flags(c),el("span",{class:"grow"}),tools),
+        el("div",{class:"cbody"},linkify(c.body))));
+    });
+    if(!cs.length)ol.append(el("li",{class:"empty small"},"아직 댓글이 없습니다."));
+    sec.replaceChildren(el("h3",{},"댓글 ",el("span",{class:"muted"},cs.length)),ol,commentForm(p));
+  }
+  function commentForm(p){
+    var ta=el("textarea",{rows:3,maxlength:1000,placeholder:"댓글을 적어 주세요","aria-label":"댓글 내용"});
+    var nk=el("input",{maxlength:12,placeholder:"닉네임",autocomplete:"nickname","aria-label":"닉네임",value:getNick()});
+    var pw=el("input",{type:"password",maxlength:64,placeholder:"비밀번호 (4자 이상)",autocomplete:"new-password","aria-label":"비밀번호"});
+    var hp=el("input",{class:"hp",tabindex:"-1",autocomplete:"off","aria-hidden":"true"});
+    var err=el("span",{class:"err",role:"alert"}),btn=el("button",{class:"btn primary",type:"submit"},"댓글 달기");
+    var f=el("form",{class:"cform",novalidate:true},ME.admin?el("p",{class:"small muted"},"운영자로 씁니다."):el("div",{class:"who"},nk,pw),ta,hp,
+      el("div",{class:"factions"},err,el("span",{class:"small muted"},"IP는 스팸 대응용으로만 저장되고 90일 뒤 지워집니다."),btn));
+    f.addEventListener("submit",function(e){
+      e.preventDefault();btn.disabled=true;err.textContent="";
+      api("post/"+p.id+"/comments",{body:ta.value,nick:nk.value,pw:pw.value,hp:hp.value}).then(function(r){
+        btn.disabled=false;if(r.error){err.textContent=r.error;return}
+        setNick(nk.value.trim());showPost(p.id,"c"+r.id);
+      });
+    });
+    return f;
+  }
+
+  /* ---------- 지우기·신고·관리자 ---------- */
+  function ask(title,fields,okText,run){
+    var d=$("dlg"),err=el("p",{class:"err",role:"alert"}),ok=el("button",{class:"btn primary",type:"submit"},okText);
+    var f=el("form",{novalidate:true},el("h3",{},title),fields,err,el("div",{class:"dact"},el("button",{class:"btn",type:"button",onclick:function(){d.close()}},"취소"),ok));
+    f.addEventListener("submit",function(e){e.preventDefault();ok.disabled=true;err.textContent="";
+      Promise.resolve(run()).then(function(msg){ok.disabled=false;if(msg)err.textContent=msg;else d.close()})});
+    d.replaceChildren(f);d.showModal();var i=f.querySelector("input,textarea");if(i)i.focus();
+  }
+  function pwField(){return el("input",{type:"password",maxlength:64,placeholder:"글 쓸 때 정한 비밀번호",autocomplete:"current-password","aria-label":"비밀번호"})}
+  function delPost(p){
+    if(ME.admin){if(!confirm("이 글과 댓글을 모두 지울까요? 되돌릴 수 없습니다."))return;
+      return api("post/"+p.id+"/delete",{}).then(function(r){if(r.error)return toast(r.error);toast("지웠습니다.");nav(BASE)})}
+    var pw=pwField();
+    ask("글 지우기",[el("p",{class:"small muted"},"글과 달린 댓글이 모두 지워지고 되돌릴 수 없습니다."),pw],"지우기",function(){
+      return api("post/"+p.id+"/delete",{pw:pw.value}).then(function(r){if(r.error)return r.error;toast("지웠습니다.");nav(BASE)});
+    });
+  }
+  function delComment(c,p){
+    if(ME.admin){if(!confirm("이 댓글을 지울까요?"))return;
+      return api("comment/"+c.id+"/delete",{}).then(function(r){if(r.error)return toast(r.error);showPost(p.id,"comments")})}
+    var pw=pwField();
+    ask("댓글 지우기",[pw],"지우기",function(){
+      return api("comment/"+c.id+"/delete",{pw:pw.value}).then(function(r){if(r.error)return r.error;toast("지웠습니다.");showPost(p.id,"comments")});
+    });
+  }
+  var REASONS=["욕설·비방","광고·도배","투자 권유·리딩방","개인정보 노출","권리 침해(명예훼손·저작권)","본인 글 삭제 요청","기타"];
+  function reportDlg(kind,id){
+    var box=el("div",{class:"reasons"},REASONS.map(function(r,i){return el("label",{},el("input",{type:"radio",name:"why",value:r,checked:i===0}),r)}));
+    var more=el("textarea",{rows:2,maxlength:150,placeholder:"자세한 내용 (선택)","aria-label":"자세한 내용"});
+    ask(kind==="post"?"글 신고":"댓글 신고",[box,more],"신고하기",function(){
+      var w=box.querySelector("input:checked"),why=(w?w.value:"기타")+(more.value.trim()?": "+more.value.trim():"");
+      return api("report",{kind:kind,id:id,reason:why}).then(function(r){if(r.error)return r.error;toast(r.already?"이미 신고했습니다.":"신고했습니다. 운영자가 확인합니다.")});
+    });
+  }
+  function adm(action,kind,id,extra){
+    if(action==="ban"&&!confirm("이 글을 쓴 IP의 글쓰기를 막고 이 글을 가릴까요?"))return;
+    var b={action:action,kind:kind,id:id};for(var k in extra||{})b[k]=extra[k];
+    return api("admin",b).then(function(r){if(r.error)return toast(r.error);toast("처리했습니다.");route()});
+  }
+
+  /* ---------- 글쓰기·고치기 ---------- */
+  function showWrite(editId){
+    show("write");$("werr").textContent="";$("wsubmit").disabled=false;
+    $("wtitle").textContent=editId?"글 고치기":"글쓰기";$("wsubmit").textContent=editId?"고치기":"올리기";
+    document.title=(editId?"글 고치기":"글쓰기")+" · 커뮤니티";
+    var cats=(ME.admin?["공지"]:[]).concat(CATS);
+    $("wcat").replaceChildren.apply($("wcat"),[el("option",{value:""},"말머리 고르기")].concat(cats.map(function(c){return el("option",{value:c},c)})));
+    $("wcat").value=S.cat||"";$("wt").value="";$("wb").value="";$("wp").value="";$("wn").value=getNick();
+    $("wform").dataset.edit=editId||"";
+    $("wnick").hidden=!!editId||ME.admin;$("wpw").hidden=ME.admin;$("wwho").hidden=ME.admin;
+    $("wpwl").textContent=editId?"비밀번호 (글 쓸 때 정한 것)":"비밀번호 (4자 이상, 고치거나 지울 때 씀)";
+    $("wp").setAttribute("autocomplete",editId?"current-password":"new-password");
+    $("wcancel").setAttribute("href",editId?BASE+"?p="+editId:listUrl());
+    count();
+    if(editId)api("post/"+editId).then(function(j){
+      if(j.error){$("werr").textContent=j.error;$("wsubmit").disabled=true;return}
+      var p=j.post;$("wcat").value=p.cat;$("wt").value=p.title;$("wb").value=p.body;count();
+      if(ME.admin&&p.admin){$("wpw").hidden=true;$("wwho").hidden=true}else{$("wwho").hidden=false;$("wpw").hidden=false}
+    });
+  }
+  function count(){$("wcount").textContent=$("wb").value.length.toLocaleString()+" / 5,000"}
+  $("wb").addEventListener("input",count);
+  $("wform").addEventListener("submit",function(e){
+    e.preventDefault();var id=+this.dataset.edit||0;
+    var b={cat:$("wcat").value,title:$("wt").value,body:$("wb").value,nick:$("wn").value,pw:$("wp").value,hp:$("whp").value};
+    $("wsubmit").disabled=true;$("werr").textContent="";
+    api(id?"post/"+id+"/edit":"posts",b).then(function(r){
+      $("wsubmit").disabled=false;
+      if(r.error){$("werr").textContent=r.error;return}
+      if(!id)setNick(b.nick.trim());
+      if(r.id){history.replaceState(null,"",BASE+"?p="+r.id);route();window.scrollTo(0,0)}else nav(BASE);
+    });
+  });
+
+  /* ---------- 관리자: 신고·가림 목록 ---------- */
+  function showQueue(){
+    show("queue");document.title="신고·가림 목록 · 커뮤니티";
+    var box=$("queue");box.replaceChildren(el("p",{class:"muted"},"불러오는 중…"));
+    api("admin/queue").then(function(j){
+      if(j.error){box.replaceChildren(el("p",{class:"empty"},j.error));return}
+      function state(x){return x.hidden===2?"자동 가림":x.hidden?"가림":"보임"}
+      function acts(kind,x){return el("td",{class:"act"},
+        x.hidden?el("button",{class:"lnk",type:"button",onclick:function(){adm("unhide",kind,x.id)}},"보이기(신고 지움)"):el("button",{class:"lnk",type:"button",onclick:function(){adm("hide",kind,x.id)}},"가리기"),
+        el("button",{class:"lnk",type:"button",onclick:function(){adm("ban",kind,x.id)}},"IP 차단"))}
+      function table(head,rows){return el("div",{class:"tblwrap"},el("table",{class:"qt"},el("thead",{},el("tr",{},head.map(function(h){return el("th",{},h)}))),el("tbody",{},rows.length?rows:el("tr",{},el("td",{colspan:head.length,class:"muted"},"없음")))))}
+      var why={};(j.reasons||[]).forEach(function(r){var k=r.kind+r.ref;(why[k]=why[k]||[]).push(r.reason)});
+      box.replaceChildren(
+        el("h3",{},"글"),table(["글","쓴 사람","상태","신고·사유","IP","처리"],j.posts.map(function(x){return el("tr",{},
+          el("td",{},el("a",{href:BASE+"?p="+x.id,"data-nav":true},x.title)),el("td",{},nickEl(x),el("div",{class:"small muted"},full(x.created))),el("td",{},state(x)),
+          el("td",{},x.reports+"건",el("div",{class:"small muted"},(why["post"+x.id]||[]).join(" / "))),el("td",{class:"ip"},x.ip||"–"),acts("post",x))})),
+        el("h3",{},"댓글"),table(["댓글","쓴 사람","상태","신고·사유","IP","처리"],j.comments.map(function(x){return el("tr",{},
+          el("td",{},el("a",{href:BASE+"?p="+x.post,"data-nav":true},x.body.slice(0,80)),el("div",{class:"small muted"},"글: "+(x.title||"(지워진 글)"))),el("td",{},nickEl(x),el("div",{class:"small muted"},full(x.created))),el("td",{},state(x)),
+          el("td",{},x.reports+"건",el("div",{class:"small muted"},(why["comment"+x.id]||[]).join(" / "))),el("td",{class:"ip"},x.ip||"–"),acts("comment",x))})),
+        el("h3",{},"글쓰기를 막은 IP"),table(["IP","사유","막은 시각",""],j.bans.map(function(x){return el("tr",{},
+          el("td",{class:"ip"},x.ip),el("td",{},x.reason||"–"),el("td",{},full(x.created)),el("td",{class:"act"},el("button",{class:"lnk",type:"button",onclick:function(){if(confirm(x.ip+" 차단을 풀까요?"))adm("unban","",0,{ip:x.ip})}},"차단 풀기")))})));
+    });
+  }
+
+  /* 방문 기록(사이트 주인만 /admin 에서 조회) — 환율 조회와 같은 신호, 화면 구분만 community */
+  try{
+    var vid=ls("fx-vid");if(!vid){vid=Math.random().toString(36).slice(2,10)+Date.now().toString(36);ls("fx-vid",vid)}
+    var hb=JSON.stringify({v:vid,r:document.referrer||"",o:ls("fx-owner")==="1"?1:0,w:screen.width||0,p:"community"});
+    if(!(navigator.sendBeacon&&navigator.sendBeacon("/api/hit",hb)))fetch("/api/hit",{method:"POST",mode:"no-cors",body:hb,keepalive:true}).catch(function(){});
+  }catch(e){}
+
+  api("me").then(function(j){setMe(j.error?null:j)}).then(route);
+})();
+</script>
+</body>
+</html>

@@ -378,6 +378,10 @@ def main():
     (OUT / "_headers").write_text((ROOT / "cloudflare" / "public" / "_headers").read_text(encoding="utf-8"), encoding="utf-8")
     fx, rates = build_fx(), build_rates()
     assert FONT_ABS in fx and FONT_ABS in rates
+    # 커뮤니티(/community/)는 본 사이트에만 있다 — ver2 전환 막대에서는 뺀다
+    COM = re.compile(r'<a href="/community/" id="sb-com"[^>]*>[^<]*</a>')
+    assert COM.search(fx) and COM.search(rates)
+    fx, rates = COM.sub("", fx), COM.sub("", rates)
     (OUT / "index.html").write_text(fx.replace(FONT_ABS, "/fonts/pretendard/"), encoding="utf-8")
     (OUT / "rates" / "index.html").write_text(rates.replace(FONT_ABS, "/fonts/pretendard/"), encoding="utf-8")
     (OUT / "privacy.html").write_text(PRIVACY, encoding="utf-8")

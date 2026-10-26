@@ -67,7 +67,7 @@ tr.isbot td{color:var(--muted)}
 <body><div class="wrap">
 <div class="top">
   <div><p class="muted" style="margin:0">관리자 전용 · 환율 조회 · 금리 모니터</p><h1>방문 기록</h1></div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="/">환율 조회</a><a class="btn" href="https://rate-monitor.pages.dev/">금리 모니터</a><a class="btn" href="/admin/logout">로그아웃</a></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="/">환율 조회</a><a class="btn" href="/rates/">금리 모니터</a><a class="btn" href="/community/">커뮤니티</a><a class="btn" href="/community/?queue">신고·가림 목록</a><a class="btn" href="/admin/logout">로그아웃</a></div>
 </div>
 <div class="ctl" role="group" aria-label="기간">
   <button type="button" data-d="1">오늘</button><button type="button" data-d="7">7일</button><button type="button" data-d="30">30일</button><button type="button" data-d="90">90일</button>
