@@ -119,19 +119,37 @@ async function sweep(ctx) {   // 가끔: 90일 지난 IP·브라우저 정보 �
 
 const LIST_COLS = "p.id, p.cat, p.title, p.nick, p.tag, p.admin, p.created, p.updated, p.views, p.likes, p.hidden, p.reports, (SELECT COUNT(*) FROM comments c WHERE c.post = p.id AND c.hidden = 0) nc";
 
+// 목록: sort = new(최신)·likes(추천)·comments(댓글), off = 이미 받은 개수(30개씩). 첫 쪽이면 공지·말머리별 건수·통계도 같이.
+const PAGE = 30;
 async function listPosts(ctx, admin) {
   const db = ctx.env.CDB, u = new URL(ctx.request.url);
-  const cat = u.searchParams.get("cat") || "", q = text(u.searchParams.get("q") || "").slice(0, 40), before = +u.searchParams.get("before") || 0;
-  const where = [admin ? "1 = 1" : "p.hidden = 0", "p.cat != '공지'"], args = [];
+  const cat = u.searchParams.get("cat") || "", q = text(u.searchParams.get("q") || "").slice(0, 40);
+  const sort = ["likes", "comments"].includes(u.searchParams.get("sort")) ? u.searchParams.get("sort") : "new";
+  const off = Math.min(Math.max(Math.floor(+u.searchParams.get("off") || 0), 0), 5000);
+  const vis = admin ? "1 = 1" : "p.hidden = 0";
+  const where = [vis, "p.cat != '공지'"], args = [];
   if (CATS.includes(cat)) { where.push("p.cat = ?"); args.push(cat); }
   if (q) { where.push("(p.title LIKE ? ESCAPE '\\' OR p.body LIKE ? ESCAPE '\\')"); const l = "%" + q.replace(/[\\%_]/g, (m) => "\\" + m) + "%"; args.push(l, l); }
-  if (before > 0) { where.push("p.id < ?"); args.push(before); }
-  const stmts = [db.prepare(`SELECT ${LIST_COLS} FROM posts p WHERE ${where.join(" AND ")} ORDER BY p.id DESC LIMIT 21`).bind(...args)];
-  const first = !before && !q && !cat;
-  if (first) stmts.push(db.prepare(`SELECT ${LIST_COLS} FROM posts p WHERE p.cat = '공지' AND ${admin ? "1 = 1" : "p.hidden = 0"} ORDER BY p.id DESC LIMIT 3`));
-  const [list, notes] = await db.batch(stmts);
-  const items = list.results.slice(0, 20);
-  return json({ items, notices: first ? notes.results : [], more: list.results.length > 20, me: { admin } });
+  const order = sort === "likes" ? "p.likes DESC, p.id DESC" : sort === "comments" ? "nc DESC, p.id DESC" : "p.id DESC";
+  const stmts = [db.prepare(`SELECT ${LIST_COLS} FROM posts p WHERE ${where.join(" AND ")} ORDER BY ${order} LIMIT ${PAGE + 1} OFFSET ${off}`).bind(...args)];
+  const first = off === 0;
+  if (first) {
+    stmts.push(
+      db.prepare(`SELECT ${LIST_COLS} FROM posts p WHERE p.cat = '공지' AND ${vis} ORDER BY p.id DESC LIMIT 3`),
+      db.prepare(`SELECT p.cat, COUNT(*) n FROM posts p WHERE ${vis} AND p.cat != '공지' GROUP BY p.cat`),
+      db.prepare("SELECT (SELECT COUNT(*) FROM posts WHERE hidden = 0 AND cat != '공지') posts, (SELECT COUNT(*) FROM comments WHERE hidden = 0) comments, (SELECT MAX(created) FROM posts WHERE hidden = 0) last"),
+    );
+    if (admin) stmts.push(db.prepare("SELECT (SELECT COUNT(*) FROM posts WHERE hidden > 0 OR reports > 0) + (SELECT COUNT(*) FROM comments WHERE hidden > 0 OR reports > 0) n"));
+  }
+  const [list, notes, cats, stats, queue] = await db.batch(stmts);
+  const out = { items: list.results.slice(0, PAGE), more: list.results.length > PAGE, me: { admin } };
+  if (first) {
+    out.notices = q ? [] : notes.results;
+    out.counts = Object.fromEntries(cats.results.map((r) => [r.cat, r.n]));
+    out.stats = stats.results[0];
+    if (admin) out.queue = queue.results[0].n;
+  }
+  return json(out);
 }
 
 async function getPost(ctx, id, admin) {

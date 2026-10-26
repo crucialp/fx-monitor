@@ -3,3 +3,9 @@
 name = "fx-monitor-v2"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-10-01"
+
+# 커뮤니티 — 본 사이트(fx-monitor)와 같은 D1. 비밀 값 COMMUNITY_KEY 도 같은 값이어야 비밀번호가 맞는다.
+[[d1_databases]]
+binding = "CDB"
+database_name = "fx-community"
+database_id = "0d599547-a8b6-4fa9-8074-9620bfdc4b0a"

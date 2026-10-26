@@ -363,6 +363,23 @@ def build_rates():
     return s
 
 
+# ================================================================== 커뮤니티 ver2
+def build_com():
+    # 본 사이트 커뮤니티 화면 그대로(같은 API·같은 D1), 광고 자리·처리방침 연결만 더하고 방문 기록 신호는 뺀다
+    s = (ROOT / "cloudflare" / "public" / "community" / "index.html").read_text(encoding="utf-8")
+    s = s.replace("<head>", '<head>\n<meta name="robots" content="noindex,nofollow">', 1)
+    s = rep(s, '</div></nav>\n<div class="wrap">', '</div></nav>\n' + v2bar("/community/") + '<div class="wrap">')
+    s = rep(s, '  </header>\n', '  </header>\n' + ad("상단 광고 영역") + '\n')
+    s = rep(s, '    <div class="pagefoot"><span class="muted small">1 / 2</span>', '    ' + ad() + '\n    <div class="pagefoot"><span class="muted small">1 / 2</span>')
+    s, n = re.subn(r"\s*/\*<visit>\*/.*?/\*</visit>\*/", "", s, flags=re.S)
+    assert n == 1, n
+    s = rep(s, '<span id="visitline">방문 통계를 위해 접속 IP·대략적 위치·브라우저 정보를 90일간 기록합니다(사이트 운영자만 열람).</span>',
+            '<span>이 사이트에는 광고가 표시되며 광고 사업자가 쿠키를 사용할 수 있습니다 · <a href="/privacy.html">개인정보처리방침</a></span>')
+    s = rep(s, '수사기관이 법령에 따른 절차로 요청하면 보관 중인 정보를 제공할 수 있습니다.</li>\n      </ul>',
+            '수사기관이 법령에 따른 절차로 요청하면 보관 중인 정보를 제공할 수 있습니다.</li>\n        <li><b>자세한 내용.</b> <a href="/privacy.html">개인정보처리방침</a>에 항목·목적·보관 기간·국외 이전까지 모두 적어 두었습니다.</li>\n      </ul>')
+    return s
+
+
 # 개인정보처리방침 원문은 v2/privacy.html (개인정보 보호법 제30조·시행령 제31조·제28조의8 항목)
 PRIVACY = (Path(__file__).resolve().parent / "privacy.html").read_text(encoding="utf-8")
 
@@ -378,10 +395,9 @@ def main():
     (OUT / "_headers").write_text((ROOT / "cloudflare" / "public" / "_headers").read_text(encoding="utf-8"), encoding="utf-8")
     fx, rates = build_fx(), build_rates()
     assert FONT_ABS in fx and FONT_ABS in rates
-    # 커뮤니티(/community/)는 본 사이트에만 있다 — ver2 전환 막대에서는 뺀다
-    COM = re.compile(r'<a href="/community/" id="sb-com"[^>]*>[^<]*</a>')
-    assert COM.search(fx) and COM.search(rates)
-    fx, rates = COM.sub("", fx), COM.sub("", rates)
+    com = build_com()
+    (OUT / "community").mkdir(exist_ok=True)
+    (OUT / "community" / "index.html").write_text(com, encoding="utf-8")
     (OUT / "index.html").write_text(fx.replace(FONT_ABS, "/fonts/pretendard/"), encoding="utf-8")
     (OUT / "rates" / "index.html").write_text(rates.replace(FONT_ABS, "/fonts/pretendard/"), encoding="utf-8")
     (OUT / "privacy.html").write_text(PRIVACY, encoding="utf-8")
