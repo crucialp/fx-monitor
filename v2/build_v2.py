@@ -297,6 +297,7 @@ def build_fx():
     s = s[:a] + p4 + s[b:]
     s = rep(s, '" · 출처: 연합뉴스 RSS · 굵은 제목은 안 읽은 기사"', '" · 출처: 한국은행·미 연준·ECB 보도자료 RSS · 굵은 제목은 안 읽은 발표"')
     s = rep(s, 'placeholder="제목 검색 (예: 외환-마감)"', 'placeholder="제목 검색 (예: 기준금리, FOMC)"')
+    s = rep(s, '$("ncredit").textContent="기사 "+L.length+"건', '$("ncredit").textContent="발표 "+L.length+"건')
 
     # 2페이지 끝 광고 자리
     a = s.index('<main id="p2"')
