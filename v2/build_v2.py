@@ -10,6 +10,7 @@
 """
 import json
 import re
+import shutil
 import statistics
 import subprocess
 from pathlib import Path
@@ -41,7 +42,7 @@ def fmt(v):
 
 # ------------------------------------------------------------------ 공통 조각
 V2CSS = """<style>
-.v2bar{background:#1c3d8f;color:#fff;font-family:'IBM Plex Sans KR','Malgun Gothic',system-ui,sans-serif;font-size:13px;line-height:1.5}
+.v2bar{background:#1c3d8f;color:#fff;font-family:'Pretendard Variable',Pretendard,'Malgun Gothic',system-ui,sans-serif;font-size:13px;line-height:1.5}
 .v2bar-in{max-width:1180px;margin:0 auto;padding:8px 16px;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline}
 .v2bar b{font-weight:700}
 .v2bar a{color:#fff;text-decoration:underline}
@@ -51,7 +52,7 @@ V2CSS = """<style>
 .v2bar li{margin:2px 0}
 .adslot{display:grid;place-items:center;min-height:90px;margin:18px auto;max-width:1180px;border:1px solid #c9cdd5;border-radius:6px;
   background:repeating-linear-gradient(135deg,rgba(120,120,120,.06) 0 12px,rgba(120,120,120,.0) 12px 24px);color:#8a8f99;
-  font-family:'IBM Plex Sans KR','Malgun Gothic',system-ui,sans-serif;font-size:12.5px;text-align:center;padding:8px}
+  font-family:'Pretendard Variable',Pretendard,'Malgun Gothic',system-ui,sans-serif;font-size:12.5px;text-align:center;padding:8px}
 .adslot b{display:block;font-size:13px;color:#6b7280}
 .v2note{border:1px solid #c9cdd5;border-radius:8px;padding:12px 14px;background:rgba(28,61,143,.05);font-size:13.5px;line-height:1.6}
 .v2note b{font-weight:600}
@@ -294,7 +295,8 @@ def build_fx():
                    "영향 요인 = 물가·경기·금융안정·총재 연설 등. 최근 30일 발표.</li>") + p4[j:]
     p4 = p4.replace('<div class="pagefoot">', ad() + '\n    <div class="pagefoot">', 1)
     s = s[:a] + p4 + s[b:]
-    s = rep(s, '" · 출처: 연합뉴스 RSS · 굵은 제목은 지난번 방문 이후 새 기사"', '" · 출처: 한국은행·미 연준·ECB 보도자료 RSS · 굵은 제목은 지난번 방문 이후 새 발표"')
+    s = rep(s, '" · 출처: 연합뉴스 RSS · 굵은 제목은 안 읽은 기사"', '" · 출처: 한국은행·미 연준·ECB 보도자료 RSS · 굵은 제목은 안 읽은 발표"')
+    s = rep(s, 'placeholder="제목 검색 (예: 외환-마감)"', 'placeholder="제목 검색 (예: 기준금리, FOMC)"')
 
     # 2페이지 끝 광고 자리
     a = s.index('<main id="p2"')
@@ -364,11 +366,19 @@ def build_rates():
 PRIVACY = (Path(__file__).resolve().parent / "privacy.html").read_text(encoding="utf-8")
 
 
+# 글꼴(Pretendard, SIL OFL)은 ver2 가 스스로 갖고 있는다 — 나중에 도메인을 옮겨도 다른 사이트에 기대지 않게
+FONT_ABS = "https://fx-monitor.pages.dev/fonts/pretendard/"
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "rates").mkdir(exist_ok=True)
-    (OUT / "index.html").write_text(build_fx(), encoding="utf-8")
-    (OUT / "rates" / "index.html").write_text(build_rates(), encoding="utf-8")
+    shutil.copytree(ROOT / "cloudflare" / "public" / "fonts", OUT / "fonts", dirs_exist_ok=True)
+    (OUT / "_headers").write_text((ROOT / "cloudflare" / "public" / "_headers").read_text(encoding="utf-8"), encoding="utf-8")
+    fx, rates = build_fx(), build_rates()
+    assert FONT_ABS in fx and FONT_ABS in rates
+    (OUT / "index.html").write_text(fx.replace(FONT_ABS, "/fonts/pretendard/"), encoding="utf-8")
+    (OUT / "rates" / "index.html").write_text(rates.replace(FONT_ABS, "/fonts/pretendard/"), encoding="utf-8")
     (OUT / "privacy.html").write_text(PRIVACY, encoding="utf-8")
     (OUT / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
     print("ok", [p.name for p in OUT.rglob("*.html")])
