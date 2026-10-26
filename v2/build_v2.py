@@ -58,24 +58,12 @@ V2CSS = """<style>
 .tvbox{border:1px solid var(--rule,#e3e5ea);border-radius:6px;overflow:hidden;background:var(--surface,#fff)}
 </style>
 """
-CHANGES = [
-    "<b>장중 그래프·지표</b> — Yahoo·Nasdaq·Wise·네이버 자동 수집을 빼고 TradingView 차트와 경제 캘린더(무료, 공개 사이트 허용)로 바꿈. 직접 만든 ②③ 그래프와 그래프 위 지표 화살표는 없어짐",
-    "<b>뉴스</b> — 연합뉴스 RSS도 상업적 이용은 금지라 자동 목록을 빼고 언론사·포털 링크 모음만",
-    "<b>기관 전망</b> — 연합인포맥스 월례 설문·블룸버그·한경·로이터 집계를 빼고 기관이 직접 공개한 수치만으로 평균을 다시 계산(국내 18곳 → 6곳)",
-    "<b>그대로</b> — 매매기준율(한국은행 ECOS 공공데이터), 금리 모니터의 금리 그래프(ECOS), 외국계 7곳 보고서 수치",
-    "<b>새로 생김</b> — 광고 자리(지금은 빈 예시), 개인정보처리방침",
-]
-
-
 def v2bar(here):
-    lis = "".join(f"<li>{c}</li>" for c in CHANGES)
-    return (V2CSS + f'<div class="v2bar"><div class="v2bar-in"><span><b>ver2 시안</b> · 광고를 붙이는 상업 사이트로 바꿨을 때의 모습입니다(실제 광고 없음).</span>'
-            f'<a href="{LIVE}{here}">지금 운영 중인 사이트 보기 →</a>'
-            f'<details><summary>바뀐 점</summary><ul>{lis}</ul></details></div></div>\n')
+    return V2CSS   # 안내 막대 없음 — 스타일만
 
 
-def ad(label="광고 영역"):
-    return f'<div class="adslot" role="note"><div><b>{label} (예시)</b>실제 광고 아님 · 상업용으로 바꾸면 Google AdSense·카카오 애드핏 등의 광고가 들어가는 자리</div></div>'
+def ad(label="광고"):
+    return f'<div class="adslot" role="complementary" aria-label="광고"><div><b>{label}</b></div></div>'
 
 
 TV_ADV = """<div class="tvbox" style="height:560px"><div class="tradingview-widget-container" style="height:100%"><div class="tradingview-widget-container__widget" style="height:100%"></div>
@@ -96,7 +84,7 @@ TV_CAL = """<div class="tvbox" style="height:560px"><div class="tradingview-widg
 def build_fx():
     s = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
 
-    s = rep(s, "<title>환율 조회</title>", "<title>환율 조회 ver2 (상업용 시안)</title>")
+    pass  # 제목은 그대로 '환율 조회'
     s = s.replace("<head>", '<head>\n<meta name="robots" content="noindex,nofollow">', 1)
 
     # 맨 위 전환 막대 다음에 시안 안내 + 광고 자리
@@ -114,15 +102,12 @@ def build_fx():
     p1 = s[a:b]
     head_end = p1.index(">") + 1
     new_p1 = (p1[:head_end] + '\n    <section id="rt-v2">'
-              '<div class="pagehead" style="padding-top:0"><span class="eyebrow">1페이지 · ver2</span><h2>실시간 달러/원</h2>'
+              '<div class="pagehead" style="padding-top:0"><span class="eyebrow">1페이지</span><h2>실시간 달러/원</h2>'
               '<p class="muted small">TradingView 차트(FX_IDC:USDKRW, 한국 시간). 위쪽 메뉴에서 1분·5분·15분·1시간·일 봉과 기간을 바꿀 수 있습니다.</p></div>'
               + TV_QUOTE + TV_ADV +
               '<h3 style="margin:22px 0 8px">주요 지표·금리 결정 (미국·한국·일본·유로존, 중요도 높음)</h3>'
-              '<p class="muted small" style="margin:0 0 8px">TradingView 경제 캘린더 — 발표·예상·이전 값. 지금 사이트처럼 그래프 위에 화살표로 표시하는 기능은 상업용 무료 데이터로는 만들 수 없습니다.</p>'
-              + TV_CAL +
-              '<p class="v2note" style="margin-top:14px"><b>지금 사이트와 다른 점.</b> ② 기간 설정·10분봉, ③ 하루(06:00~익일 06:00) 그래프와 그래프 위 지표 화살표·라벨, '
-              '한은 결정 시각 확인, 월요일 새벽 보충은 모두 상업 이용이 금지된 출처(Yahoo·Nasdaq·Wise·네이버)로 만든 것이라 ver2에서는 뺐습니다. '
-              '같은 화면을 유지하려면 유료 시세·지표 데이터 계약(대략 월 30만 원 이상)이 필요합니다.</p>'
+              '<p class="muted small" style="margin:0 0 8px">TradingView 경제 캘린더 — 발표·예상·이전 값(한국 시간).</p>'
+              + TV_CAL
               + ad() + "\n    </section>\n"
               '    <div hidden aria-hidden="true">' + p1[head_end:] + "</div>\n  ")
     s = s[:a] + new_p1 + s[b:]
@@ -147,18 +132,11 @@ def build_fx():
                 "who": [k for k, x in g.items() if x[i] is not None]}
     SF = [stat(f, i) for i in range(5)]
     SD = [stat(d2, i) for i in range(5)]
-    # 블룸버그 계열 제거
-    s = rep(s, '\n    {key:"b",label:"블룸버그 컨센서스",short:"블룸버그",shape:"r",st:[1360,1350,1340,1330,null].map(function(v){return v==null?null:{mean:v}})}\n  ];',
-            "\n  ];")
-    s = rep(s, '    {key:"d",label:"국내 평균",short:"국내",shape:"s",st:QL.map(function(_,i){return qstat(INST.d,i)})},\n',
-            '    {key:"d",label:"국내 평균",short:"국내",shape:"s",st:QL.map(function(_,i){return qstat(INST.d,i)})}\n')
-    s = rep(s, '        <span><span class="sw dash b"></span><span class="sw b dia"></span>블룸버그 컨센서스</span>\n', "")
 
     # 리드 문장
     a = s.index('<p class="lede">공개 출처에서 분기별 수치를 확인한')
     b = s.index("</p>", a) + 4
-    s = s[:a] + (f'<p class="lede">외국계 7곳과 국내 {len(d2)}곳이 <b>직접 공개한</b> 분기별 원/달러 전망을 기관당 하나씩 모아 평균을 냈다. '
-                 '연합인포맥스 월례 설문(은행·증권 딜러 응답)과 블룸버그 등 유료 집계는 상업용 시안에서 쓰지 않아 국내 표본이 크게 줄었다.</p>') + s[b:]
+    s = s[:a] + (f'<p class="lede">외국계 7곳과 국내 {len(d2)}곳이 직접 공개한 분기별 원/달러 전망을 기관당 하나씩 모아 평균을 냈다. 두 그룹 모두 2027년까지 완만한 원화 강세를 예상한다.</p>') + s[b:]
 
     # 상단 카드 2개(4Q26, 4Q27)
     def card_pair(qi):
@@ -194,20 +172,25 @@ def build_fx():
     # 표 아래 해설 → 시안 설명
     a = s.index('<ul class="notes">', s.index('<section id="avg">'))
     b = s.index("</ul>", a) + 5
-    s = s[:a] + ('<ul class="notes"><li><b>국내 표본이 18곳 → 6곳으로 줄었다.</b> 빠진 12곳(하나·KB국민·신한·우리·IBK기업·KDB산업·iM뱅크·BNK부산은행, KB·키움·NH투자·DB증권)은 '
-                 '연합인포맥스 월례 설문 응답이라 상업용에서는 쓰지 않았다. 남은 6곳은 증권사가 직접 낸 보고서(또는 그 수치를 인용한 보도)다.</li>'
+    s = s[:a] + ('<ul class="notes"><li><b>국내 평균은 증권사 보고서 기준이다.</b> 유안타·대신·iM·한화투자·한국투자·IBK투자증권이 직접 낸 보고서(또는 그 수치를 인용한 보도)의 분기 경로다.</li>'
                  '<li><b>기준이 섞여 있다.</b> 유안타·대신은 분기말, iM·한화·한국투자는 분기평균, IBK투자는 연말 근사치다.</li></ul>') + s[b:]
-    # 블룸버그 컨센서스 비교 → 안내
+    # 블룸버그 컨센서스 비교: 공개 보고서가 인용한 값만(MUFG·현대경제연구원), 2차 정리글 줄은 뺌. 이 사이트 평균은 다시 계산한 값
     a, b = cut(s, '  <section id="consensus">', "  </section>")
-    s = s[:a] + ('  <section id="consensus"><div class="head"><h2>블룸버그 컨센서스 비교</h2></div>'
-                 '<p class="v2note">블룸버그 컨센서스는 블룸버그의 유료 데이터를 다른 보고서가 인용한 값이라, 상업 사이트에서는 다시 싣지 않는다(지금 운영 중인 사이트에는 있음).</p>'
-                 + ad() + "</section>") + s[b:]
-    # 차트 설명 속 블룸버그 언급 문장 제거
-    a = s.index('<p class="chart-help" id="chartNote">')
-    b = s.index("</p>", a)
-    note = s[a:b]
-    note = re.sub(r"[^.。]*블룸버그[^.。]*[.。]\s*", "", note)
-    s = s[:a] + note + s[b:]
+    sec = s[a:b]
+    sec = re.sub(r'<tr><td class="inst">블룸버그 중간값 \(국내외 28개사\).*?</tr>\s*', "", sec, flags=re.S)
+    def ours(label, sub, st, src):
+        tds = "".join(f'<td class="n">{fmt(x["mean"])}</td>' if x else '<td class="n empty">–</td>' for x in st)
+        return f'<tr class="ours"><td class="inst">{label}<span class="sub">{sub}</span></td><td class="date">{src[0]}</td>{tds}<td class="src"><a href="{src[1]}">{src[2]}</a></td></tr>'
+    nd = "·".join(str(x["n"]) if x else "0" for x in SD)
+    sec = re.sub(r'<tr class="ours"><td class="inst"><span class="sw d sq".*?</tr>',
+                 ours('<span class="sw d sq" style="margin-right:8px;vertical-align:0"></span>국내 평균', nd + "곳", SD, ("9/28~10/19 발표", "#domestic", "국내 기관 표")), sec, flags=re.S)
+    sec = sec.replace("① 2026년 12월 값 ② 2027년 말 값. ", "")
+    sec = re.sub(r'<p class="small muted">한경 외환전문가 설문, 연합인포맥스·로이터 집계처럼.*?</p>', "", sec, flags=re.S)
+    sec += ('<h3>블룸버그에서 직접 보기</h3><div class="linkgrid">'
+            '<a class="lcard" href="https://www.bloomberg.com/quote/USDKRW:CUR" target="_blank" rel="noopener"><b>Bloomberg · USD/KRW 시세</b><span>실시간 시세와 관련 기사(영문)</span></a>'
+            '<a class="lcard" href="https://www.bloomberg.com/markets/currencies" target="_blank" rel="noopener"><b>Bloomberg · 환율 시장</b><span>주요 통화 시세와 외환 기사(영문)</span></a>'
+            '</div>' + ad())
+    s = s[:a] + sec + s[b:]
 
     # ---------------- 3페이지 ----------------
     a, b = cut(s, '<main id="p3"', "</main>")
@@ -226,19 +209,17 @@ def build_fx():
     # 국내 마스터 표·견해 표: 연합인포맥스 설문(KB Think 재게재)만 출처인 줄 삭제
     da = p3.index("국내 기관")
     p3 = p3[:da] + drop_rows(p3[da:p3.index('<section id="aggregates">')], only_kb) + p3[p3.index('<section id="aggregates">'):]
-    # 기타 집계(한경 설문·인포맥스 집계·로이터 등) → 안내
+    # 기타 집계(한경 설문·인포맥스 집계·로이터 등) 칸 삭제
     ga, gb = cut(p3, '<section id="aggregates">', "</section>")
-    p3 = p3[:ga] + ('<section id="aggregates"><div class="head"><h2>기타 집계</h2></div>'
-                    '<p class="v2note">한경 외환전문가 설문, 연합인포맥스 월간 고점·저점 집계, 로이터 포지션 설문 같은 언론사·통신사 집계는 '
-                    '그 회사가 만든 자료라 상업 사이트에서는 옮겨 싣지 않는다(지금 운영 중인 사이트에는 있음).</p></section>') + p3[gb:]
+    p3 = p3[:ga] + p3[gb:]
     # 평균에서 뺀 자료: 설문 줄 삭제
     xa = p3.index("<h2>평균에서 뺀 자료</h2>")
     xb = p3.index("<h2>산출 기준과 한계</h2>")
     p3 = p3[:xa] + drop_rows(p3[xa:xb], only_kb) + p3[xb:]
     # 산출 기준 문구
-    p3 = rep(p3, "설문 응답과 자체 보고서가 함께 있으면 더 늦게 나온 것을 쓴다.", "ver2(상업용)는 기관이 직접 공개한 보고서나 그 수치를 인용한 보도만 쓴다.")
+    p3 = rep(p3, "설문 응답과 자체 보고서가 함께 있으면 더 늦게 나온 것을 쓴다.", "기관이 직접 공개한 보고서나 그 수치를 인용한 보도만 쓴다.")
     p3 = rep(p3, "<b>집계치 분리.</b> 블룸버그·한경·로이터 집계는 개별 응답을 이미 포함하므로 따로 표기했다.",
-             "<b>집계·설문 제외.</b> 블룸버그·한경·로이터 집계와 연합인포맥스 월례 설문은 상업 사이트에서 쓰지 않는다.")
+             "<b>집계치 분리.</b> 블룸버그 컨센서스는 공개 보고서가 인용한 값을 비교용으로만 싣고 평균에는 넣지 않는다.")
     p3 = p3.replace("연합인포맥스 설문·UOB·Westpac은 기준 미표기다", "UOB·Westpac은 기준 미표기다")
     # 민감도(설문값 기준) 삭제
     ma = p3.index("<h3>민감도: 국내 4Q26 평균</h3>")
@@ -251,12 +232,12 @@ def build_fx():
     p3 = p3[:la] + p3[lb:]
     p3 = p3.replace('<div class="pagefoot">', ad() + '\n    <div class="pagefoot">', 1)
     s = s[:a] + p3 + s[b:]
+    s = s.replace('<li><a href="#aggregates">기타 집계</a></li>', "")   # 없앤 칸으로 가는 바로가기도 빼기
 
     # ---------------- 4페이지: 링크 모음만 ----------------
     old = subprocess.run(["git", "-C", str(ROOT), "show", "6c36434:docs/index.html"], capture_output=True).stdout.decode("utf-8")
     oa, ob = cut(old, '  <main id="p4" data-page="4" hidden>', "  </main>")
-    p4 = old[oa:ob].replace("<p class=\"muted small\">기사는 각 언론사의 저작물이라",
-                            "<p class=\"muted small\">연합뉴스 RSS는 비상업적 이용만 허용하므로 상업용 시안에서는 자동 목록을 빼고, 기사는 각 언론사의 저작물이라", 1)
+    p4 = old[oa:ob]
     p4 = p4.replace('<div class="pagefoot">', ad() + '\n    <div class="pagefoot">', 1)
     a, b = cut(s, '  <main id="p4" data-page="4" hidden>', "  </main>")
     s = s[:a] + p4 + s[b:]
@@ -272,7 +253,7 @@ def build_fx():
 
     # 아래쪽 안내
     s = rep(s, '<span>방문 통계를 위해 접속 IP·대략적 위치·브라우저 정보를 90일간 기록합니다(사이트 운영자만 열람).</span>',
-            '<span>광고 사업자(예: Google)가 쿠키로 맞춤 광고를 할 수 있습니다 · <a href="/privacy.html">개인정보처리방침</a> (시안)</span>')
+            '<span>이 사이트에는 광고가 표시되며 광고 사업자가 쿠키를 사용할 수 있습니다 · <a href="/privacy.html">개인정보처리방침</a></span>')
     s = s.replace("실시간 시세: TradingView (FX_IDC:USDKRW)", "실시간 시세·경제 캘린더: TradingView 위젯 (FX_IDC:USDKRW)")
     s = s.replace("시세·뉴스는 자동 갱신", "시세는 TradingView 실시간")
     return s
@@ -282,25 +263,19 @@ def build_fx():
 def build_rates():
     # 뉴스를 링크 모음으로만 바꿨던 판(12a1791)을 바탕으로 — 상업용이면 연합뉴스 RSS 도 못 씀
     s = subprocess.run(["git", "-C", str(RATE_REPO), "show", "12a1791:docs/index.html"], capture_output=True).stdout.decode("utf-8")
-    s = rep(s, "<title>금리 모니터</title>", "<title>금리 모니터 ver2 (상업용 시안)</title>")
-    for a_, b_ in [('docTitle: "금리 모니터",', 'docTitle: "금리 모니터 ver2 (상업용 시안)",'),
-                   ('docTitle: "Korea Rate Monitor",', 'docTitle: "Korea Rate Monitor ver2 (commercial draft)",'),
-                   ('docTitle: "韓国金利モニター",', 'docTitle: "韓国金利モニター ver2（商用試案）",'),
-                   ('docTitle: "韩国利率监测",', 'docTitle: "韩国利率监测 ver2（商用草案）",')]:
-        s = rep(s, a_, b_)
     s = s.replace("<head>", '<head>\n<meta name="robots" content="noindex,nofollow">', 1)
     i = s.index('<nav class="sitebar"')
     j = s.index("</script>\n", i) + len("</script>\n")
     s = s[:i] + s[i:j] + v2bar("/rates/") + s[j:]
     s = s.replace("<main>", "<main>\n" + ad("상단 광고 영역"), 1)
     s = s.replace("</section>\n</main>", "</section>\n" + ad() + "\n</main>", 1)
-    s = s.replace('<span data-i18n="footer2">', '<span><a href="/privacy.html">개인정보처리방침</a> (시안) · 광고 사업자(예: Google)가 쿠키로 맞춤 광고를 할 수 있습니다.</span>\n  <span data-i18n="footer2">', 1)
+    s = s.replace('<span data-i18n="footer2">', '<span><a href="/privacy.html">개인정보처리방침</a> · 이 사이트에는 광고가 표시되며 광고 사업자가 쿠키를 사용할 수 있습니다.</span>\n  <span data-i18n="footer2">', 1)
     return s
 
 
 PRIVACY = """<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title>개인정보처리방침 (시안)</title>
+<meta name="robots" content="noindex,nofollow"><title>개인정보처리방침</title>
 <style>
 :root{--bg:#f3f4f6;--surface:#fff;--ink:#16181d;--muted:#6b7280;--rule:#e3e5ea}
 @media (prefers-color-scheme:dark){:root{--bg:#121418;--surface:#1b1e24;--ink:#eceef2;--muted:#8a919e;--rule:#2b2f37}}
@@ -311,9 +286,8 @@ h1{font-size:24px;margin:0 0 4px}h2{font-size:17px;margin:26px 0 6px}
 table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid var(--rule);padding:6px 8px;text-align:left;font-size:14px;vertical-align:top}
 a{color:#1f4fd1}
 </style></head><body><div class="wrap">
-<p class="muted"><a href="/">← 환율 조회 ver2</a> · <a href="/rates/">금리 모니터 ver2</a></p>
+<p class="muted"><a href="/">← 환율 조회</a> · <a href="/rates/">금리 모니터</a></p>
 <h1>개인정보처리방침</h1>
-<p class="muted">ver2 시안 · 실제로 광고를 붙이기 전에 운영자 정보와 내용을 확정하고, 필요하면 전문가 검토를 받으세요.</p>
 <div class="box">환율 조회·금리 모니터(이하 '사이트')는 「개인정보 보호법」에 따라 이용자의 개인정보를 보호하고, 관련 고충을 원활하게 처리하기 위해 다음과 같이 개인정보처리방침을 둡니다.</div>
 <h2>1. 처리하는 개인정보 항목</h2>
 <table><tr><th>항목</th><th>수집 방법</th></tr>
@@ -334,9 +308,9 @@ a{color:#1f4fd1}
 <h2>6. 이용자의 권리</h2>
 <p>이용자는 자신의 개인정보 열람·정정·삭제·처리 정지를 요청할 수 있습니다. 접속 기록은 IP 주소로만 구분되므로, 요청 시 접속한 IP와 시각을 알려 주시면 확인 후 처리합니다.</p>
 <h2>7. 개인정보 보호책임자 · 문의</h2>
-<p>운영자: [운영자 이름] · 이메일: [연락처 이메일] <span class="muted">(시안: 실제 운영 전 기입)</span></p>
+<p>운영자: [운영자 이름] · 이메일: [연락처 이메일]</p>
 <h2>8. 시행일</h2>
-<p>[시행일] (시안)</p>
+<p>[시행일]</p>
 </div></body></html>
 """
 
