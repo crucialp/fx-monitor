@@ -1,0 +1,5 @@
+# ver2(상업용 시안) — https://fx-monitor-v2.pages.dev
+# 만들기: python v2/build_v2.py  → 배포: (v2 폴더에서) npx wrangler pages deploy --branch main --commit-dirty=true
+name = "fx-monitor-v2"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"
