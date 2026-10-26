@@ -1814,7 +1814,7 @@ img{max-width:100%}
     else if(st.date===t&&st.state==="failed")m.textContent="오늘 업데이트가 실패했습니다 ("+(st.finished||"")+") · 내일 다시 가능";
     else if(st.date===t)m.textContent="오늘은 이미 실행됨 · 내일 다시 가능";
     else if(lk.date===t)m.textContent="오늘 "+(lk.at||"")+"에 요청됨 · 곧 시작합니다";
-    else{b.disabled=false;m.textContent="기관 전망 리서치 · 하루 1회 · 시세·뉴스는 자동 갱신"}
+    else{b.disabled=false;m.textContent="기관 전망 리서치 · 하루 1회 · 시세는 자동 갱신"}
   }
   function loadUpd(){
     fetch(API+"/api/update",{cache:"no-store"}).then(function(r){return r.json()}).then(showUpd)
@@ -1832,7 +1832,7 @@ img{max-width:100%}
     }).catch(function(){$("updMsg").textContent="요청에 실패했습니다. 잠시 후 다시 시도해 주세요";$("updBtn").disabled=false});
   });
   /* 버튼 뒤의 자동 리서치는 아직 설정 전이라 잠가 둔다 */
-  $("updBtn").disabled=true; $("updMsg").textContent="업데이트 버튼 준비 중 · 시세·뉴스는 자동 갱신";
+  $("updBtn").disabled=true; $("updMsg").textContent="업데이트 버튼 준비 중 · 시세는 자동 갱신";
 
   /* ---------- 페이지 전환 (1·2·3) ---------- */
   var tabs=[].slice.call(document.querySelectorAll(".pager button"));
