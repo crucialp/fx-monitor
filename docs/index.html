@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="달러/원 실시간 1분봉, 서울외국환중개 매매기준율 일별 추이, 국내외 기관 분기별 전망 모음.">
 <title>환율 조회</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fx-monitor.pages.dev/fonts/pretendard/pretendardvariable-dynamic-subset.css">
 <style>
 /* Layout: a dealing-room research brief. Live base-rate chart first, then quarterly averages, consensus, per-institution ledgers with source links, method. */
 :root{
@@ -26,9 +24,9 @@
   --ev:#7a4fd6;
   --up:#d6453d;
   --down:#2a6fd6;
-  --font-display:"Noto Serif KR","Nanum Myeongjo","Batang",serif;
-  --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
-  --font-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+  --font-display:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-num:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -45,10 +43,10 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 .wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 64px}
 @media (max-width:480px){.wrap{padding-inline:16px}}
-h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;color:var(--ink)}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;color:var(--ink);letter-spacing:-.015em}
 h1{font-size:clamp(28px,4.4vw,42px);line-height:1.2;font-weight:700;letter-spacing:-.01em}
 h2{font-size:clamp(21px,2.6vw,26px);line-height:1.3;font-weight:700}
 h3{font-size:17px;line-height:1.4;font-weight:600}
@@ -298,6 +296,50 @@ img{max-width:100%}
 .lcard:hover{border-color:var(--rule-strong);background:var(--chip)}
 .lcard b{font-size:14px;font-weight:600}
 .lcard span{font-size:12.5px;color:var(--muted)}
+.nx-toolbar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-bottom:12px}
+.nx-search{flex:1 1 220px;max-width:340px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 10px;font:inherit;font-size:14px}
+.nx-toolbar select{border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 8px;font:inherit;font-size:13px}
+.nx-check{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2)}
+.nx-end{margin-left:auto}
+.nx-btn{border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.nx-btn:hover{background:var(--chip)}
+.nx-cats{display:flex;flex-wrap:wrap;gap:6px;flex-basis:100%}
+.nx-cat{border:1px solid var(--rule-strong);background:var(--surface);border-radius:999px;padding:3px 11px;font:inherit;font-size:13px;color:var(--ink-2);cursor:pointer}
+.nx-cat:hover{background:var(--chip)}
+.nx-cat[aria-pressed="true"]{border-color:var(--ink-2);color:var(--ink);font-weight:600}
+.nx-cat .n{color:var(--muted);font-weight:400;margin-left:3px}
+.nx-inbox{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);border:1px solid var(--rule);border-radius:10px;background:var(--surface);overflow:hidden;height:max(460px,calc(100dvh - 260px))}
+.nx-list{overflow-y:auto;border-right:1px solid var(--rule);outline:none;overscroll-behavior:contain}
+.nx-day{position:sticky;top:0;z-index:1;background:var(--surface);border-bottom:1px solid var(--rule);padding:6px 16px;font-size:12px;font-weight:600;color:var(--ink-2);display:flex;justify-content:space-between}
+.nx-day span{font-weight:400;color:var(--muted)}
+.nx-item{display:grid;grid-template-columns:10px minmax(0,1fr);gap:2px 10px;padding:10px 16px 11px 12px;border-bottom:1px solid var(--rule);cursor:pointer}
+.nx-item:hover{background:var(--chip)}
+.nx-item[aria-selected="true"]{background:color-mix(in srgb,var(--down) 10%,transparent)}
+.nx-dot{width:7px;height:7px;border-radius:50%;margin-top:7px;background:transparent}
+.nx-item.unread .nx-dot{background:var(--down)}
+.nx-item .meta{font-size:12px;color:var(--muted);display:flex;gap:6px;min-width:0}
+.nx-item .meta .s{color:var(--ink-2);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nx-item .t{grid-column:2;font-size:14px;line-height:1.45;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nx-item.unread .t{color:var(--ink);font-weight:600}
+.nx-item .tg{grid-column:2;font-size:11.5px;color:var(--muted)}
+.nx-item .tg.lv-긴급{color:var(--up)}
+.nx-empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+.nx-reader{overflow-y:auto;padding:28px 32px;display:grid;align-content:start;gap:14px;min-width:0}
+.nx-reader .pill{justify-self:start;font-size:11.5px;border:1px solid var(--rule-strong);border-radius:999px;padding:1px 9px;color:var(--ink-2)}
+.nx-reader .pill.lv-긴급{border-color:var(--up);color:var(--up)}
+.nx-reader h3{font-size:21px;line-height:1.4}
+.nx-reader .byline{font-size:13px;color:var(--muted)}
+.nx-reader .none{margin:0;color:var(--muted);font-size:13.5px}
+.nx-reader .open{justify-self:start;display:inline-block;background:var(--down);color:#fff;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;text-decoration:none}
+.nx-reader .open::after{content:"↗";color:inherit;font-size:.9em;margin-left:4px}
+.nx-reader-empty{color:var(--muted);font-size:14px;padding-top:40px;text-align:center}
+.nx-badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:6px;border-radius:999px;background:var(--down);color:#fff;font-size:11px;font-weight:600;vertical-align:1px}
+@media (max-width:860px){
+  .nx-inbox{grid-template-columns:1fr;height:auto;overflow:visible;border:0;background:transparent}
+  .nx-list{border:1px solid var(--rule);border-radius:10px;background:var(--surface);overflow:visible}
+  .nx-reader{display:none}
+  .nx-end{margin-left:0}
+}
 .newslist{display:grid;background:var(--surface);border:1px solid var(--rule);border-radius:6px;overflow:hidden;position:relative;min-height:120px}
 .newslist .msg{padding:24px;color:var(--muted);font-size:13px;text-align:center}
 .nday{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em;padding:10px 14px 6px;background:var(--bg);border-bottom:1px solid var(--rule)}
@@ -331,7 +373,7 @@ img{max-width:100%}
 </head>
 <body>
 <style>
-.sitebar{background:#16181d;font-family:'IBM Plex Sans KR','Pretendard','Malgun Gothic',system-ui,sans-serif;font-size:13px;line-height:1.4}
+.sitebar{background:#16181d;font-family:'Pretendard Variable',Pretendard,'Malgun Gothic',system-ui,sans-serif;font-size:13px;line-height:1.4}
 .sitebar-in{max-width:1180px;margin:0 auto;padding:6px 16px;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 .sitebar a{color:#c9ced8;text-decoration:none;padding:4px 12px;border-radius:999px;font-weight:500}
 .sitebar a:hover{color:#fff}
@@ -362,7 +404,7 @@ img{max-width:100%}
         <button type="button" role="tab" aria-controls="p1" aria-selected="true" data-go="1"><span class="pn">1</span>실시간</button>
         <button type="button" role="tab" aria-controls="p2" aria-selected="false" data-go="2"><span class="pn">2</span>추이·전망</button>
         <button type="button" role="tab" aria-controls="p3" aria-selected="false" data-go="3"><span class="pn">3</span>기관별 상세·출처</button>
-        <button type="button" role="tab" aria-controls="p4" aria-selected="false" data-go="4"><span class="pn">4</span>뉴스</button>
+        <button type="button" role="tab" aria-controls="p4" aria-selected="false" data-go="4"><span class="pn">4</span>뉴스<span class="nx-badge" id="nbadge" hidden></span></button>
       </div>
       <ul data-for="1">
         <li><a href="#rtnotes">데이터 기준</a></li>
@@ -949,17 +991,17 @@ img{max-width:100%}
   <main id="p4" data-page="4" hidden>
     <div class="pagehead"><span class="eyebrow">4페이지</span><h2>환율 뉴스</h2><p class="muted small">연합뉴스 RSS에서 환율에 영향을 줄 수 있는 기사를 자동으로 모읍니다. 연합뉴스는 비상업적 블로그·개인 용도의 RSS 이용을 허용하며, 이 사이트는 광고 없는 비상업 운영입니다. 제목과 링크만 보여 주고 본문은 연합뉴스에서 보세요. 화면을 열어 두면 1분마다 새 기사를 확인합니다.</p></div>
     <section id="news" style="padding-top:16px">
-      <div class="ctl">
-        <div class="seg" role="group" aria-label="분류">
-          <button type="button" data-nf="all" aria-pressed="true">전체</button>
-          <button type="button" data-nf="긴급" aria-pressed="false">긴급·속보</button>
-          <button type="button" data-nf="외환" aria-pressed="false">외환 시황</button>
-          <button type="button" data-nf="영향" aria-pressed="false">영향 요인</button>
-        </div>
-        <input type="search" id="nq" placeholder="제목 검색 (예: 외환-마감)" aria-label="제목 검색">
+      <div class="nx-toolbar">
+        <input type="search" class="nx-search" id="nq" placeholder="제목 검색 (예: 외환-마감)" aria-label="제목 검색">
+        <select id="nsrc" aria-label="매체"></select>
+        <label class="nx-check"><input type="checkbox" id="nunread"> 안 읽은 기사만</label>
+        <div class="nx-end"><button type="button" class="nx-btn" id="nmark">모두 읽음</button></div>
+        <div class="nx-cats" id="ncats" role="group" aria-label="분류"></div>
       </div>
-      <div class="urgent" id="nurgent" hidden></div>
-      <div class="newslist" id="nlist"><div class="msg">뉴스를 불러오는 중…</div></div>
+      <div class="nx-inbox">
+        <div class="nx-list" id="nlist" tabindex="0" role="listbox" aria-label="기사 목록"><div class="nx-empty">뉴스를 불러오는 중…</div></div>
+        <article class="nx-reader" id="nreader" aria-live="polite"></article>
+      </div>
       <ul class="notes">
         <li><b>분류 기준(키워드 자동 분류).</b> 긴급·속보 = 속보·개입·급등락 등 + 환율·금리·관세 같은 재료, 외환 시황 = 달러-원·NDF·외환당국 등 외환시장 기사(인포맥스 [외환]·[외환-마감] 포함), 영향 요인 = 연준·한은·유가·국민연금처럼 환율을 움직일 수 있는 기사.</li>
       </ul>
@@ -1456,7 +1498,7 @@ img{max-width:100%}
     box.innerHTML="";
     var LC=window.LightweightCharts;
     var chart=LC.createChart(box,{autoSize:true,
-      layout:{background:{type:"solid",color:cssv("--surface")},textColor:cssv("--ink-2"),fontFamily:"'IBM Plex Sans KR','Malgun Gothic',sans-serif",fontSize:11.5,attributionLogo:true},
+      layout:{background:{type:"solid",color:cssv("--surface")},textColor:cssv("--ink-2"),fontFamily:"'Pretendard Variable',Pretendard,'Malgun Gothic',sans-serif",fontSize:11.5,attributionLogo:true},
       grid:{vertLines:{color:cssv("--rule")},horzLines:{color:cssv("--rule")}},
       rightPriceScale:{borderColor:cssv("--rule-strong"),scaleMargins:{top:0.28,bottom:0.08}},
       crosshair:{vertLine:{style:0,width:1,color:cssv("--rule-strong"),labelBackgroundColor:cssv("--ink-2")},horzLine:{style:0,width:1,color:cssv("--rule-strong"),labelBackgroundColor:cssv("--ink-2")}},
@@ -1578,7 +1620,7 @@ img{max-width:100%}
   function evRest(e){if(e.info)return e.note?"("+e.note+")":"";var s=(e.actual||"발표 대기")+(e.note?" "+e.note:"");if(e.forecast)s+=" · 예상 "+e.forecast;if(e.previous)s+=" · 이전 "+e.previous;return s}
   var MCTX=null;
   function textW(str,bold){
-    try{MCTX=MCTX||document.createElement("canvas").getContext("2d");MCTX.font=(bold?"600 ":"400 ")+"11.5px 'IBM Plex Sans KR','Malgun Gothic',sans-serif";return MCTX.measureText(str).width}catch(e){return str.length*8}
+    try{MCTX=MCTX||document.createElement("canvas").getContext("2d");MCTX.font=(bold?"600 ":"400 ")+"11.5px 'Pretendard Variable',Pretendard,'Malgun Gothic',sans-serif";return MCTX.measureText(str).width}catch(e){return str.length*8}
   }
   /* 라벨은 두 줄: 윗줄 굵은 이름, 아랫줄 가는 값(발표·예상·이전), 둘 다 화살표 위 가운데. 화살표는 라벨 바로 아래에서 시세까지.
      5분 이내·화면상 14px 이내(같이 발표)는 한 화살표 위에 라벨을 쌓고, 따로 발표된 것끼리는
@@ -1817,42 +1859,89 @@ img{max-width:100%}
   if(window.ResizeObserver){
     ["dchart","rchart"].forEach(function(id){var bx=$(id),w0=bx.clientWidth;new ResizeObserver(function(){if(bx.clientWidth!==w0){w0=bx.clientWidth;if(ID&&!$("p1").hidden){if(id==="dchart"&&MODE==="day")drawDay();if(id==="rchart"&&MODE==="range")drawRange()}}}).observe(bx)});
   }
+  /* 글꼴(Pretendard)이 늦게 도착하면 지표 라벨 폭을 다시 재서 그린다 */
+  if(document.fonts&&document.fonts.addEventListener){var FT=0;document.fonts.addEventListener("loadingdone",function(){clearTimeout(FT);FT=setTimeout(function(){if(ID&&!$("p1").hidden){if(MODE==="day")drawDay();else if(MODE==="range")drawRange()}},150)})}
 
-  /* ---------- 4페이지: 환율 뉴스 ---------- */
-  var NEWS=null, NF="all", NSEEN=null;
-  try{NSEEN=+localStorage.getItem("usdkrw-news-seen")||null}catch(e){}
+  /* ---------- 4페이지: 환율 뉴스 — 금리 모니터와 같은 받은편지함(왼쪽 목록·오른쪽 보기, 분류·매체·안 읽은 기사·모두 읽음) ---------- */
+  var NEWS=null, NX={cat:"전체",src:"all",q:"",unread:false,sel:null};
+  var NXCAT={"긴급":"긴급·속보","외환":"외환 시황","영향":"영향 요인"}, NXORD=["전체","긴급","외환","영향"];
+  var NXREAD={}, NXWM=0;
+  try{(JSON.parse(localStorage.getItem("fx-news-read")||"[]")).forEach(function(k){NXREAD[k]=1});NXWM=+localStorage.getItem("fx-news-wm")||0}catch(e){}
+  if(!NXWM){NXWM=Date.now()-24*3600e3;try{localStorage.setItem("fx-news-wm",String(NXWM))}catch(e){}}   /* 첫 방문: 하루 전 기사까지만 새 기사로 */
   function esc(x){return String(x).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function nxId(x){var str=x.t+"|"+x.u,h=2166136261;for(var i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
+  function nxUnread(x){return x.m*60000>NXWM&&!NXREAD[x.id]}
+  function nxMark(id){if(NXREAD[id])return;NXREAD[id]=1;try{localStorage.setItem("fx-news-read",JSON.stringify(Object.keys(NXREAD).slice(-3000)))}catch(e){}}
+  function nxRel(m){var d=Date.now()/60000-m;if(d<1)return "방금";if(d<60)return Math.floor(d)+"분 전";if(d<1440)return Math.floor(d/60)+"시간 전";return mdhm(m)}
+  function nxDay(m){var dk=ymdK(m),td=ymdK(Date.now()/60000),yd=ymdK(Date.now()/60000-1440),x=kd(m);
+    var base=(x.getUTCMonth()+1)+"월 "+x.getUTCDate()+"일 ("+"일월화수목금토"[x.getUTCDay()]+")";
+    return dk===td?["오늘",base]:dk===yd?["어제",base]:[base,""]}
   function loadNews(){
+    if(NEWS)renderNews();   /* 이미 받은 기사는 바로 보여 주고 새로 받아 덮는다 */
     return fetch(API+"/api/news",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})
-      .then(function(j){if(j&&j.items){NEWS=j;renderNews()}})
-      .catch(function(e){if(window.console)console.error("news",e&&e.stack||e);if(!NEWS)$("nlist").innerHTML='<div class="msg">뉴스를 불러오지 못했습니다. 잠시 후 다시 열어 주세요.</div>'});
+      .then(function(j){if(j&&j.items){j.items.forEach(function(x){x.id=nxId(x)});NEWS=j;nxControls();renderNews()}})
+      .catch(function(e){if(window.console)console.error("news",e&&e.stack||e);if(!NEWS)$("nlist").innerHTML='<div class="nx-empty">뉴스를 불러오지 못했습니다. 잠시 후 다시 열어 주세요.</div>'});
   }
+  function nxFiltered(){var q=NX.q.trim().toLowerCase();return NEWS.items.filter(function(x){
+    return (NX.cat==="전체"||x.lv===NX.cat)&&(NX.src==="all"||x.s===NX.src)&&(!NX.unread||nxUnread(x))&&(!q||x.t.toLowerCase().indexOf(q)>=0)})}
+  function nxControls(){
+    var it=NEWS.items, cnt={"전체":it.length}, srcs={};
+    it.forEach(function(x){cnt[x.lv]=(cnt[x.lv]||0)+1;srcs[x.s]=(srcs[x.s]||0)+1});
+    $("ncats").innerHTML=NXORD.filter(function(c){return c==="전체"||cnt[c]}).map(function(c){
+      return '<button type="button" class="nx-cat" data-nc="'+c+'" aria-pressed="'+(NX.cat===c)+'">'+(c==="전체"?"전체":NXCAT[c])+'<span class="n">'+(cnt[c]||0)+'</span></button>'}).join("");
+    var names=Object.keys(srcs).sort(function(a,b){return srcs[b]-srcs[a]});
+    if(NX.src!=="all"&&!srcs[NX.src])NX.src="all";
+    $("nsrc").innerHTML='<option value="all">모든 매체</option>'+names.map(function(n){return '<option value="'+esc(n)+'"'+(NX.src===n?" selected":"")+'>'+esc(n)+'</option>'}).join("");
+  }
+  function nxBadge(){if(!NEWS)return;var n=NEWS.items.filter(nxUnread).length,b=$("nbadge");b.hidden=!n;b.textContent=n>99?"99+":String(n)}
   function renderNews(){
-    if(!NEWS)return;
-    var q=($("nq").value||"").trim().toLowerCase(), it=NEWS.items, nowM=Date.now()/60000;
-    var list=it.filter(function(x){return (NF==="all"||x.lv===NF)&&(!q||x.t.toLowerCase().indexOf(q)>=0)});
-    var urg=it.filter(function(x){return x.lv==="긴급"&&nowM-x.m<=24*60}).slice(0,5);
-    var ub=$("nurgent");
-    if(urg.length&&NF==="all"&&!q){
-      ub.hidden=false;
-      var todayK=ymdK(Date.now()/60000);
-      ub.innerHTML='<div class="uh">최근 24시간 긴급·속보</div>'+urg.map(function(x){return '<a class="nitem" style="border:0;padding:4px 0" href="'+esc(x.u)+'" target="_blank" rel="noopener"><span class="ntime">'+(ymdK(x.m)===todayK?hm(x.m):mdhm(x.m))+'</span><span class="nbadge lv-긴급">긴급</span><span class="ntitle">'+esc(x.t)+'</span><span class="nsrc">'+esc(x.s)+'</span></a>'}).join("");
-    }else ub.hidden=true;
-    if(!list.length){$("nlist").innerHTML='<div class="msg">조건에 맞는 기사가 없습니다.</div>';return}
-    var h="", day="";
-    list.slice(0,300).forEach(function(x){
-      var d=kd(x.m), dk=(d.getUTCMonth()+1)+"월 "+d.getUTCDate()+"일 ("+"일월화수목금토"[d.getUTCDay()]+")";
-      if(dk!==day){h+='<div class="nday">'+dk+'</div>';day=dk}
-      h+='<a class="nitem'+(NSEEN&&x.m>NSEEN?" fresh":"")+'" href="'+esc(x.u)+'" target="_blank" rel="noopener"><span class="ntime">'+hm(x.m)+'</span><span class="nbadge lv-'+x.lv+'">'+(x.lv==="긴급"?"긴급":x.lv==="외환"?"외환":"영향")+'</span><span class="ntitle">'+esc(x.t)+'</span><span class="nsrc">'+esc(x.s)+'</span></a>';
+    if(!NEWS)return; nxBadge();
+    if($("p4").hidden)return;
+    var list=$("nlist"), keep=list.scrollTop, L=nxFiltered(), h="", day="";
+    if(!L.length)h='<div class="nx-empty">'+(NEWS.items.length?"조건에 맞는 기사가 없습니다.":"아직 기사가 없습니다.")+'</div>';
+    L.slice(0,400).forEach(function(x){
+      var dl=nxDay(x.m);
+      if(dl[0]!==day){day=dl[0];h+='<div class="nx-day">'+dl[0]+'<span>'+dl[1]+'</span></div>'}
+      h+='<div class="nx-item'+(nxUnread(x)?" unread":"")+'" role="option" id="nx-'+x.id+'" data-id="'+x.id+'" aria-selected="'+(NX.sel===x.id)+'">'+
+        '<span class="nx-dot"></span><div class="meta"><span class="s">'+esc(x.s)+'</span>·<span>'+nxRel(x.m)+'</span></div>'+
+        '<div class="t">'+esc(x.t)+'</div><div class="tg lv-'+x.lv+'">'+NXCAT[x.lv]+'</div></div>';
     });
-    $("nlist").innerHTML=h;
-    $("ncredit").textContent="기사 "+list.length+"건 · 받은 시각 "+(NEWS.updated||"").replace("T"," ")+" · 출처: 연합뉴스 RSS · 굵은 제목은 지난번 방문 이후 새 기사";
-    if(!$("p4").hidden&&it.length){try{localStorage.setItem("usdkrw-news-seen",String(it[0].m))}catch(e){}}
+    list.innerHTML=h; list.scrollTop=keep;
+    $("ncredit").textContent="기사 "+L.length+"건 · 받은 시각 "+(NEWS.updated||"").replace("T"," ")+" · 출처: 연합뉴스 RSS · 굵은 제목은 안 읽은 기사";
+    nxReader();
   }
-  [].forEach.call(document.querySelectorAll("[data-nf]"),function(b){b.addEventListener("click",function(){NF=b.dataset.nf;[].forEach.call(document.querySelectorAll("[data-nf]"),function(x){x.setAttribute("aria-pressed",String(x===b))});renderNews()})});
-  $("nq").addEventListener("input",renderNews);
+  function nxNarrow(){return window.matchMedia&&matchMedia("(max-width: 860px)").matches}
+  function nxSelect(id,fromClick){
+    var x=null;NEWS.items.forEach(function(y){if(y.id===id)x=y});if(!x)return;
+    NX.sel=id; nxMark(id);
+    if(fromClick&&nxNarrow())window.open(x.u,"_blank","noopener");
+    [].forEach.call(document.querySelectorAll(".nx-item[aria-selected='true']"),function(r){r.setAttribute("aria-selected","false")});
+    var row=$("nx-"+id); if(row){row.setAttribute("aria-selected","true");row.classList.remove("unread");row.scrollIntoView({block:"nearest"})}
+    nxBadge(); nxReader();
+  }
+  function nxReader(){
+    var r=$("nreader"), x=null; NEWS.items.forEach(function(y){if(y.id===NX.sel)x=y});
+    if(!x){r.innerHTML='<div class="nx-reader-empty">왼쪽 목록에서 기사를 고르면 제목과 원문 링크가 여기에 나옵니다.</div>';return}
+    var d=kd(x.m), when=d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate())+" ("+"일월화수목금토"[d.getUTCDay()]+") "+hm(x.m)+" 한국 시간";
+    r.innerHTML='<span class="pill lv-'+x.lv+'">'+NXCAT[x.lv]+'</span><h3>'+esc(x.t)+'</h3><div class="byline">'+esc(x.s)+' · '+when+'</div>'+
+      '<p class="none">제목과 원문 링크만 보여 줍니다. 본문은 원문에서 확인하세요.</p><a class="open" href="'+esc(x.u)+'" target="_blank" rel="noopener">원문 열기</a>';
+  }
+  $("nlist").addEventListener("click",function(e){var row=e.target.closest&&e.target.closest(".nx-item");if(row)nxSelect(row.getAttribute("data-id"),true)});
+  $("ncats").addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-nc]");if(!b)return;NX.cat=b.getAttribute("data-nc");nxControls();renderNews()});
+  $("nsrc").addEventListener("change",function(){NX.src=this.value;renderNews()});
+  $("nunread").addEventListener("change",function(){NX.unread=this.checked;renderNews()});
+  $("nq").addEventListener("input",function(){NX.q=this.value;renderNews()});
+  $("nmark").addEventListener("click",function(){NXWM=Date.now();NXREAD={};try{localStorage.setItem("fx-news-wm",String(NXWM));localStorage.setItem("fx-news-read","[]")}catch(e){}renderNews()});
+  document.addEventListener("keydown",function(e){
+    if($("p4").hidden||!NEWS||/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName))return;
+    var rows=[].slice.call(document.querySelectorAll("#nlist .nx-item"));if(!rows.length)return;
+    var cur=-1;rows.forEach(function(r,i){if(r.getAttribute("data-id")===NX.sel)cur=i});
+    if(e.key==="j"||e.key==="ArrowDown"){e.preventDefault();nxSelect(rows[Math.min(rows.length-1,cur+1)].getAttribute("data-id"),false)}
+    else if(e.key==="k"||e.key==="ArrowUp"){e.preventDefault();nxSelect(rows[Math.max(0,cur-1)].getAttribute("data-id"),false)}
+    else if(e.key==="Enter"&&cur>=0){var id=NX.sel;NEWS.items.forEach(function(y){if(y.id===id)window.open(y.u,"_blank","noopener")})}
+  });
   setInterval(function(){if(!document.hidden&&!$("p4").hidden)loadNews()},60000);
-  setTimeout(function(){if(!NEWS)loadNews()},2500);  /* 4페이지를 열기 전에 미리 받아 둔다 */
+  setTimeout(function(){if(!NEWS)loadNews()},2500);  /* 4페이지를 열기 전에 미리 받아 둔다(안 읽은 기사 수 표시) */
 
   /* ---------- 상단 '업데이트' 버튼: 하루 한 번, 누르면 그날은 모두 잠김 ---------- */
   var UPD=null;

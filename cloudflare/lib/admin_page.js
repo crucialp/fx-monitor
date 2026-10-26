@@ -4,11 +4,10 @@
 const HEAD = (title) => `<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title>${title}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/fonts/pretendard/pretendardvariable-dynamic-subset.css">
 <style>
 :root{--bg:#f3f4f6;--surface:#fff;--ink:#16181d;--ink-2:#4a505c;--muted:#6b7280;--rule:#e3e5ea;--rule-strong:#c9cdd5;--accent:#1f4fd1;--me:#7a4fd6;--bad:#c4372f;
-  --font-body:'IBM Plex Sans KR','Malgun Gothic',sans-serif;--font-num:'IBM Plex Mono',ui-monospace,monospace}
+  --font-body:'Pretendard Variable',Pretendard,'Malgun Gothic',sans-serif;--font-num:'Pretendard Variable',Pretendard,'Malgun Gothic',sans-serif}
 @media (prefers-color-scheme:dark){:root{--bg:#121418;--surface:#1b1e24;--ink:#eceef2;--ink-2:#b4bac5;--muted:#8a919e;--rule:#2b2f37;--rule-strong:#3a3f49;--accent:#7ea2ff;--me:#a98cf2;--bad:#ec6a62}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5}
@@ -16,7 +15,7 @@ a{color:var(--accent)}
 .wrap{max-width:1180px;margin:0 auto;padding:24px 16px 48px}
 h1{font-size:24px;margin:0}
 .muted{color:var(--muted)}
-.num{font-family:var(--font-num)}
+.num{font-family:var(--font-num)} body{font-variant-numeric:tabular-nums}
 button,.btn{font:inherit;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer;text-decoration:none;display:inline-block}
 button[aria-pressed=true]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 input[type=password]{font:inherit;width:100%;padding:10px 12px;border:1px solid var(--rule-strong);border-radius:6px;background:var(--surface);color:var(--ink)}
