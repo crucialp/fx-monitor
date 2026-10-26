@@ -92,7 +92,7 @@ tr.isbot td{color:var(--muted)}
 <h2 style="margin-top:8px">IP별 <span class="note">(많이 온 순)</span></h2><div class="tbl"><table id="byip"></table></div>
 <h2>최근 방문 <span class="note">(최대 500건)</span></h2><div class="tbl"><table id="recent"></table></div>
 <p class="note" style="margin-top:18px">사이트를 한 번 열 때마다 1건(화면 안에서 페이지를 넘기거나 시세·금리가 갱신되는 것은 세지 않음). 위치·통신사는 IP로 추정한 값이라 실제와 다를 수 있습니다.
-'내 방문 빼기' — 환율 조회는 이 관리자 화면에 로그인한 브라우저로 연 것만 빼고, 금리 모니터는 그런 표시가 없어 지금 내 IP와 같은 기록을 뺍니다(회사에서 보면 같은 회사망 동료 방문도 같이 빠질 수 있음).
+'내 방문 빼기' — 이 관리자 화면에 로그인한 브라우저로 연 것만 뺍니다. 단, 금리 모니터를 환율 조회 주소(/rates/)로 합치기 전(10/26)의 금리 모니터 기록은 그런 표시가 없어 지금 내 IP와 같은 기록을 뺍니다.
 환율 조회의 '방문자'는 브라우저마다 붙는 임의 번호 기준입니다. 자동 접속(봇·스캐너 이름, 위장된 브라우저 정보, AWS·Google 같은 데이터센터 회선)은 두 사이트 모두 같은 규칙으로 가려 방문 수에서는 빼고, 표에는 '봇' 표시를 붙여 보여 줍니다(흐린 글씨, '표에 봇 보기'를 끄면 숨김). 기록은 두 사이트 모두 90일 뒤 지워집니다.</p>
 </div>
 <script>
@@ -173,7 +173,7 @@ tr.isbot td{color:var(--muted)}
       .then(function(j){
         if(j.error){$("upd").textContent=j.error;return}
         J=j;
-        $("you").textContent="지금 내 IP: "+(j.you||"–")+" · 이 브라우저에서 연 환율 조회는 '나'로 표시됩니다.";
+        $("you").textContent="지금 내 IP: "+(j.you||"–")+" · 이 브라우저에서 연 환율 조회·금리 모니터는 '나'로 표시됩니다.";
         $("upd").textContent="갱신 "+k(j.now);
         render();
       }).catch(function(e){if(e!==0)$("upd").textContent="불러오지 못했습니다. 새로고침해 주세요."});

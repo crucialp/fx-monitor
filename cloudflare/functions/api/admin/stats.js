@@ -1,7 +1,7 @@
 // 관리자 전용 방문 통계 JSON — 환율 조회(DB)와 금리 모니터(RATE_DB, 읽기만) 두 사이트. 로그인 쿠키가 없으면 401.
 // GET /api/admin/stats?days=7&me=0
 //   me=0 이면 내 방문 제외: 환율 조회는 /admin 에 로그인한 브라우저 표시(me=1) 기준,
-//   금리 모니터는 그런 표시가 없어 지금 내 IP 기준(같은 회사망 동료 방문도 함께 빠질 수 있음). 방문 수는 사람(bot=0)만 세고 봇(같은 규칙)은 bots 로 따로, 목록에는 봇도 bot 표시와 함께 넣는다.
+//   금리 모니터는 /rates/ 통합 뒤엔 같은 쿠키 표시, 그 전 기록은 내 IP 기준. 방문 수는 사람(bot=0)만 세고 봇(같은 규칙)은 bots 로 따로, 목록에는 봇도 bot 표시와 함께 넣는다.
 import { isAdmin, PRIVATE } from "../../../lib/auth.js";
 
 const KST = 32400; // 초
@@ -24,16 +24,18 @@ async function fxStats(db, since, noMe) {
   return { total: tot.results[0], allTime: all.results[0], daily: daily.results, byIp: byIp.results, recent: recent.results };
 }
 
+// 금리 모니터를 /rates/ 로 통합한 뒤(RATES_JOINED)부터는 관리자 쿠키로 '나'(me=1)를 표시한다. 그 전 기록은 IP 로만 구분.
+const RATES_JOINED = 1792974928684;
 async function rateStats(db, since, myIp) {
-  const c = myIp ? " AND (ip IS NULL OR ip != ?)" : "";
+  const c = myIp ? ` AND me = 0 AND NOT (ts < ${RATES_JOINED} AND ip IS NOT NULL AND ip = ?)` : "";
   const b = (st, ...a) => (myIp ? st.bind(...a, myIp) : st.bind(...a));
   const [tot, all, daily, byIp, recent] = await db.batch([
     b(db.prepare(`SELECT ${AGG} FROM visits WHERE ts >= ?${c}`), since),
     b(db.prepare(`SELECT ${AGG}, MIN(ts) first FROM visits WHERE 1=1${c}`)),
     b(db.prepare(`SELECT ${DAYEXPR} d, ${AGG} FROM visits WHERE ts >= ?${c} GROUP BY d ORDER BY d DESC`), since),
-    b(db.prepare(`SELECT ip, COUNT(*) n, MIN(ts) first, MAX(ts) last, MAX(country) country, MAX(city) city, MAX(org) org, MAX(ua) ua, MIN(bot) bot
+    b(db.prepare(`SELECT ip, COUNT(*) n, MIN(ts) first, MAX(ts) last, MAX(country) country, MAX(city) city, MAX(org) org, MAX(ua) ua, MIN(bot) bot, MAX(me) me
                   FROM visits WHERE ts >= ?${c} GROUP BY ip ORDER BY MIN(bot), n DESC, last DESC LIMIT 400`), since),
-    b(db.prepare(`SELECT ts, ip, country, city, org, ua, referer ref, host, query, bot FROM visits WHERE ts >= ?${c} ORDER BY ts DESC LIMIT 500`), since),
+    b(db.prepare(`SELECT ts, ip, country, city, org, ua, referer ref, host, query, bot, me FROM visits WHERE ts >= ?${c} ORDER BY ts DESC LIMIT 500`), since),
   ]);
   return { total: tot.results[0], allTime: all.results[0], daily: daily.results, byIp: byIp.results, recent: recent.results };
 }
