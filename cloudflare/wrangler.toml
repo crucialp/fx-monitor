@@ -14,3 +14,9 @@ id = "85349e46143444fc960664115711b1bc"
 binding = "DB"
 database_name = "fx-monitor-visits"
 database_id = "b0a080bc-ecea-437e-995a-993de1d2d14f"
+
+# 금리 모니터(rate-monitor) 방문 기록 — 관리자 통합 화면에서 읽기만 한다(쓰기·삭제는 금리 모니터 쪽이 함)
+[[d1_databases]]
+binding = "RATE_DB"
+database_name = "rate-monitor-visits"
+database_id = "c0d6c9bb-7f3b-4360-87b0-468d75485c96"
