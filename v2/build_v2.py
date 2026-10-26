@@ -56,6 +56,8 @@ V2CSS = """<style>
 .v2note{border:1px solid #c9cdd5;border-radius:8px;padding:12px 14px;background:rgba(28,61,143,.05);font-size:13.5px;line-height:1.6}
 .v2note b{font-weight:600}
 .tvbox{border:1px solid var(--rule,#e3e5ea);border-radius:6px;overflow:hidden;background:var(--surface,#fff)}
+.tradingview-widget-copyright{font-size:12px;text-align:right;margin:4px 2px 0;color:var(--muted,#6b7280)}
+.tradingview-widget-copyright a{color:inherit;text-decoration:none}.tradingview-widget-copyright .blue-text{color:#2962ff}
 </style>
 """
 def v2bar(here):
@@ -115,14 +117,14 @@ def build_fx():
         <label class="mode"><input type="radio" name="rtmode2" value="day" checked><span><b>③ 하루</b><small>오늘 흐름 한눈에</small></span></label>
       </div>
     </div>
-    <div id="tv2quote" style="min-height:72px"></div>
-    <div class="mp2" data-mode="drag" hidden><p class="spec"><b>1분봉</b> · 끌어서 이동, 휠·두 손가락으로 확대. 위쪽 메뉴에서 봉 간격과 그래프 모양을 바꿀 수 있습니다.</p><div class="tvbox" style="height:560px" id="tv2drag"></div></div>
+    <div id="tv2quote" style="min-height:72px"></div><div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+    <div class="mp2" data-mode="drag" hidden><p class="spec"><b>1분봉</b> · 끌어서 이동, 휠·두 손가락으로 확대. 위쪽 메뉴에서 봉 간격과 그래프 모양을 바꿀 수 있습니다.</p><div class="tvbox" style="height:560px" id="tv2drag"></div><div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div></div>
     <div class="mp2" data-mode="range" hidden><div class="ctl"><div class="seg" role="group" aria-label="기간"><button type="button" data-r2="1D">1일</button><button type="button" data-r2="5D" aria-pressed="true">5일</button><button type="button" data-r2="1M">1개월</button></div></div>
-      <p class="spec">고른 기간 전체를 한 화면에 보여 줍니다. 봉 간격은 기간에 맞춰 자동으로 정해집니다.</p><div class="tvbox" style="height:520px" id="tv2range"></div></div>
-    <div class="mp2" data-mode="day"><p class="spec"><b>오늘 하루</b>의 1분 흐름을 화면 폭 전체에 그립니다.</p><div class="tvbox" style="height:460px" id="tv2day"></div></div>
+      <p class="spec">고른 기간 전체를 한 화면에 보여 줍니다. 봉 간격은 기간에 맞춰 자동으로 정해집니다.</p><div class="tvbox" style="height:520px" id="tv2range"></div><div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div></div>
+    <div class="mp2" data-mode="day"><p class="spec"><b>오늘 하루</b>의 1분 흐름을 화면 폭 전체에 그립니다.</p><div class="tvbox" style="height:460px" id="tv2day"></div><div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div></div>
     <h3 style="margin:22px 0 8px">주요 지표·금리 결정 (미국·한국·일본·유로존, 중요도 높음)</h3>
     <p class="muted small" style="margin:0 0 8px">발표 · 예상 · 이전 값, 한국 시간.</p>
-    <div class="tvbox" style="height:560px" id="tv2cal"></div>
+    <div class="tvbox" style="height:560px" id="tv2cal"></div><div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
     ''' + ad() + '''
     </section>
     <script>
@@ -300,6 +302,15 @@ def build_fx():
     s = s[:pf] + ad() + "\n    " + s[pf:]
     # 머리 아래 광고 자리
     s = s.replace("</header>", "</header>\n" + ad("상단 광고 영역"), 1)
+
+    # ---- 상업 이용 점검(10/26): 로이터 포지션 설문·연합인포맥스 설문 인용, 원문 미확인 2차 출처(SNS·블로그) 줄 삭제 ----
+    s, n1 = re.subn(r'\s*<li><b>포지션\.</b> 로이터 10/1 포지션 폴.*?</li>', '', s, count=1, flags=re.S)
+    s = rep(s, '연준 9월 FOMC 인상, 미 10년물 5.2%대(<a href="https://kbthink.com/news-list/view.html?newsId=20260930080003794" target="_blank" rel="noopener">연합인포맥스 설문</a>). 10/5 장중 5.349%',
+            '연준 9월 FOMC 인상, 미 10년물 10/5 장중 5.349%')
+    s = re.sub(r'<a href="https://kbthink\.com[^"]*"[^>]*>설문[^<]*</a>\s*·\s*', '', s)
+    s, n2 = re.subn(r'\s*<tr><td><span class="sw f"></span></td><td class="inst">JP모건</td><td class="date">2026-07-04</td>.*?</tr>', '', s, count=1, flags=re.S)
+    s, n3 = re.subn(r'\s*<tr><td><span class="sw d"></span></td><td class="inst">KB국민·우리은행</td>.*?</tr>', '', s, count=1, flags=re.S)
+    assert n1 == n2 == n3 == 1, (n1, n2, n3)
 
     # 아래쪽 안내
     s = rep(s, '<span>방문 통계를 위해 접속 IP·대략적 위치·브라우저 정보를 90일간 기록합니다(사이트 운영자만 열람).</span>',
