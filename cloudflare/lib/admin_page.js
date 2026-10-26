@@ -58,6 +58,8 @@ td.n{font-family:var(--font-num);text-align:right} th.n{text-align:right}
 td.ip{font-family:var(--font-num)}
 td.fx{color:var(--fx);font-weight:600} td.rt{color:var(--rt);font-weight:600}
 .me{display:inline-block;font-size:11px;color:#fff;background:var(--me);border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.bot{display:inline-block;font-size:11px;color:var(--ink-2);background:var(--bg);border:1px solid var(--rule-strong);border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
+tr.isbot td{color:var(--muted)}
 .note{font-size:12.5px;color:var(--muted)}
 .err{color:var(--bad);font-size:13px}
 :root{--fx:#1f4fd1;--rt:#1a8a5a}
@@ -72,6 +74,7 @@ td.fx{color:var(--fx);font-weight:600} td.rt{color:var(--rt);font-weight:600}
   <button type="button" data-d="1">오늘</button><button type="button" data-d="7">7일</button><button type="button" data-d="30">30일</button><button type="button" data-d="90">90일</button>
   <span class="sep" aria-hidden="true"></span>
   <label><input type="checkbox" id="noMe" checked> 내 방문 빼기</label>
+  <label><input type="checkbox" id="showBot" checked> 표에 봇 보기</label>
   <span class="note" id="upd"></span>
 </div>
 <p class="note" id="you"></p>
@@ -90,7 +93,7 @@ td.fx{color:var(--fx);font-weight:600} td.rt{color:var(--rt);font-weight:600}
 <h2>최근 방문 <span class="note">(최대 500건)</span></h2><div class="tbl"><table id="recent"></table></div>
 <p class="note" style="margin-top:18px">사이트를 한 번 열 때마다 1건(화면 안에서 페이지를 넘기거나 시세·금리가 갱신되는 것은 세지 않음). 위치·통신사는 IP로 추정한 값이라 실제와 다를 수 있습니다.
 '내 방문 빼기' — 환율 조회는 이 관리자 화면에 로그인한 브라우저로 연 것만 빼고, 금리 모니터는 그런 표시가 없어 지금 내 IP와 같은 기록을 뺍니다(회사에서 보면 같은 회사망 동료 방문도 같이 빠질 수 있음).
-환율 조회의 '방문자'는 브라우저마다 붙는 임의 번호 기준입니다. 자동 접속(봇·스캐너 이름, 위장된 브라우저 정보, AWS·Google 같은 데이터센터 회선)은 두 사이트 모두 같은 규칙으로 빼고 셉니다. 기록은 두 사이트 모두 90일 뒤 지워집니다.</p>
+환율 조회의 '방문자'는 브라우저마다 붙는 임의 번호 기준입니다. 자동 접속(봇·스캐너 이름, 위장된 브라우저 정보, AWS·Google 같은 데이터센터 회선)은 두 사이트 모두 같은 규칙으로 가려 방문 수에서는 빼고, 표에는 '봇' 표시를 붙여 보여 줍니다(흐린 글씨, '표에 봇 보기'를 끄면 숨김). 기록은 두 사이트 모두 90일 뒤 지워집니다.</p>
 </div>
 <script>
 (function(){
@@ -120,10 +123,12 @@ td.fx{color:var(--fx);font-weight:600} td.rt{color:var(--rt);font-weight:600}
       var r=document.createElement("tr");
       cells.forEach(function(c){var td=document.createElement("td");td.textContent=c.t==null?"–":String(c.t);if(c.c)td.className=c.c;
         if(c.me){var s=document.createElement("span");s.className="me";s.textContent="나";td.appendChild(s)}
+        if(c.bot){var b=document.createElement("span");b.className="bot";b.textContent="봇";td.appendChild(b);r.className="isbot"}
         r.appendChild(td)});
       el.appendChild(r)});
   }
   function ok(x){return x&&!x.error&&x.total}
+  function z(v){return v==null?0:v}
   function render(){
     if(!J)return;
     [].forEach.call(document.querySelectorAll("[data-d]"),function(b){b.setAttribute("aria-pressed",String(+b.dataset.d===D))});
@@ -132,32 +137,34 @@ td.fx{color:var(--fx);font-weight:600} td.rt{color:var(--rt);font-weight:600}
     if(fx&&fx.error)errs.push("환율 조회 기록: "+fx.error); if(rt&&rt.error)errs.push("금리 모니터 기록: "+rt.error);
     if(!fx)errs.push("환율 조회 기록 DB 가 연결되지 않았습니다"); if(!rt)errs.push("금리 모니터 기록 DB 가 연결되지 않았습니다");
     $("err").hidden=!errs.length; $("err").textContent=errs.join(" · ");
-    var F=ok(fx)?fx:{total:{n:0,ips:0,vids:0},allTime:{n:0},daily:[],byIp:[],recent:[]}, R=ok(rt)?rt:{total:{n:0,ips:0},allTime:{n:0},daily:[],byIp:[],recent:[]};
-    $("fxN").textContent=F.total.n; $("fxS").textContent="IP "+F.total.ips+" · 방문자 "+F.total.vids+" · 전체 누적 "+F.allTime.n;
-    $("rtN").textContent=R.total.n; $("rtS").textContent="IP "+R.total.ips+" · 전체 누적 "+R.allTime.n;
-    var ipset={}; F.byIp.concat(R.byIp).forEach(function(r){ipset[r.ip]=1});
-    $("alN").textContent=F.total.n+R.total.n; $("alS").textContent="IP "+Object.keys(ipset).length+"(두 사이트 중복 제외) · 전체 누적 "+(F.allTime.n+R.allTime.n);
+    var F=ok(fx)?fx:{total:{},allTime:{},daily:[],byIp:[],recent:[]}, R=ok(rt)?rt:{total:{},allTime:{},daily:[],byIp:[],recent:[]};
+    var SB=$("showBot").checked;
+    $("fxN").textContent=z(F.total.n); $("fxS").textContent="IP "+z(F.total.ips)+" · 방문자 "+z(F.total.vids)+" · 전체 누적 "+z(F.allTime.n)+" · 봇 "+z(F.total.bots)+"건 별도";
+    $("rtN").textContent=z(R.total.n); $("rtS").textContent="IP "+z(R.total.ips)+" · 전체 누적 "+z(R.allTime.n)+" · 봇 "+z(R.total.bots)+"건 별도";
+    var ipset={}; F.byIp.concat(R.byIp).forEach(function(r){if(!r.bot)ipset[r.ip]=1});
+    $("alN").textContent=z(F.total.n)+z(R.total.n); $("alS").textContent="IP "+Object.keys(ipset).length+"(두 사이트 중복 제외) · 전체 누적 "+(z(F.allTime.n)+z(R.allTime.n))+" · 봇 "+(z(F.total.bots)+z(R.total.bots))+"건 별도";
     /* 날짜별: 두 사이트를 날짜로 합침 */
     var dm={}; F.daily.forEach(function(r){(dm[r.d]=dm[r.d]||{}).f=r}); R.daily.forEach(function(r){(dm[r.d]=dm[r.d]||{}).r=r});
-    table($("daily"),[["날짜"],["환율 조회","n"],["IP","n"],["금리 모니터","n"],["IP","n"],["합계","n"]],
-      Object.keys(dm).sort().reverse().map(function(d){var f=dm[d].f||{n:0,ips:0}, r=dm[d].r||{n:0,ips:0};
-        return [{t:d},{t:f.n,c:"n"},{t:f.ips,c:"n"},{t:r.n,c:"n"},{t:r.ips,c:"n"},{t:f.n+r.n,c:"n"}]}));
+    table($("daily"),[["날짜"],["환율 조회","n"],["IP","n"],["금리 모니터","n"],["IP","n"],["합계","n"],["봇(별도)","n"]],
+      Object.keys(dm).sort().reverse().map(function(d){var f=dm[d].f||{}, r=dm[d].r||{};
+        return [{t:d},{t:z(f.n),c:"n"},{t:z(f.ips),c:"n"},{t:z(r.n),c:"n"},{t:z(r.ips),c:"n"},{t:z(f.n)+z(r.n),c:"n"},{t:z(f.bots)+z(r.bots),c:"n"}]}));
     /* IP별: 같은 IP를 합치고 사이트별 횟수 */
     var im={};
-    function addIp(r,key){var o=im[r.ip]||(im[r.ip]={ip:r.ip,fx:0,rate:0,first:r.first,last:r.last,country:r.country,city:r.city,org:r.org,ua:r.ua,me:0});
+    function addIp(r,key){var o=im[r.ip]||(im[r.ip]={ip:r.ip,fx:0,rate:0,first:r.first,last:r.last,country:r.country,city:r.city,org:r.org,ua:r.ua,me:0,bot:1});
+      if(!r.bot)o.bot=0;
       o[key]+=r.n; if(r.first<o.first)o.first=r.first; if(r.last>o.last){o.last=r.last;o.ua=r.ua||o.ua} o.country=o.country||r.country; o.city=o.city||r.city; o.org=o.org||r.org; if(r.me)o.me=1}
     F.byIp.forEach(function(r){addIp(r,"fx")}); R.byIp.forEach(function(r){addIp(r,"rate")});
-    var ips=Object.keys(im).map(function(x){return im[x]}).filter(function(o){return S==="all"||o[S]>0})
-      .sort(function(a,b){var na=S==="all"?a.fx+a.rate:a[S], nb=S==="all"?b.fx+b.rate:b[S]; return nb-na||b.last-a.last});
+    var ips=Object.keys(im).map(function(x){return im[x]}).filter(function(o){return (S==="all"||o[S]>0)&&(SB||!o.bot)})
+      .sort(function(a,b){var na=S==="all"?a.fx+a.rate:a[S], nb=S==="all"?b.fx+b.rate:b[S]; return a.bot-b.bot||nb-na||b.last-a.last});   /* 사람 먼저, 봇은 아래 */
     table($("byip"),[["IP"],["환율 조회","n"],["금리 모니터","n"],["합계","n"],["처음"],["마지막"],["위치"],["통신사·기관"],["기기"]],
-      ips.map(function(o){return [{t:o.ip,c:"ip",me:o.me},{t:o.fx,c:"n"},{t:o.rate,c:"n"},{t:o.fx+o.rate,c:"n"},{t:k(o.first)},{t:k(o.last)},{t:place(o)},{t:o.org},{t:dev(o.ua)}]}));
+      ips.map(function(o){return [{t:o.ip,c:"ip",me:o.me,bot:o.bot},{t:o.fx,c:"n"},{t:o.rate,c:"n"},{t:o.fx+o.rate,c:"n"},{t:k(o.first)},{t:k(o.last)},{t:place(o)},{t:o.org},{t:dev(o.ua)}]}));
     /* 최근 방문: 두 사이트를 시각순으로 */
     var rec=[];
-    if(S!=="rate")F.recent.forEach(function(r){rec.push({s:"fx",r:r})});
-    if(S!=="fx")R.recent.forEach(function(r){rec.push({s:"rate",r:r})});
+    if(S!=="rate")F.recent.forEach(function(r){if(SB||!r.bot)rec.push({s:"fx",r:r})});
+    if(S!=="fx")R.recent.forEach(function(r){if(SB||!r.bot)rec.push({s:"rate",r:r})});
     rec.sort(function(a,b){return b.r.ts-a.r.ts}); rec=rec.slice(0,500);
     table($("recent"),[["시각"],["사이트"],["IP"],["위치"],["통신사·기관"],["기기"],["들어온 곳"],["주소"]],
-      rec.map(function(x){var r=x.r;return [{t:k(r.ts)},{t:NAME[x.s],c:x.s==="fx"?"fx":"rt"},{t:r.ip,c:"ip",me:r.me},{t:place(r)},{t:r.org},{t:dev(r.ua)},{t:from(r.ref)},{t:addr(r)}]}));
+      rec.map(function(x){var r=x.r;return [{t:k(r.ts)},{t:NAME[x.s],c:x.s==="fx"?"fx":"rt"},{t:r.ip,c:"ip",me:r.me,bot:r.bot},{t:place(r)},{t:r.org},{t:dev(r.ua)},{t:from(r.ref)},{t:addr(r)}]}));
   }
   function load(){
     var noMe=$("noMe").checked;
@@ -174,6 +181,8 @@ td.fx{color:var(--fx);font-weight:600} td.rt{color:var(--rt);font-weight:600}
   [].forEach.call(document.querySelectorAll("[data-d]"),function(b){b.addEventListener("click",function(){D=+b.dataset.d;try{localStorage.setItem("fx-adm-d",String(D))}catch(e){}load()})});
   [].forEach.call(document.querySelectorAll("[data-s]"),function(b){b.addEventListener("click",function(){S=b.dataset.s;try{localStorage.setItem("fx-adm-s",S)}catch(e){}render()})});
   $("noMe").addEventListener("change",load);
+  try{if(localStorage.getItem("fx-adm-bot")==="0")$("showBot").checked=false}catch(e){}
+  $("showBot").addEventListener("change",function(){try{localStorage.setItem("fx-adm-bot",$("showBot").checked?"1":"0")}catch(e){}render()});
   load(); setInterval(function(){if(!document.hidden)load()},60000);
 })();
 </script>
