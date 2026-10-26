@@ -360,46 +360,8 @@ def build_rates():
     return s
 
 
-PRIVACY = """<!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title>개인정보처리방침</title>
-<style>
-:root{--bg:#f3f4f6;--surface:#fff;--ink:#16181d;--muted:#6b7280;--rule:#e3e5ea}
-@media (prefers-color-scheme:dark){:root{--bg:#121418;--surface:#1b1e24;--ink:#eceef2;--muted:#8a919e;--rule:#2b2f37}}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans KR','Malgun Gothic',system-ui,sans-serif;font-size:15px;line-height:1.7}
-.wrap{max-width:760px;margin:0 auto;padding:28px 16px 60px}
-h1{font-size:24px;margin:0 0 4px}h2{font-size:17px;margin:26px 0 6px}
-.muted{color:var(--muted);font-size:13px}.box{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;margin:14px 0}
-table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid var(--rule);padding:6px 8px;text-align:left;font-size:14px;vertical-align:top}
-a{color:#1f4fd1}
-</style></head><body><div class="wrap">
-<p class="muted"><a href="/">← 환율 조회</a> · <a href="/rates/">금리 모니터</a></p>
-<h1>개인정보처리방침</h1>
-<div class="box">환율 조회·금리 모니터(이하 '사이트')는 「개인정보 보호법」에 따라 이용자의 개인정보를 보호하고, 관련 고충을 원활하게 처리하기 위해 다음과 같이 개인정보처리방침을 둡니다.</div>
-<h2>1. 처리하는 개인정보 항목</h2>
-<table><tr><th>항목</th><th>수집 방법</th></tr>
-<tr><td>접속 IP 주소, 접속 시각, IP로 추정한 대략적 위치(국가·도시)와 통신사·기관 이름, 브라우저·기기 정보, 들어온 주소(리퍼러), 브라우저마다 붙는 임의 번호</td><td>사이트를 열 때 자동 수집</td></tr>
-<tr><td>광고 쿠키·광고 식별자</td><td>광고 사업자(예: Google AdSense)가 자체적으로 수집</td></tr></table>
-<p class="muted">회원가입이 없어 이름·연락처 같은 정보는 받지 않습니다.</p>
-<h2>2. 처리 목적</h2>
-<p>방문 통계, 서비스 개선, 비정상 접속(봇 등) 확인, 광고 게재.</p>
-<h2>3. 보유 기간</h2>
-<p>접속 기록은 수집일로부터 90일이 지나면 자동으로 지웁니다. 광고 쿠키는 각 광고 사업자의 정책에 따릅니다.</p>
-<h2>4. 처리 위탁</h2>
-<table><tr><th>받는 곳</th><th>업무</th></tr>
-<tr><td>Cloudflare, Inc.</td><td>사이트 호스팅, 접속 기록 저장(데이터베이스)</td></tr>
-<tr><td>GitHub, Inc.</td><td>사이트 파일·공개 데이터 보관</td></tr></table>
-<h2>5. 광고와 쿠키</h2>
-<p>사이트에 표시되는 광고는 Google 등 제3자 광고 사업자가 제공하며, 이들은 쿠키를 사용해 이용자의 이 사이트 및 다른 사이트 방문 기록에 따라 광고를 보여 줄 수 있습니다.
-이용자는 <a href="https://adssettings.google.com/" target="_blank" rel="noopener">Google 광고 설정</a>에서 맞춤 광고를 끄거나, 브라우저 설정에서 쿠키를 거부할 수 있습니다.</p>
-<h2>6. 이용자의 권리</h2>
-<p>이용자는 자신의 개인정보 열람·정정·삭제·처리 정지를 요청할 수 있습니다. 접속 기록은 IP 주소로만 구분되므로, 요청 시 접속한 IP와 시각을 알려 주시면 확인 후 처리합니다.</p>
-<h2>7. 개인정보 보호책임자 · 문의</h2>
-<p>운영자: [운영자 이름] · 이메일: [연락처 이메일]</p>
-<h2>8. 시행일</h2>
-<p>[시행일]</p>
-</div></body></html>
-"""
+# 개인정보처리방침 원문은 v2/privacy.html (개인정보 보호법 제30조·시행령 제31조·제28조의8 항목)
+PRIVACY = (Path(__file__).resolve().parent / "privacy.html").read_text(encoding="utf-8")
 
 
 def main():
