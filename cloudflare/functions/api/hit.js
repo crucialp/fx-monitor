@@ -17,6 +17,9 @@ export async function onRequestPost(ctx) {
   const cf = req.cf || {};
   const cut = (v, n) => (typeof v === "string" && v ? v.slice(0, n) : null);
   ctx.waitUntil((async () => {
+    const ip = req.headers.get("cf-connecting-ip");
+    const recent = await env.DB.prepare("SELECT COUNT(*) n FROM visits WHERE ip = ? AND ts > ?").bind(ip, Date.now() - 3600e3).first();
+    if (recent && recent.n >= 60) return;   // 같은 IP 1시간 60건 넘으면 더 남기지 않음(도배로 D1 쓰기 한도 소진 방지)
     await env.DB.prepare("INSERT INTO visits (ts, ip, country, region, city, asn, org, ua, ref, host, vid, me, w, bot) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
       .bind(Date.now(), req.headers.get("cf-connecting-ip"), cf.country || null, cf.region || null, cf.city || null, cf.asn || null,
         cut(cf.asOrganization, 120), cut(req.headers.get("user-agent"), 300), cut(b.r, 300), origin.replace(/^https:\/\//, "") + (b.p === "community" ? "/community" : ""),

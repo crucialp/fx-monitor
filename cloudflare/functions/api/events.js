@@ -2,6 +2,7 @@
 // GET /api/events?from=<epoch분>&to=<epoch분>  → 그 구간의 지정 이벤트만
 // 사용자가 지정한 것만: 미국·한국·일본·유로존 금리 결정, 미국 CPI·PPI·PCE(전년비), 미국 신규 실업수당·실업률·비농업,
 // 미국·한국·일본 GDP(미국·일본은 연율, 속보/잠정/확정 구분).
+import { isAdmin } from "../../lib/auth.js";
 import { kstNow, options } from "../../lib/common.js";
 
 // Nasdaq 시각은 미국 동부시간이고, date=D 로 받은 행은 실제로는 동부시간 D-1 일의 발표다
@@ -247,7 +248,7 @@ export async function onRequestGet(ctx) {
   const errors = results.flat().filter((x) => x._error).map((x) => x._date + " " + x._error);
   const events = normalize(results.flat().filter((x) => !x._error)).filter((e) => e.t >= from - 240 && e.t <= to + 240);
   // 금리 결정 실제 시각(+한은 의결문 공개)을 차례로 확인. 점검용: ?fresh=1 이면 캐시 없이 다시 찾고 과정(_check)을 보여 줌
-  const fresh = u.searchParams.has("fresh");
+  const fresh = u.searchParams.has("fresh") && (await isAdmin(ctx));   // 점검용은 관리자만(아무나 쓰면 외부 호출을 마구 일으킴)
   const budget = { left: 48 - misses };
   for (const e of events.slice()) {
     const cf = CONFIRM[e.cc];

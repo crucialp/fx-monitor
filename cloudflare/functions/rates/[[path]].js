@@ -3,7 +3,7 @@
 // (금리 모니터 worker/src/site.js 의 serveSite 와 같은 방식: 데이터 1분·페이지 5분 캐시, GitHub 가 안 되면 마지막 정상본).
 // 페이지를 열 때 방문 1건을 금리 모니터 방문 기록 DB(RATE_DB)에 남긴다. 관리자(/admin 로그인 쿠키)가 연 것은 me=1.
 import { isBot } from "../../lib/botrule.js";
-import { isAdmin } from "../../lib/auth.js";
+import { isAdmin, SECURITY } from "../../lib/auth.js";
 
 const ORIGIN = "https://raw.githubusercontent.com/crucialp/rate-monitor/main/docs";
 const TYPES = {
@@ -25,7 +25,8 @@ export async function onRequest(ctx) {
   const { request, env } = ctx;
   if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method Not Allowed", { status: 405 });
   const url = new URL(request.url);
-  let path = decodeURIComponent(url.pathname).replace(/^\/rates/, "");
+  let path;
+  try { path = decodeURIComponent(url.pathname).replace(/^\/rates/, ""); } catch { return new Response("Bad Request", { status: 400 }); }
   if (path === "") return Response.redirect(`${url.origin}/rates/${url.search}`, 301);   // 상대 경로(data/…)가 맞게 끝에 / 를 붙인다
   if (path.endsWith("/")) path += "index.html";
   const ext = path.split(".").pop().toLowerCase();
@@ -43,7 +44,7 @@ export async function onRequest(ctx) {
   try { origin = await fetch(ORIGIN + path, { cf: { cacheTtl: ttl, cacheEverything: true } }); } catch { origin = null; }
   if (origin && origin.ok) {
     const body = await origin.arrayBuffer();
-    const headers = { "content-type": TYPES[ext], "x-content-type-options": "nosniff" };
+    const headers = { "content-type": TYPES[ext], ...SECURITY };
     const fresh = new Response(body, { headers: { ...headers, "cache-control": `public, max-age=${ttl}` } });
     const stale = new Response(body, { headers: { ...headers, "cache-control": `public, max-age=${STALE_SECONDS}` } });
     ctx.waitUntil(Promise.all([cache.put(freshKey, fresh.clone()), cache.put(staleKey, stale)]));
@@ -60,6 +61,9 @@ async function logVisit(ctx, url) {
   const ua = (request.headers.get("user-agent") || "").slice(0, 400);
   const cf = request.cf || {};
   try {
+    const ip = request.headers.get("cf-connecting-ip") || "";
+    const recent = await env.RATE_DB.prepare("SELECT COUNT(*) n FROM visits WHERE ip = ? AND ts > ?").bind(ip, Date.now() - 3600e3).first();
+    if (recent && recent.n >= 60) return;   // 같은 IP 1시간 60건까지만(도배 방지)
     const me = (await isAdmin(ctx)) ? 1 : 0;
     await env.RATE_DB.prepare(
       "INSERT INTO visits (ts, ip, country, city, org, ua, bot, host, query, referer, me) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)"

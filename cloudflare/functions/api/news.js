@@ -3,6 +3,7 @@
 // 이 사이트는 광고 없는 비상업 운영. 빙·구글 뉴스 RSS(개인 RSS 리더 밖 사용 금지), 연합인포맥스(영리·복제 금지),
 // 네이버(자동 수집 금지)는 쓰지 않는다.
 // 분류(키워드 규칙): 긴급 = 속보·개입 등 + 환율/영향 요인, 외환 = 외환시장 기사, 영향 = 환율을 움직일 재료.
+import { isAdmin } from "../../lib/auth.js";
 import { cached, kstNow, options } from "../../lib/common.js";
 
 const FEEDS = [
@@ -82,7 +83,7 @@ async function build() {
 
 export const onRequestGet = async (ctx) => {
   // 점검용: ?fresh=1 이면 캐시 없이 바로 만들어 결과나 오류를 그대로 보여 준다
-  if (new URL(ctx.request.url).searchParams.get("fresh") === "1") {
+  if (new URL(ctx.request.url).searchParams.get("fresh") === "1" && (await isAdmin(ctx))) {   // 관리자만
     try { return new Response(JSON.stringify(await build()), { headers: { "content-type": "application/json; charset=utf-8" } }); }
     catch (e) { return new Response(JSON.stringify({ error: String(e && e.stack || e) }), { status: 500, headers: { "content-type": "application/json; charset=utf-8" } }); }
   }

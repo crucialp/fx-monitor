@@ -38,6 +38,16 @@ export async function isAdmin(ctx) {
   return same(await hmac(key, "fx-admin:" + exp), sig);
 }
 
+// 사이트 화면 공통 보안 헤더: 다른 사이트가 이 화면을 몰래 틀(iframe) 안에 넣어 클릭을 유도하는 것, 파일 종류 속이기,
+// 주소 새는 것, 카메라·마이크 같은 권한 요청을 막는다. 정적 파일(커뮤니티·글꼴)은 public/_headers 에 같은 값.
+export const SECURITY = {
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "SAMEORIGIN",
+  "referrer-policy": "strict-origin-when-cross-origin",
+  "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+  "content-security-policy": "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
+};
+
 // 관리자 화면 공통 응답 머리: 캐시·검색 노출·다른 사이트 안에 끼워 넣기 금지
 export const PRIVATE = {
   "cache-control": "no-store",

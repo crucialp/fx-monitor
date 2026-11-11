@@ -1437,6 +1437,7 @@ img{max-width:100%}
     if(window.LightweightCharts)return cb();
     var sc=document.createElement("script");
     sc.src="https://unpkg.com/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js";
+    sc.integrity="sha384-KkYqTZlM13Zya6fVUF3IGCBOQ1ehFeJVVgxaVvD/0MebineF9EI8Jkd3NnWNChqN"; sc.crossOrigin="anonymous";   /* 외부 파일이 바뀌면(변조) 실행하지 않음 */
     sc.onload=cb; sc.onerror=function(){$("lwbox").innerHTML='<div class="msg">차트 도구를 불러오지 못했습니다. 새로고침해 주세요.</div>'};
     document.head.appendChild(sc);
   }

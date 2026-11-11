@@ -398,8 +398,7 @@ def build_com():
     s = rep(s, '</div></nav>\n<div class="wrap">', '</div></nav>\n' + v2bar("/community/") + '<div class="wrap">')
     s = rep(s, '  </header>\n', '  </header>\n' + ad("상단 광고 영역") + '\n')
     s = rep(s, '    <div class="pagefoot"><span class="muted small">1 / 2</span>', '    ' + ad() + '\n    <div class="pagefoot"><span class="muted small">1 / 2</span>')
-    s, n = re.subn(r"\s*/\*<visit>\*/.*?/\*</visit>\*/", "", s, flags=re.S)
-    assert n == 1, n
+    assert '<script src="/community/app.js"></script>' in s
     s = rep(s, '<span id="visitline">방문 통계를 위해 접속 IP·대략적 위치·브라우저 정보를 90일간 기록합니다(사이트 운영자만 열람).</span>',
             '<span>이 사이트에는 광고가 표시되며 광고 사업자가 쿠키를 사용할 수 있습니다 · <a href="/privacy.html">개인정보처리방침</a></span>')
     s = rep(s, '수사기관이 법령에 따른 절차로 요청하면 보관 중인 정보를 제공할 수 있습니다.</li>\n      </ul>',
@@ -429,6 +428,10 @@ def main():
         return page.replace("<body>", "<body>\n" + side_ads(w, top), 1)
     fx, rates, com = sides(fx, 1120), sides(rates, 1180, 108), sides(com, 1120)
     (OUT / "community").mkdir(exist_ok=True)
+    js = (ROOT / "cloudflare" / "public" / "community" / "app.js").read_text(encoding="utf-8")
+    js, n = re.subn(r"\s*/\*<visit>\*/.*?/\*</visit>\*/", "", js, flags=re.S)   # ver2 는 방문 기록을 남기지 않음
+    assert n == 1, n
+    (OUT / "community" / "app.js").write_text(js, encoding="utf-8")
     (OUT / "community" / "index.html").write_text(com, encoding="utf-8")
     (OUT / "index.html").write_text(fx.replace(FONT_ABS, "/fonts/pretendard/"), encoding="utf-8")
     (OUT / "rates" / "index.html").write_text(rates.replace(FONT_ABS, "/fonts/pretendard/"), encoding="utf-8")
