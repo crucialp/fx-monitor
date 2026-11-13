@@ -136,8 +136,13 @@ def build_fx():
     <section id="rt2">
     <div class="rt-bar">
       <div class="head">
-        <h2>실시간 달러/원</h2>
-        <p class="muted small">국제 외환시장 시세 · 한국 시간 기준 · 그래프 방식을 고르세요</p>
+        <h2 id="rt2Title">실시간 달러/원</h2>
+        <p class="muted small">국제 외환시장 시세 · 한국 시간 기준 · 통화와 그래프 방식을 고르세요</p>
+        <div class="seg curseg" role="group" aria-label="통화">
+          <button type="button" data-c2="usd" aria-pressed="true">달러/원</button>
+          <button type="button" data-c2="jpy" aria-pressed="false">엔/원 <small>1엔당</small></button>
+          <button type="button" data-c2="eur" aria-pressed="false">유로/원</button>
+        </div>
       </div>
       <div class="modes" role="radiogroup" aria-label="그래프 방식">
         <label class="mode"><input type="radio" name="rtmode2" value="drag"><span><b>① 드래그로 보기</b><small>1분봉 · 확대·이동</small></span></label>
@@ -162,7 +167,9 @@ def build_fx():
         var c=document.createElement("div");c.className="tradingview-widget-container";c.style.height="100%";
         var w=document.createElement("div");w.className="tradingview-widget-container__widget";w.style.height="100%";c.appendChild(w);
         var sc=document.createElement("script");sc.type="text/javascript";sc.async=true;sc.src="https://s3.tradingview.com/external-embedding/"+file;sc.text=JSON.stringify(cfg);c.appendChild(sc);el.appendChild(c)}
-      function base(x){var o={autosize:true,symbol:"FX_IDC:USDKRW",timezone:"Asia/Seoul",theme:th,locale:"kr",allow_symbol_change:false,hide_side_toolbar:true,calendar:false,support_host:"https://www.tradingview.com"};for(var k in x)o[k]=x[k];return o}
+      var C2={usd:["FX_IDC:USDKRW","달러/원"],jpy:["FX_IDC:JPYKRW","엔/원(1엔당)"],eur:["FX_IDC:EURKRW","유로/원"]}, CUR2="usd";
+      try{var c20=localStorage.getItem("fx2-cur");if(C2[c20])CUR2=c20}catch(e){}
+      function base(x){var o={autosize:true,symbol:C2[CUR2][0],timezone:"Asia/Seoul",theme:th,locale:"kr",allow_symbol_change:false,hide_side_toolbar:true,calendar:false,support_host:"https://www.tradingview.com"};for(var k in x)o[k]=x[k];return o}
       var R2="5D", made={};
       function build(m){
         if(m==="drag")tv("tv2drag","embed-widget-advanced-chart.js",base({interval:"1",style:"2"}));
@@ -177,7 +184,13 @@ def build_fx():
       [].forEach.call(document.querySelectorAll("[data-r2]"),function(b){b.addEventListener("click",function(){R2=b.getAttribute("data-r2");
         [].forEach.call(document.querySelectorAll("[data-r2]"),function(x){x.setAttribute("aria-pressed",String(x===b))});build("range")})});
       var M="day";try{M=localStorage.getItem("fx2-mode")||"day"}catch(e){}
-      tv("tv2quote","embed-widget-single-quote.js",{symbol:"FX_IDC:USDKRW",width:"100%",isTransparent:true,colorTheme:th,locale:"kr"});
+      function quote(){tv("tv2quote","embed-widget-single-quote.js",{symbol:C2[CUR2][0],width:"100%",isTransparent:true,colorTheme:th,locale:"kr"})}
+      function curUI(){document.getElementById("rt2Title").textContent="실시간 "+C2[CUR2][1];
+        [].forEach.call(document.querySelectorAll("[data-c2]"),function(b){b.setAttribute("aria-pressed",String(b.getAttribute("data-c2")===CUR2))})}
+      [].forEach.call(document.querySelectorAll("[data-c2]"),function(b){b.addEventListener("click",function(){var c=b.getAttribute("data-c2");if(c===CUR2)return;
+        CUR2=c;try{localStorage.setItem("fx2-cur",c)}catch(e){}curUI();quote();made={};
+        var cur=null;radios.forEach(function(r){if(r.checked)cur=r.value});if(cur)build(cur)})});
+      curUI();quote();
       tv("tv2cal","embed-widget-events.js",{colorTheme:th,isTransparent:false,width:"100%",height:"100%",locale:"kr",importanceFilter:"0,1",countryFilter:"us,kr,jp,eu"});
       show(M);
     })();
@@ -189,6 +202,68 @@ def build_fx():
     s = rep(s, "  function loadID(){\n", "  function loadID(){return Promise.resolve();   /* ver2: Yahoo 장중 시세 안 씀 */\n")
     s = rep(s, "  function drawDay(){\n", "  function drawDay(){if(!ID)return;\n")
     s = rep(s, "  function drawRange(){\n", "  function drawRange(){if(!ID)return;\n")
+
+    # ---------------- 5페이지: 비교 차트 → TradingView 비교 차트(compareSymbols). 고르는 화면은 그대로 ----------------
+    a, b = cut(s, "      <!--cmp-area-->", "      <!--/cmp-area-->\n")
+    s = s[:a] + '''      <div class="sumrow" id="cmpSum"></div>
+      <div class="tvbox" style="height:600px" id="cmpTv"></div><div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+      <div>''' + ad() + "</div>\n" + s[b:]   # 바깥 div: 격자 안에서 광고 칸이 좁아지지 않게
+    a, b = cut(s, '      <ul class="notes" id="cmpnotes"', "</ul>")
+    s = s[:a] + '''      <ul class="notes" id="cmpnotes" style="margin-top:16px">
+        <li><b>변화율.</b> 처음 고른 계열을 기준으로 나머지를 같은 축에 겹치면 TradingView 가 기간 시작 대비 변화율(%) 눈금으로 바꿔 그립니다.</li>
+        <li><b>실제 값.</b> 계열마다 아래에 칸을 따로 만들어 각자의 단위로 그립니다.</li>
+        <li><b>시세.</b> TradingView 위젯(FX_IDC·FX 시세)이며 차트 안에서 확대·이동할 수 있습니다. 엔/원은 1엔당입니다. 달러인덱스는 유로·엔·파운드 등 6개 통화 대비 달러 가치로, 위젯에서 ICE 원본을 쓸 수 없어 이를 따르는 Capital.com 시세로 그립니다.</li>
+      </ul>''' + s[b:]
+    s = rep(s, '<button type="button" data-cr="3y">3년</button>', '<button type="button" data-cr="3y">5년</button>')
+    s = rep(s, '<button type="button" data-cr="10y">10년</button>', '<button type="button" data-cr="10y">전체</button>')
+    s = rep(s, "한 번에 4개까지 고를 수 있습니다.</p>", "한 번에 4개까지 고를 수 있습니다. 차트는 TradingView 입니다.</p>")
+    a, b = cut(s, "  /* ---------- 5페이지: 비교 차트(직접 고른 계열을 한 그래프에) ---------- */", "  /* ---------- 5페이지 끝 ---------- */\n")
+    s = s[:a] + r'''  /* ---------- 5페이지: 비교 차트 — ver2 는 TradingView 비교 차트(compareSymbols) ---------- */
+  var CMPS={usdkrw:{n:"달러/원",c:"var(--k1)",tv:"FX_IDC:USDKRW"},jpykrw:{n:"엔/원(1엔)",c:"var(--k2)",tv:"FX_IDC:JPYKRW"},eurkrw:{n:"유로/원",c:"var(--k3)",tv:"FX_IDC:EURKRW"},
+    cnykrw:{n:"위안/원",c:"var(--k4)",tv:"FX_IDC:CNYKRW"},dxy:{n:"달러인덱스",c:"var(--k5)",tv:"CAPITALCOM:DXY"},usdjpy:{n:"달러/엔",c:"var(--k6)",tv:"FX_IDC:USDJPY"},
+    eurusd:{n:"유로/달러",c:"var(--k7)",tv:"FX:EURUSD"},usdcny:{n:"달러/위안",c:"var(--k8)",tv:"FX_IDC:USDCNY"}};
+  var CMPR={"1d":["1D","5"],"1w":["5D","15"],"1m":["1M","60"],"3m":["3M","D"],"1y":["12M","D"],"3y":["60M","W"],"10y":["ALL","M"]};
+  var CMP={s:["dxy","usdkrw"],r:"1y",v:"pct"};
+  try{var cm0=JSON.parse(localStorage.getItem("fx2-cmp")||"null");
+    if(cm0&&cm0.s&&cm0.s.length){CMP.s=cm0.s.filter(function(k){return CMPS[k]}).slice(0,4);if(CMPR[cm0.r])CMP.r=cm0.r;if(cm0.v==="abs")CMP.v="abs"}
+    if(!CMP.s.length)CMP.s=["dxy","usdkrw"]}catch(e){}
+  function cmpSave(){try{localStorage.setItem("fx2-cmp",JSON.stringify(CMP))}catch(e){}}
+  function cmpChips(){
+    var box=$("cmpSer"); box.textContent="";
+    Object.keys(CMPS).forEach(function(k){
+      var S=CMPS[k], on=CMP.s.indexOf(k)>=0;
+      var b=document.createElement("button"); b.type="button"; b.className="cmp-chip"; b.setAttribute("aria-pressed",String(on)); b.style.setProperty("--c",S.c);
+      var kk=document.createElement("span"); kk.className="k"; var nm=document.createElement("span"); nm.className="nm"; nm.textContent=S.n;
+      var sb=document.createElement("span"); sb.className="sb"; sb.textContent=S.tv; b.append(kk,nm,sb);
+      b.addEventListener("click",function(){var i=CMP.s.indexOf(k);
+        if(i>=0){if(CMP.s.length>1)CMP.s.splice(i,1)}else{if(CMP.s.length>=4)return;CMP.s.push(k)}
+        cmpSave();renderCmp()});
+      box.appendChild(b);
+    });
+    [].forEach.call(document.querySelectorAll("[data-cr]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.cr===CMP.r))});
+    [].forEach.call(document.querySelectorAll("[data-cv]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.cv===CMP.v))});
+    [].forEach.call(document.querySelectorAll("[data-pre]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.pre===CMP.s.join(",")))});
+  }
+  [].forEach.call(document.querySelectorAll("[data-cr]"),function(b){b.addEventListener("click",function(){CMP.r=b.dataset.cr;cmpSave();renderCmp()})});
+  [].forEach.call(document.querySelectorAll("[data-cv]"),function(b){b.addEventListener("click",function(){CMP.v=b.dataset.cv;cmpSave();renderCmp()})});
+  [].forEach.call(document.querySelectorAll("[data-pre]"),function(b){b.addEventListener("click",function(){CMP.s=b.dataset.pre.split(",");cmpSave();renderCmp()})});
+  var CMPLAST="";
+  function renderCmp(){
+    if($("p5").hidden)return;
+    cmpChips();
+    var key=CMP.s.join(",")+"|"+CMP.r+"|"+CMP.v; if(key===CMPLAST)return; CMPLAST=key;
+    var r=CMPR[CMP.r], dark=isDark(), box=$("cmpTv"); box.innerHTML="";
+    var c=document.createElement("div"); c.className="tradingview-widget-container"; c.style.height="100%";
+    var w=document.createElement("div"); w.className="tradingview-widget-container__widget"; w.style.height="100%"; c.appendChild(w);
+    var sc=document.createElement("script"); sc.type="text/javascript"; sc.async=true; sc.src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    sc.text=JSON.stringify({autosize:true,symbol:CMPS[CMP.s[0]].tv,range:r[0],interval:r[1],timezone:"Asia/Seoul",theme:dark?"dark":"light",style:"2",locale:"kr",
+      allow_symbol_change:false,hide_side_toolbar:true,hide_volume:true,calendar:false,withdateranges:true,support_host:"https://www.tradingview.com",
+      compareSymbols:CMP.s.slice(1).map(function(k){return {symbol:CMPS[k].tv,position:CMP.v==="abs"?"NewPane":"SameScale"}})});
+    c.appendChild(sc); box.appendChild(c);
+    $("cmpSum").innerHTML='<span>고른 계열 <b>'+CMP.s.map(function(k){return CMPS[k].n}).join(" · ")+'</b></span><span>'+(CMP.v==="abs"?"실제 값(칸 나눔)":"변화율(%)")+'</span>';
+  }
+  /* ---------- 5페이지 끝 ---------- */
+''' + s[b:]
 
     # ---------------- 2페이지: 기관 전망(자체 공개 수치만) ----------------
     m = re.search(r"var INST=\{\s*f:(\{.*?\}),\s*d:(\{.*?\})\s*\};", s, re.S)

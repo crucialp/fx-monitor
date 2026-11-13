@@ -26,6 +26,7 @@
   --down:#2a6fd6;
   --font-display:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
   --font-body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --k1:#2a78d6;--k2:#eb6834;--k3:#1baf7a;--k4:#eda100;--k5:#4a3aa7;--k6:#e87ba4;--k7:#008300;--k8:#e34948;
   --font-num:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){
@@ -33,6 +34,7 @@
     --bg:#0f1215;--surface:#171b20;--ink:#eef1f4;--ink-2:#b4bcc6;--muted:#8a939e;
     --rule:#2a3038;--rule-strong:#3b434d;--chip:#232930;--zone:#1c2229;
     --foreign:#3987e5;--domestic:#d95926;--bbg:#199e70;--up:#ec6a62;--down:#5596ee;--ev:#a98cf2;
+    --k1:#3987e5;--k2:#d95926;--k3:#199e70;--k4:#c98500;--k5:#9085e9;--k6:#d55181;--k7:#2e9e2e;--k8:#e66767;
     color-scheme:dark;
   }
 }
@@ -40,6 +42,7 @@
   --bg:#0f1215;--surface:#171b20;--ink:#eef1f4;--ink-2:#b4bcc6;--muted:#8a939e;
   --rule:#2a3038;--rule-strong:#3b434d;--chip:#232930;--zone:#1c2229;
   --foreign:#3987e5;--domestic:#d95926;--bbg:#199e70;--up:#ec6a62;--down:#5596ee;--ev:#a98cf2;
+  --k1:#3987e5;--k2:#d95926;--k3:#199e70;--k4:#c98500;--k5:#9085e9;--k6:#d55181;--k7:#2e9e2e;--k8:#e66767;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -369,6 +372,29 @@ img{max-width:100%}
 .wick{stroke-width:1}
 .c-up{fill:var(--up);stroke:var(--up)} .c-dn{fill:var(--down);stroke:var(--down)}
 .dsep{stroke:var(--rule);stroke-width:1;stroke-dasharray:2 3}
+.curseg{margin-top:8px}
+.pager button{white-space:nowrap}
+.curseg small{font-size:11px;color:inherit;opacity:.7;margin-left:2px}
+
+/* ---------- 5페이지: 비교 차트 */
+.cmp-ser{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.cmp-chip{display:grid;grid-template-columns:auto auto;gap:0 8px;align-items:center;text-align:left;font:inherit;border:1px solid var(--rule-strong);background:var(--surface);border-radius:8px;padding:6px 11px 6px 9px;cursor:pointer;color:var(--ink)}
+.cmp-chip:hover{border-color:var(--ink-2)}
+.cmp-chip .k{width:16px;height:0;border-top:2px dashed var(--rule-strong);grid-row:1/3}
+.cmp-chip[aria-pressed="true"]{border-color:var(--ink-2)}
+.cmp-chip[aria-pressed="true"] .k{border-top-style:solid;border-top-color:var(--c)}
+.cmp-chip .nm{font-size:13.5px;font-weight:600;white-space:nowrap}
+.cmp-chip[aria-pressed="false"] .nm{font-weight:400;color:var(--ink-2)}
+.cmp-chip .sb{font-size:11.5px;color:var(--muted);white-space:nowrap;font-family:var(--font-num)}
+.cmp-label{font-size:12.5px;color:var(--muted);margin-right:2px}
+.cmpchart{height:auto;min-height:340px}
+.cline{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.zero{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3;opacity:.6}
+.endlab{font-family:var(--font-body);font-size:12px;fill:var(--ink-2)}
+.endlab b,.endlab .v{font-weight:600;fill:var(--ink)}
+.plab{font-family:var(--font-body);font-size:12px;font-weight:600;fill:var(--ink)}
+.rtip .tr .k{display:inline-block;width:12px;height:2px;border-radius:2px;margin-right:6px;vertical-align:middle}
+td.corr{font-family:var(--font-num)}
 </style>
 </head>
 <body>
@@ -405,6 +431,7 @@ img{max-width:100%}
         <button type="button" role="tab" aria-controls="p2" aria-selected="false" data-go="2"><span class="pn">2</span>추이·전망</button>
         <button type="button" role="tab" aria-controls="p3" aria-selected="false" data-go="3"><span class="pn">3</span>기관별 상세·출처</button>
         <button type="button" role="tab" aria-controls="p4" aria-selected="false" data-go="4"><span class="pn">4</span>뉴스<span class="nx-badge" id="nbadge" hidden></span></button>
+        <button type="button" role="tab" aria-controls="p5" aria-selected="false" data-go="5"><span class="pn">5</span>비교 차트</button>
       </div>
       <ul data-for="1">
         <li><a href="#rtnotes">데이터 기준</a></li>
@@ -426,6 +453,10 @@ img{max-width:100%}
       <ul data-for="4" hidden>
         <li><a href="#news">환율 뉴스</a></li>
       </ul>
+      <ul data-for="5" hidden>
+        <li><a href="#cmp">비교 차트</a></li>
+        <li><a href="#cmpnotes">계산 방법</a></li>
+      </ul>
     </div>
   </nav>
 
@@ -433,8 +464,13 @@ img{max-width:100%}
   <section id="rt">
     <div class="rt-bar">
       <div class="head">
-        <h2>실시간 달러/원</h2>
-        <p class="muted small">국제 외환시장 시세 · 한국 시간 기준 · 그래프 방식을 고르세요</p>
+        <h2 id="rtTitle">실시간 달러/원</h2>
+        <p class="muted small">국제 외환시장 시세 · 한국 시간 기준 · 통화와 그래프 방식을 고르세요</p>
+        <div class="seg curseg" role="group" aria-label="통화" id="curSeg">
+          <button type="button" data-cur="usd" aria-pressed="true">달러/원</button>
+          <button type="button" data-cur="jpy" aria-pressed="false">엔/원 <small>100엔</small></button>
+          <button type="button" data-cur="eur" aria-pressed="false">유로/원</button>
+        </div>
       </div>
       <div class="modes" role="radiogroup" aria-label="그래프 방식">
         <label class="mode"><input type="radio" name="rtmode" value="drag"><span><b>① 드래그로 보기</b><small>실시간 · 확대·이동</small></span></label>
@@ -500,7 +536,7 @@ img{max-width:100%}
 
     <div class="mpanel" data-mode="day">
       <p class="spec"><b>하루 = 06:00 ~ 익일 06:00 (1분 단위).</b> 06:00부터 지금까지를 화면 폭 전체에 맞춰 그립니다. 시간이 흐를수록 같은 폭에 더 많은 움직임이 담겨 선의 굴곡이 늘어납니다.</p>
-      <div class="nowbox" aria-live="polite"><span class="nlab">현재 달러/원</span><span class="nval"><span id="dnowv">–</span><span class="nunit">원</span></span><span class="nchg" id="dnowc"></span><span class="ntime" id="dnowt"></span></div>
+      <div class="nowbox" aria-live="polite"><span class="nlab" id="dnowl">현재 달러/원</span><span class="nval"><span id="dnowv">–</span><span class="nunit">원</span></span><span class="nchg" id="dnowc"></span><span class="ntime" id="dnowt"></span></div>
       <div class="sumrow" id="dsum"></div>
       <div class="legend" aria-hidden="true"><span><span class="sw line"></span>1분 시세(국제 시세)</span><span><span class="sw evsw"></span>주요 지표·금리 결정(발표 · 예상 · 이전)</span><span id="dfillLg" hidden><span class="sw fill"></span>월요일 06:00~09:00: Wise 1시간 간격 시세(이 구간은 Yahoo 시세 없음)</span><span class="muted">시세가 없던 구간은 직선으로 이어 그림 · 연한 가로선은 눈금</span></div>
       <div class="rchart" id="dchart"><div class="msg">장중 데이터를 불러오는 중…</div></div>
@@ -509,12 +545,12 @@ img{max-width:100%}
     </div>
 
     <ul class="notes" id="rtnotes">
-      <li><b>데이터 기준.</b> ①은 TradingView(FX_IDC:USDKRW) 실시간 시세, ②·③은 Yahoo Finance(KRW=X) 시세를 열 때마다 받아 옵니다(약 1~2분 지연). 둘 다 국제 외환시장 시세라 서울 외환시장 체결가(연합인포맥스 등)나 서울외국환중개 매매기준율과 몇 원 차이 날 수 있습니다.</li>
+      <li><b>데이터 기준.</b> ①은 TradingView(FX_IDC:USDKRW·JPYKRW·EURKRW) 실시간 시세, ②·③은 Yahoo Finance(KRW=X·JPYKRW=X·EURKRW=X, 엔은 100엔당으로 환산) 시세를 열 때마다 받아 옵니다(약 1~2분 지연). 둘 다 국제 외환시장 시세라 서울 외환시장 체결가(연합인포맥스 등)나 서울외국환중개 매매기준율과 몇 원 차이 날 수 있습니다.</li>
       <li><b>하루의 기준.</b> 국제 외환시장은 뉴욕 오후 5시에 하루를 마감합니다(한국 시간 오전 6시, 미국 서머타임이 아닌 11월 첫 일요일~3월 둘째 일요일 전에는 오전 7시). 이 페이지는 1년 내내 06:00~익일 06:00을 하루로 봅니다.</li>
       <li><b>일별 매매기준율 추이와 분기별 전망</b>은 <a href="#p2">2페이지</a>, 기관별 수치와 출처는 <a href="#p3">3페이지</a>에 있습니다.</li>
     </ul>
   </section>
-    <div class="pagefoot"><span class="muted small">1 / 4</span><a class="nextpg" href="#p2">2페이지 · 추이·전망 →</a></div>
+    <div class="pagefoot"><span class="muted small">1 / 5</span><a class="nextpg" href="#p2">2페이지 · 추이·전망 →</a></div>
   </main>
 
   <main id="p2" data-page="2" hidden>
@@ -710,7 +746,7 @@ img{max-width:100%}
   </section>
 
 
-    <div class="pagefoot"><a class="nextpg" href="#p1">← 1페이지 · 실시간</a><span class="muted small">2 / 4</span><a class="nextpg" href="#p3">3페이지 · 기관별 상세·출처 →</a></div>
+    <div class="pagefoot"><a class="nextpg" href="#p1">← 1페이지 · 실시간</a><span class="muted small">2 / 5</span><a class="nextpg" href="#p3">3페이지 · 기관별 상세·출처 →</a></div>
   </main>
 
   <main id="p3" data-page="3" hidden>
@@ -985,7 +1021,7 @@ img{max-width:100%}
     </ul>
   </section>
 
-    <div class="pagefoot"><a class="nextpg" href="#p2">← 2페이지 · 추이·전망</a><span class="muted small">3 / 4</span><a class="nextpg" href="#p4">4페이지 · 뉴스 →</a></div>
+    <div class="pagefoot"><a class="nextpg" href="#p2">← 2페이지 · 추이·전망</a><span class="muted small">3 / 5</span><a class="nextpg" href="#p4">4페이지 · 뉴스 →</a></div>
   </main>
 
   <main id="p4" data-page="4" hidden>
@@ -1011,7 +1047,52 @@ img{max-width:100%}
       
       <p class="muted small" style="margin-top:14px">링크만 걸어 두었으며 각 사이트의 내용·이용 조건은 해당 사이트를 따릅니다.</p>
     </section>
-    <div class="pagefoot"><a class="nextpg" href="#p3">← 3페이지 · 기관별 상세·출처</a><span class="muted small">4 / 4</span></div>
+    <div class="pagefoot"><a class="nextpg" href="#p3">← 3페이지 · 기관별 상세·출처</a><span class="muted small">4 / 5</span><a class="nextpg" href="#p5">5페이지 · 비교 차트 →</a></div>
+  </main>
+
+  <main id="p5" data-page="5" hidden>
+    <div class="pagehead"><span class="eyebrow">5페이지</span><h2>비교 차트</h2><p class="muted small">환율과 달러인덱스를 골라 한 그래프에서 비교합니다. 단위가 서로 달라 기본은 기간 시작 대비 변화율(%)로 겹쳐 그리고, '실제 값'을 고르면 계열마다 칸을 나눠 그립니다. 한 번에 4개까지 고를 수 있습니다.</p></div>
+    <section id="cmp" style="padding-top:16px">
+      <div class="ctl">
+        <span class="cmp-label">빠른 선택</span>
+        <div class="seg" id="cmpPre" role="group" aria-label="빠른 선택">
+          <button type="button" data-pre="dxy,usdkrw">달러인덱스 vs 달러/원</button>
+          <button type="button" data-pre="usdkrw,usdjpy">달러/원 vs 달러/엔</button>
+          <button type="button" data-pre="usdkrw,jpykrw,eurkrw">원화: 달러·엔·유로</button>
+          <button type="button" data-pre="dxy,eurusd,usdjpy">달러 강세: 지수·유로·엔</button>
+          <button type="button" data-pre="usdkrw,usdcny,usdjpy">아시아: 원·위안·엔</button>
+        </div>
+      </div>
+      <div class="cmp-ser" id="cmpSer" role="group" aria-label="비교할 계열"></div>
+      <div class="ctl">
+        <div class="seg" id="cmpRange" role="group" aria-label="기간">
+          <button type="button" data-cr="1d">1일</button>
+          <button type="button" data-cr="1w">1주</button>
+          <button type="button" data-cr="1m">1개월</button>
+          <button type="button" data-cr="3m">3개월</button>
+          <button type="button" data-cr="1y">1년</button>
+          <button type="button" data-cr="3y">3년</button>
+          <button type="button" data-cr="10y">10년</button>
+        </div>
+        <div class="seg" id="cmpView" role="group" aria-label="보기">
+          <button type="button" data-cv="pct">변화율(%)</button>
+          <button type="button" data-cv="abs">실제 값</button>
+        </div>
+      </div>
+      <!--cmp-area-->
+      <div class="sumrow" id="cmpSum"></div>
+      <div class="rchart cmpchart" id="cmpChart"><div class="msg">계열을 고르면 그래프가 나옵니다.</div></div>
+      <div class="credit" id="cmpCredit"></div>
+      <div class="tbl" style="margin-top:14px"><table id="cmpTbl"></table></div>
+      <!--/cmp-area-->
+      <ul class="notes" id="cmpnotes" style="margin-top:16px">
+        <li><b>변화율.</b> 고른 기간의 첫 값을 0%로 두고 그 뒤 얼마나 오르내렸는지 겹쳐 그립니다. 달러/원·달러/엔·달러인덱스가 함께 오르면 달러가 넓게 강해진 것이고, 달러/원만 오르면 원화만 약해진 것입니다.</li>
+        <li><b>실제 값.</b> 계열마다 칸을 나눠 각자의 단위로 그립니다(축 하나에 두 단위를 섞지 않음). 마우스를 올리면 모든 칸의 같은 시각 값이 함께 나옵니다.</li>
+        <li><b>상관계수.</b> 첫 번째로 고른 계열과 봉마다의 변동률이 얼마나 같이 움직였는지입니다. +1에 가까우면 같은 방향, −1에 가까우면 반대 방향, 0 근처면 따로 움직였다는 뜻입니다.</li>
+        <li><b>시각.</b> 거래가 없는 시간(주말 등)은 건너뛰고 이어 그립니다. 시각은 한국 시간입니다. 엔/원은 100엔당, 위안/원은 달러/원 ÷ 달러/위안으로 계산한 값입니다. 달러인덱스(ICE)는 유로·엔·파운드 등 6개 통화 대비 달러 가치입니다.</li>
+      </ul>
+    </section>
+    <div class="pagefoot"><a class="nextpg" href="#p4">← 4페이지 · 뉴스</a><span class="muted small">5 / 5</span></div>
   </main>
 
   <footer>
@@ -1403,7 +1484,7 @@ img{max-width:100%}
     c.appendChild(w);
     var sc=document.createElement("script"); sc.type="text/javascript"; sc.async=true;
     sc.src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    sc.innerHTML=JSON.stringify({autosize:true,symbol:"FX_IDC:USDKRW",range:v.range,interval:v.interval,timezone:"Asia/Seoul",
+    sc.innerHTML=JSON.stringify({autosize:true,symbol:CURS[CUR].tv,range:v.range,interval:v.interval,timezone:"Asia/Seoul",
       theme:dk?"dark":"light",style:TV.s,locale:"kr",backgroundColor:dk?"#171b20":"#ffffff",
       gridColor:dk?"rgba(255,255,255,0.06)":"rgba(18,22,27,0.06)",hide_side_toolbar:true,hide_volume:true,
       allow_symbol_change:false,save_image:false,calendar:false,withdateranges:true,support_host:"https://www.tradingview.com"});
@@ -1429,6 +1510,30 @@ img{max-width:100%}
   })();
 
 
+  /* ---------- 통화(달러/원·엔/원·유로/원): ①②③ 모두 이 통화로 그린다. 엔은 100엔당 ---------- */
+  var CURS={usd:{n:"달러/원",y:"KRW=X",tv:"FX_IDC:USDKRW",tvu:"USDKRW",per:""},
+            jpy:{n:"엔/원(100엔)",y:"JPYKRW=X",tv:"FX_IDC:JPYKRW",tvu:"JPYKRW",per:" · 100엔당으로 환산(TradingView 원본은 1엔당)"},
+            eur:{n:"유로/원",y:"EURKRW=X",tv:"FX_IDC:EURKRW",tvu:"EURKRW",per:""}};
+  var CUR="usd", IDS={};
+  try{var cu0=localStorage.getItem("fx-cur");if(CURS[cu0])CUR=cu0}catch(e){}
+  function curLabels(){
+    $("rtTitle").textContent="실시간 "+CURS[CUR].n;
+    $("dnowl").textContent="현재 "+CURS[CUR].n;
+    [].forEach.call(document.querySelectorAll("[data-cur]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.cur===CUR))});
+  }
+  function setCur(c){
+    if(!CURS[c]||c===CUR)return;
+    CUR=c; try{localStorage.setItem("fx-cur",c)}catch(e){}
+    ID=IDS[c]||null;
+    if(LW){LW.chart.remove();LW=null}
+    TV.mounted=false;
+    curLabels();
+    if(!ID){msg($("dchart"),"장중 데이터를 불러오는 중…");msg($("rchart"),"장중 데이터를 불러오는 중…")}
+    renderP1();
+  }
+  [].forEach.call(document.querySelectorAll("[data-cur]"),function(b){b.addEventListener("click",function(){setCur(b.dataset.cur)})});
+  curLabels();
+
   /* ---------- ① 드래그: 지표 표시 차트(Lightweight Charts, TradingView 오픈소스) / TradingView 원본 ---------- */
   var DK="lw", LI="1m", LW=null;
   try{var dk0=localStorage.getItem("usdkrw-dk"); if(dk0==="tv"||dk0==="lw")DK=dk0; var li0=localStorage.getItem("usdkrw-li"); if(li0==="1m"||li0==="10m")LI=li0}catch(e){}
@@ -1447,8 +1552,8 @@ img{max-width:100%}
     var lw=DK==="lw";
     $("lwbox").hidden=!lw; $("tvbox").hidden=lw; $("lwInt").hidden=!lw; $("tvCtl").hidden=lw; $("lwLegend").hidden=!lw; $("lwevents").hidden=!lw; $("lwInfo").hidden=!lw;
     $("dragCredit").innerHTML=lw
-      ?'데이터: Yahoo Finance KRW=X(국제 시세, 약 1~2분 지연) · 지표: Nasdaq 경제 캘린더 · 한은 결정·의결문 시각: 언론 첫 속보 · 차트: <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener nofollow">TradingView Lightweight Charts</a>'
-      :'차트·시세 제공: <a href="https://www.tradingview.com/symbols/USDKRW/?exchange=FX_IDC" rel="noopener nofollow" target="_blank">TradingView</a> (FX_IDC:USDKRW) · 실시간 · 지표 표시는 안 됨';
+      ?'데이터: Yahoo Finance '+CURS[CUR].y+'(국제 시세, 약 1~2분 지연'+CURS[CUR].per+') · 지표: Nasdaq 경제 캘린더 · 한은 결정·의결문 시각: 언론 첫 속보 · 차트: <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener nofollow">TradingView Lightweight Charts</a>'
+      :'차트·시세 제공: <a href="https://www.tradingview.com/symbols/'+CURS[CUR].tvu+'/?exchange=FX_IDC" rel="noopener nofollow" target="_blank">TradingView</a> ('+CURS[CUR].tv+') · 실시간 · 지표 표시는 안 됨';
   }
   [].forEach.call(document.querySelectorAll("[data-dk]"),function(b){b.addEventListener("click",function(){DK=b.dataset.dk; try{localStorage.setItem("usdkrw-dk",DK)}catch(e){} renderDrag()})});
   [].forEach.call(document.querySelectorAll("[data-li]"),function(b){b.addEventListener("click",function(){if(LI!==b.dataset.li){LI=b.dataset.li; try{localStorage.setItem("usdkrw-li",LI)}catch(e){} if(LW){LW.chart.remove();LW=null} renderDrag()}})});
@@ -1543,8 +1648,9 @@ img{max-width:100%}
   function msg(box,t){box.innerHTML='<div class="msg">'+t+'</div>'}
 
   function loadID(){
-    return fetch(API+"/api/intraday",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})
-      .then(function(j){if(j&&j.m1&&j.m10){ID=j;renderP1()}})
+    var c=CUR;
+    return fetch(API+"/api/intraday"+(c==="usd"?"":"?c="+c),{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})
+      .then(function(j){if(j&&j.m1&&j.m10){IDS[c]=j;if(c===CUR){ID=j;renderP1()}}})
       .catch(function(){if(!ID){msg($("dchart"),"장중 데이터를 불러오지 못했습니다. 잠시 후 새로고침해 주세요.");msg($("rchart"),"장중 데이터를 불러오지 못했습니다. 잠시 후 새로고침해 주세요.")}});
   }
   function setMode(m){
@@ -1763,7 +1869,7 @@ img{max-width:100%}
     $("dnowv").textContent=f1(now);
     $("dnowc").innerHTML="06:00 시가 대비 "+chg(open,now);
     $("dnowt").textContent=(stale?"마지막 거래 ":"")+mdhm(endT)+" 기준";
-    $("dcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 1분 단위 · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)"+(nf?" · 월요일 06:00~첫 Yahoo 시세: Wise 시장 중간 환율(1시간 간격)":"")+" · 지표: Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각과 한은 의결문 공개 시각: 언론 첫 속보(네이버 뉴스 입력 시각)";
+    $("dcredit").textContent="데이터: Yahoo Finance "+CURS[CUR].y+"(국제 시세"+CURS[CUR].per+") · 1분 단위 · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)"+(nf?" · 월요일 06:00~첫 Yahoo 시세: Wise 시장 중간 환율(1시간 간격)":"")+" · 지표: Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각과 한은 의결문 공개 시각: 언론 첫 속보(네이버 뉴스 입력 시각)";
     eventList($("devents"),dayEv,LAY.mode,"이 날의 주요 지표·금리 결정 ("+mdhm(start)+" ~ "+mdhm(start+DAYM)+", 한국 시간 · Nasdaq 캘린더)",dayEv.loading);
   }
 
@@ -1854,7 +1960,7 @@ img{max-width:100%}
       '<span>시가 <b>'+f1(B.o[i0])+'</b></span><span>종가 <b>'+f1(B.c[i1])+'</b></span><span>변동 '+chg(B.o[i0],B.c[i1])+'</span>'+
       '<span>고가 <b>'+f1(hi)+'</b> ('+mdhm(t[ih])+')</span><span>저가 <b>'+f1(lo)+'</b> ('+mdhm(t[il])+')</span>'+
       (N>240?'<span class="muted">봉이 많아 종가 선과 고저 범위로 표시</span>':'');
-    $("rcredit").textContent="데이터: Yahoo Finance KRW=X(국제 시세) · 10분봉(5분봉 2개 묶음) · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)";
+    $("rcredit").textContent="데이터: Yahoo Finance "+CURS[CUR].y+"(국제 시세"+CURS[CUR].per+") · 10분봉(5분봉 2개 묶음) · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)";
     eventList($("revents"),rEv,rLAY.mode,"이 기간의 주요 지표·금리 결정 (한국 시간 · Nasdaq 캘린더)",rEv.loading);
   }
   if(window.ResizeObserver){
@@ -1975,15 +2081,237 @@ img{max-width:100%}
   /* 버튼 뒤의 자동 리서치는 아직 설정 전이라 잠가 둔다 */
   $("updBtn").disabled=true; $("updMsg").textContent="업데이트 버튼 준비 중 · 시세·뉴스는 자동 갱신";
 
+
+  /* ---------- 5페이지: 비교 차트(직접 고른 계열을 한 그래프에) ---------- */
+  var CMPS={
+    usdkrw:{n:"달러/원",c:"var(--k1)",d:2,src:"KRW=X"},
+    jpykrw:{n:"엔/원(100엔)",c:"var(--k2)",d:2,src:"JPYKRW=X ×100"},
+    eurkrw:{n:"유로/원",c:"var(--k3)",d:2,src:"EURKRW=X"},
+    cnykrw:{n:"위안/원",c:"var(--k4)",d:2,src:"KRW=X ÷ CNY=X"},
+    dxy:{n:"달러인덱스",c:"var(--k5)",d:2,src:"DX-Y.NYB"},
+    usdjpy:{n:"달러/엔",c:"var(--k6)",d:2,src:"JPY=X"},
+    eurusd:{n:"유로/달러",c:"var(--k7)",d:4,src:"EURUSD=X"},
+    usdcny:{n:"달러/위안",c:"var(--k8)",d:4,src:"CNY=X"}
+  };
+  var CMPR={"1d":"5분봉","1w":"15분봉","1m":"1시간봉","3m":"일봉","1y":"일봉","3y":"일봉","10y":"주봉"};
+  var CMP={s:["dxy","usdkrw"],r:"1y",v:"pct"}, CMPD={}, CMPW={};
+  try{var cm0=JSON.parse(localStorage.getItem("fx-cmp")||"null");
+    if(cm0&&cm0.s&&cm0.s.length){CMP.s=cm0.s.filter(function(k){return CMPS[k]}).slice(0,4);if(CMPR[cm0.r])CMP.r=cm0.r;if(cm0.v==="abs")CMP.v="abs"}
+    if(!CMP.s.length)CMP.s=["dxy","usdkrw"]}catch(e){}
+  function cmpSave(){try{localStorage.setItem("fx-cmp",JSON.stringify(CMP))}catch(e){}}
+  function cmpKey(k){return k+"|"+CMP.r}
+  function cmpLoad(k){
+    var key=cmpKey(k), r=CMP.r;
+    if(CMPD[key]||CMPW[key])return;
+    CMPW[key]=1;
+    fetch(API+"/api/fx?s="+k+"&r="+r).then(function(x){if(!x.ok)throw new Error(x.status);return x.json()})
+      .then(function(j){CMPD[key]=j;delete CMPW[key];if(!$("p5").hidden)renderCmp()})
+      .catch(function(){delete CMPW[key];CMPD[key]={err:1,t:[],c:[]};if(!$("p5").hidden)renderCmp()});
+  }
+  function cmpChips(){
+    var box=$("cmpSer"); box.textContent="";
+    Object.keys(CMPS).forEach(function(k){
+      var S=CMPS[k], on=CMP.s.indexOf(k)>=0, d=CMPD[cmpKey(k)];
+      var b=document.createElement("button"); b.type="button"; b.className="cmp-chip"; b.setAttribute("aria-pressed",String(on));
+      b.style.setProperty("--c",S.c);
+      var kk=document.createElement("span"); kk.className="k";
+      var nm=document.createElement("span"); nm.className="nm"; nm.textContent=S.n;
+      var sb=document.createElement("span"); sb.className="sb";
+      if(d&&d.c&&d.c.length){var a=d.c[0],z=d.c[d.c.length-1];sb.textContent=z.toFixed(S.d)+" · "+(z>=a?"+":"")+((z/a-1)*100).toFixed(2)+"%"}
+      else sb.textContent=on?"불러오는 중…":S.src;
+      b.append(kk,nm,sb);
+      b.addEventListener("click",function(){
+        var i=CMP.s.indexOf(k);
+        if(i>=0){if(CMP.s.length>1)CMP.s.splice(i,1)}
+        else{if(CMP.s.length>=4){toastMsg("한 번에 4개까지 고를 수 있습니다. 다른 계열을 먼저 끄세요.");return}CMP.s.push(k)}
+        cmpSave(); renderCmp();
+      });
+      box.appendChild(b);
+    });
+    [].forEach.call(document.querySelectorAll("[data-cr]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.cr===CMP.r))});
+    [].forEach.call(document.querySelectorAll("[data-cv]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.cv===CMP.v))});
+    [].forEach.call(document.querySelectorAll("[data-pre]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.pre===CMP.s.join(",")))});
+  }
+  function toastMsg(t){var c=$("cmpCredit");c.textContent=t;c.style.color="var(--up)";setTimeout(function(){c.style.color="";cmpCredit()},2500)}
+  [].forEach.call(document.querySelectorAll("[data-cr]"),function(b){b.addEventListener("click",function(){CMP.r=b.dataset.cr;cmpSave();renderCmp()})});
+  [].forEach.call(document.querySelectorAll("[data-cv]"),function(b){b.addEventListener("click",function(){CMP.v=b.dataset.cv;cmpSave();renderCmp()})});
+  [].forEach.call(document.querySelectorAll("[data-pre]"),function(b){b.addEventListener("click",function(){CMP.s=b.dataset.pre.split(",");cmpSave();renderCmp()})});
+
+  /* 한국 시간 글자 */
+  function kst(sec){return new Date((sec+9*3600)*1000)}
+  function kYMD(sec){var x=kst(sec);return x.getUTCFullYear()+"-"+pad(x.getUTCMonth()+1)+"-"+pad(x.getUTCDate())}
+  function kLabel(sec,r){var x=kst(sec);
+    if(r==="1d")return pad(x.getUTCHours())+":"+pad(x.getUTCMinutes());
+    if(r==="1w"||r==="1m")return (x.getUTCMonth()+1)+"/"+x.getUTCDate();
+    if(r==="3m"||r==="1y")return x.getUTCMonth()?(x.getUTCMonth()+1)+"월":String(x.getUTCFullYear());
+    return String(x.getUTCFullYear())}
+  function kTip(sec,r){var x=kst(sec),d=x.getUTCFullYear()+"."+pad(x.getUTCMonth()+1)+"."+pad(x.getUTCDate());
+    return (r==="1d"||r==="1w"||r==="1m")?d+" "+pad(x.getUTCHours())+":"+pad(x.getUTCMinutes()):d}
+  function cTicks(lo,hi,n){
+    var raw=(hi-lo)/Math.max(1,n)||1, p=Math.pow(10,Math.floor(Math.log10(raw))), st=p;
+    [1,2,2.5,5,10].some(function(k){st=k*p;return st>=raw});
+    var dec=Math.max(0,-Math.floor(Math.log10(st)+1e-9)+(st/p===2.5?1:0)), a=Math.floor(lo/st)*st, b=Math.ceil(hi/st)*st, out=[];
+    for(var v=a;v<=b+st/2;v+=st)out.push(+v.toFixed(dec));
+    return {min:a,max:b,ticks:out,dec:dec};
+  }
+  /* 고른 계열을 같은 시간 칸(봉)에 맞춘다: 시간 칸은 모든 계열의 칸을 합친 것, 거래 없는 시간은 건너뜀 */
+  function cmpAlign(list){
+    var bucket=list[0].d.bucket||86400, set={}, keys;
+    list.forEach(function(o){o.m={};o.d.t.forEach(function(t,i){var k=Math.floor(t/bucket);o.m[k]=o.d.c[i];set[k]=1})});
+    keys=Object.keys(set).map(Number).sort(function(a,b){return a-b});
+    list.forEach(function(o){
+      o.v=keys.map(function(k){return k in o.m?o.m[k]:NaN});
+      o.v0=NaN;for(var i=0;i<o.v.length;i++)if(!isNaN(o.v[i])){o.v0=o.v[i];o.i0=i;break}
+      o.last=NaN;for(i=o.v.length-1;i>=0;i--)if(!isNaN(o.v[i])){o.last=o.v[i];o.i1=i;break}
+      o.p=o.v.map(function(v){return isNaN(v)?NaN:(v/o.v0-1)*100});
+    });
+    return {bucket:bucket,keys:keys,t:keys.map(function(k){return k*bucket})};
+  }
+  function corr(a,b){
+    var xs=[],ys=[],i;
+    for(i=1;i<a.length;i++)if(!isNaN(a[i])&&!isNaN(a[i-1])&&!isNaN(b[i])&&!isNaN(b[i-1])){xs.push(a[i]/a[i-1]-1);ys.push(b[i]/b[i-1]-1)}
+    var n=xs.length; if(n<5)return NaN;
+    var mx=0,my=0; for(i=0;i<n;i++){mx+=xs[i];my+=ys[i]} mx/=n; my/=n;
+    var sxy=0,sxx=0,syy=0; for(i=0;i<n;i++){var dx=xs[i]-mx,dy=ys[i]-my;sxy+=dx*dy;sxx+=dx*dx;syy+=dy*dy}
+    return sxx&&syy?sxy/Math.sqrt(sxx*syy):NaN;
+  }
+  function cmpCredit(){
+    $("cmpCredit").textContent="데이터: Yahoo Finance(국제 시세) — "+CMP.s.map(function(k){return CMPS[k].n+" "+CMPS[k].src}).join(" · ")+" · "+CMPR[CMP.r]+" · 짧은 기간은 약 2분, 긴 기간은 약 30분 늦을 수 있음";
+  }
+  function renderCmp(){
+    if($("p5").hidden)return;
+    cmpChips();
+    var miss=CMP.s.filter(function(k){var d=CMPD[cmpKey(k)];return !d});
+    miss.forEach(cmpLoad);
+    var box=$("cmpChart");
+    if(miss.length){if(!box.querySelector("svg"))msg(box,"시세를 불러오는 중…");return}
+    var list=CMP.s.map(function(k){return {k:k,S:CMPS[k],d:CMPD[cmpKey(k)]}}).filter(function(o){return o.d&&o.d.t&&o.d.t.length>1});
+    var bad=CMP.s.filter(function(k){var d=CMPD[cmpKey(k)];return !d||!d.t||d.t.length<2}).map(function(k){return CMPS[k].n});
+    if(!list.length){msg(box,"시세를 불러오지 못했습니다. 잠시 후 다시 열어 주세요.");$("cmpSum").textContent="";$("cmpTbl").textContent="";return}
+    var A=cmpAlign(list);
+    $("cmpSum").innerHTML='<span>기간 <b>'+kTip(A.t[0],CMP.r)+' ~ '+kTip(A.t[A.t.length-1],CMP.r)+'</b></span><span>'+CMPR[CMP.r]+' <b>'+A.t.length.toLocaleString()+'개</b></span><span>한국 시간</span>'+(bad.length?'<span class="muted">못 불러온 계열: '+bad.join(", ")+'</span>':'');
+    cmpCredit();
+    if(CMP.v==="abs")cmpDrawAbs(box,list,A);else cmpDrawPct(box,list,A);
+    cmpTable(list,A);
+  }
+  function cmpXTicks(svg,A,X,m,ph,W,yb){
+    var n=A.t.length, maxN=Math.max(3,Math.floor((W-m.l-m.r)/80)), cand=[], prev=null, i;
+    for(i=0;i<n;i++){var l=kLabel(A.t[i],CMP.r), key=CMP.r==="1d"?Math.floor((A.t[i]+9*3600)/10800):l;
+      if(key!==prev){cand.push(i);prev=key}}
+    var step=Math.ceil(cand.length/maxN);
+    cand.forEach(function(ci,j){if(j%step)return;var x=X(ci);
+      el("line",{x1:x,x2:x,y1:yb,y2:yb+4,"class":"tickmark"},svg);
+      var tx=el("text",{x:x,y:yb+17,"class":"xt","text-anchor":x-m.l<24?"start":"middle"},svg); tx.textContent=kLabel(A.t[ci],CMP.r)});
+  }
+  function cmpPath(vals,X,Y){
+    var d="",pen=false;
+    for(var i=0;i<vals.length;i++){if(isNaN(vals[i]))continue;d+=(pen?"L":"M")+X(i).toFixed(1)+","+Y(vals[i]).toFixed(1);pen=true}
+    return d;
+  }
+  function cmpTip(f,A,list,i,W,top,x){
+    var h='<div class="tq">'+kTip(A.t[i],CMP.r)+'</div>';
+    list.forEach(function(o){
+      var v=NaN,j; for(j=i;j>=0;j--)if(!isNaN(o.v[j])){v=o.v[j];break}
+      h+='<div class="tr"><span><span class="k" style="background:'+o.S.c+'"></span>'+o.S.n+'</span><b>'+(isNaN(v)?"–":v.toFixed(o.S.d)+' <span class="muted">('+((v/o.v0-1)*100>=0?"+":"")+((v/o.v0-1)*100).toFixed(2)+'%)</span>')+'</b></div>';
+    });
+    f.tip.innerHTML=h; placeTip(f.tip,x,W,top);
+  }
+  function cmpDrawPct(box,list,A){
+    var W=Math.max(280,box.clientWidth), narrow=W<600, H=narrow?340:440;
+    box.style.height=H+"px";
+    if(!box.clientWidth)return;
+    var labW=0; list.forEach(function(o){labW=Math.max(labW,(o.S.n.length+8)*7.2)});
+    var m={l:narrow?44:54,r:narrow?12:Math.min(190,labW+26),t:18,b:34}, pw=W-m.l-m.r, ph=H-m.t-m.b, n=A.t.length;
+    var lo=0,hi=0; list.forEach(function(o){o.p.forEach(function(v){if(!isNaN(v)){if(v<lo)lo=v;if(v>hi)hi=v}})});
+    var pad0=Math.max((hi-lo)*0.06,0.2), yt=cTicks(lo-pad0,hi+pad0,narrow?4:6);
+    var X=function(i){return m.l+(n>1?i/(n-1):0.5)*pw}, Y=function(v){return m.t+(1-(v-yt.min)/(yt.max-yt.min))*ph};
+    var f=frame(box,W,H,m), svg=f.svg;
+    yt.ticks.forEach(function(v){if(v<yt.min-1e-9||v>yt.max+1e-9)return;
+      el("line",{x1:m.l,x2:m.l+pw,y1:Y(v),y2:Y(v),"class":"grid"},svg);
+      var tx=el("text",{x:m.l-8,y:Y(v)+4,"class":"tick","text-anchor":"end"},svg); tx.textContent=(v>0?"+":"")+v.toFixed(yt.dec)+"%"});
+    el("line",{x1:m.l,x2:m.l+pw,y1:Y(0),y2:Y(0),"class":"zero"},svg);
+    el("line",{x1:m.l,x2:m.l+pw,y1:m.t+ph,y2:m.t+ph,"class":"base"},svg);
+    cmpXTicks(svg,A,X,m,ph,W,m.t+ph);
+    list.forEach(function(o){var p=el("path",{d:cmpPath(o.p,X,Y),"class":"cline"},svg);p.style.stroke=o.S.c});
+    /* 오른쪽 끝 이름표(겹치지 않게) */
+    if(!narrow){
+      var items=list.map(function(o){var v=o.p[o.i1];return {o:o,v:v,y0:Y(v),xe:X(o.i1)}}).sort(function(a,b){return a.y0-b.y0}), gap=15;
+      items.forEach(function(it,k){it.y=k?Math.max(it.y0,items[k-1].y+gap):it.y0});
+      if(items.length){var over=items[items.length-1].y-(m.t+ph);if(over>0)items.forEach(function(it){it.y-=over});
+        for(var k=items.length-2;k>=0;k--)items[k].y=Math.min(items[k].y,items[k+1].y-gap)}
+      items.forEach(function(it){
+        el("path",{d:"M"+(it.xe+4)+","+it.y0+"L"+(m.l+pw+8)+","+it.y+"L"+(m.l+pw+12)+","+it.y,fill:"none",stroke:"var(--rule-strong)","stroke-width":1},svg);
+        var tx=el("text",{x:m.l+pw+16,y:it.y+4,"class":"endlab"},svg);
+        tx.textContent=it.o.S.n+" "+(it.v>=0?"+":"")+it.v.toFixed(2)+"%";
+      });
+    }
+    var cross=el("line",{x1:0,x2:0,y1:m.t,y2:m.t+ph,"class":"cross",visibility:"hidden"},svg), dots=list.map(function(o){var c=el("circle",{cx:0,cy:0,r:4,"class":"hov",visibility:"hidden"},svg);c.style.fill=o.S.c;return c});
+    hover(svg,m,pw,ph,function(px){
+      var i=Math.max(0,Math.min(n-1,Math.round((px-m.l)/pw*(n-1)))), x=X(i);
+      cross.setAttribute("x1",x);cross.setAttribute("x2",x);cross.setAttribute("visibility","visible");
+      list.forEach(function(o,k){var j,v=NaN;for(j=i;j>=0;j--)if(!isNaN(o.p[j])){v=o.p[j];break}
+        if(isNaN(v)){dots[k].setAttribute("visibility","hidden");return}
+        dots[k].setAttribute("cx",x);dots[k].setAttribute("cy",Y(v));dots[k].setAttribute("visibility","visible")});
+      cmpTip(f,A,list,i,W,m.t+6,x);
+    },function(){f.tip.hidden=true;cross.setAttribute("visibility","hidden");dots.forEach(function(d){d.setAttribute("visibility","hidden")})});
+  }
+  function cmpDrawAbs(box,list,A){
+    var W=Math.max(280,box.clientWidth), narrow=W<600, k=list.length, panelH=narrow?120:140, gapP=44;
+    var m={l:narrow?52:62,r:narrow?12:18,t:30,b:34}, H=m.t+m.b+k*panelH+(k-1)*gapP;
+    box.style.height=H+"px";
+    if(!box.clientWidth)return;
+    var pw=W-m.l-m.r, n=A.t.length, X=function(i){return m.l+(n>1?i/(n-1):0.5)*pw};
+    var f=frame(box,W,H,m), svg=f.svg, Ys=[];
+    list.forEach(function(o,pi){
+      var top=m.t+pi*(panelH+gapP), lo=Infinity, hi=-Infinity;
+      o.v.forEach(function(v){if(!isNaN(v)){if(v<lo)lo=v;if(v>hi)hi=v}});
+      var pad0=Math.max((hi-lo)*0.08,Math.pow(10,-o.S.d)), yt=cTicks(lo-pad0,hi+pad0,3);
+      var Y=function(v){return top+(1-(v-yt.min)/(yt.max-yt.min))*panelH}; Ys.push(Y);
+      yt.ticks.forEach(function(v){if(v<yt.min-1e-9||v>yt.max+1e-9)return;
+        el("line",{x1:m.l,x2:m.l+pw,y1:Y(v),y2:Y(v),"class":"grid"},svg);
+        var tx=el("text",{x:m.l-8,y:Y(v)+4,"class":"tick","text-anchor":"end"},svg); tx.textContent=v.toLocaleString("en-US",{minimumFractionDigits:yt.dec,maximumFractionDigits:yt.dec})});
+      el("line",{x1:m.l,x2:m.l+pw,y1:top+panelH,y2:top+panelH,"class":"base"},svg);
+      var p=el("path",{d:cmpPath(o.v,X,Y),"class":"cline"},svg); p.style.stroke=o.S.c;
+      var lb=el("text",{x:m.l,y:top-12,"class":"plab"},svg); lb.textContent=o.S.n+"  "+o.last.toFixed(o.S.d)+" ("+((o.last/o.v0-1)*100>=0?"+":"")+((o.last/o.v0-1)*100).toFixed(2)+"%)";
+    });
+    cmpXTicks(svg,A,X,m,0,W,H-m.b);
+    var cross=el("line",{x1:0,x2:0,y1:m.t,y2:H-m.b,"class":"cross",visibility:"hidden"},svg), dots=list.map(function(o){var c=el("circle",{cx:0,cy:0,r:4,"class":"hov",visibility:"hidden"},svg);c.style.fill=o.S.c;return c});
+    hover(svg,m,pw,H-m.t-m.b,function(px){
+      var i=Math.max(0,Math.min(n-1,Math.round((px-m.l)/pw*(n-1)))), x=X(i);
+      cross.setAttribute("x1",x);cross.setAttribute("x2",x);cross.setAttribute("visibility","visible");
+      list.forEach(function(o,q){var j,v=NaN;for(j=i;j>=0;j--)if(!isNaN(o.v[j])){v=o.v[j];break}
+        if(isNaN(v)){dots[q].setAttribute("visibility","hidden");return}
+        dots[q].setAttribute("cx",x);dots[q].setAttribute("cy",Ys[q](v));dots[q].setAttribute("visibility","visible")});
+      cmpTip(f,A,list,i,W,m.t+6,x);
+    },function(){f.tip.hidden=true;cross.setAttribute("visibility","hidden");dots.forEach(function(d){d.setAttribute("visibility","hidden")})});
+  }
+  function cmpTable(list,A){
+    var tb=$("cmpTbl"); tb.textContent="";
+    var hr=tb.createTHead().insertRow();
+    ["계열","시작","끝","변화율","고가","저가","상관계수 ("+list[0].S.n+" 기준)"].forEach(function(h,i){var th=document.createElement("th");th.textContent=h;if(i)th.className="n";hr.appendChild(th)});
+    var bd=tb.createTBody();
+    list.forEach(function(o,q){
+      var hi=-Infinity,lo=Infinity,ih=0,il=0; o.v.forEach(function(v,i){if(isNaN(v))return;if(v>hi){hi=v;ih=i}if(v<lo){lo=v;il=i}});
+      var tr=bd.insertRow(), c0=tr.insertCell(); c0.className="inst";
+      var sw=document.createElement("span"); sw.className="sw line"; sw.style.borderTopColor=o.S.c; sw.style.marginRight="8px"; sw.style.verticalAlign="middle";
+      c0.appendChild(sw); c0.appendChild(document.createTextNode(o.S.n));
+      var ch=(o.last/o.v0-1)*100, cr=q?corr(list[0].v,o.v):NaN;
+      [o.v0.toFixed(o.S.d),o.last.toFixed(o.S.d),(ch>=0?"+":"")+ch.toFixed(2)+"%",hi.toFixed(o.S.d)+" ("+kTip(A.t[ih],CMP.r)+")",lo.toFixed(o.S.d)+" ("+kTip(A.t[il],CMP.r)+")",q?(isNaN(cr)?"–":(cr>=0?"+":"")+cr.toFixed(2)):"기준"]
+        .forEach(function(t,i){var c=tr.insertCell();c.textContent=t;c.className="n"+(i===5?" corr":"")});
+    });
+  }
+  if(window.ResizeObserver){var cw0=0;new ResizeObserver(function(){var w=$("cmpChart").clientWidth;if(Math.abs(w-cw0)>1){cw0=w;if(!$("p5").hidden)renderCmp()}}).observe($("cmpChart"))}
+  /* ---------- 5페이지 끝 ---------- */
+
   /* ---------- 페이지 전환 (1·2·3) ---------- */
   var tabs=[].slice.call(document.querySelectorAll(".pager button"));
   function go(n,id){
-    ["1","2","3","4"].forEach(function(k){
+    ["1","2","3","4","5"].forEach(function(k){
       $("p"+k).hidden=(k!==n);
       var ul=document.querySelector('nav.toc ul[data-for="'+k+'"]'); if(ul)ul.hidden=(k!==n);
     });
     tabs.forEach(function(b){b.setAttribute("aria-selected",String(b.dataset.go===n))});
-    if(n==="1")renderP1(); if(n==="2")draw(); if(n==="4")loadNews();
+    if(n==="1")renderP1(); if(n==="2")draw(); if(n==="4")loadNews(); if(n==="5")renderCmp();
     var t=id&&$(id);
     if(t)t.scrollIntoView();else window.scrollTo(0,0);
     try{history.replaceState(null,"","#"+(id||"p"+n))}catch(e){}
