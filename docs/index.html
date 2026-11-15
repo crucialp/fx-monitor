@@ -395,6 +395,19 @@ img{max-width:100%}
 .plab{font-family:var(--font-body);font-size:12px;font-weight:600;fill:var(--ink)}
 .rtip .tr .k{display:inline-block;width:12px;height:2px;border-radius:2px;margin-right:6px;vertical-align:middle}
 td.corr{font-family:var(--font-num)}
+
+/* ---------- 오늘의 브리핑(1페이지 맨 위) */
+.brief{margin:22px 0 0;border:1px solid var(--rule);border-radius:10px;background:var(--surface);padding:14px 18px;display:grid;gap:8px}
+.brief-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.brief-tag{font-size:11.5px;font-weight:600;color:var(--surface);background:var(--ink);border-radius:999px;padding:2px 9px;align-self:center}
+.brief-t{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.brief-time{margin-left:auto;font-size:12.5px;color:var(--muted);font-family:var(--font-num)}
+.brief-l{margin:0;padding-left:1.1em;display:grid;gap:4px;font-size:14px;color:var(--ink-2);max-width:none}
+.brief-links{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px}
+.brief-links:empty{display:none}
+.brief-links a{color:var(--ink-2)}
+.brief-links .s{color:var(--muted);font-size:12px;margin-left:4px}
+.brief-note{font-size:11.5px;color:var(--muted);max-width:none}
 </style>
 </head>
 <body>
@@ -461,6 +474,12 @@ td.corr{font-family:var(--font-num)}
   </nav>
 
   <main id="p1" data-page="1">
+  <div class="brief" id="brief" hidden aria-live="polite">
+    <div class="brief-h"><span class="brief-tag">오늘의 브리핑</span><b class="brief-t" id="briefT"></b><span class="brief-time" id="briefTime"></span></div>
+    <ul class="brief-l" id="briefL"></ul>
+    <div class="brief-links" id="briefLinks"></div>
+    <p class="brief-note">시세를 정해 둔 규칙으로 문장에 옮긴 자동 요약입니다(사람·AI가 쓴 글 아님) · 투자 권유가 아닙니다 · <span id="briefSrc"></span></p>
+  </div>
   <section id="rt">
     <div class="rt-bar">
       <div class="head">
@@ -1509,6 +1528,26 @@ td.corr{font-family:var(--font-num)}
     }catch(e){}
   })();
 
+
+  /* ---------- 오늘의 브리핑: /api/brief(달러/원·달러인덱스·국고채·미국채를 규칙대로 문장으로), 1분마다 ---------- */
+  function loadBrief(){
+    fetch(API+"/api/brief",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(j){
+      if(!j||!j.lines||!j.lines.length)return;
+      $("briefT").textContent=j.title||"";
+      $("briefTime").textContent=(j.updated||"").slice(5).replace("-","/").replace("T"," ")+" 기준";
+      var L=$("briefL"); L.textContent="";
+      j.lines.forEach(function(x){var li=document.createElement("li");li.textContent=x.text;L.appendChild(li)});
+      var K=$("briefLinks"); K.textContent="";
+      (j.links||[]).forEach(function(x){if(!/^https?:\/\//.test(x.u))return;
+        var a=document.createElement("a");a.href=x.u;a.target="_blank";a.rel="noopener";a.textContent=x.t;
+        var sp=document.createElement("span");sp.className="s";sp.textContent=x.s+" "+x.at;
+        var w=document.createElement("span");w.append(a,sp);K.appendChild(w)});
+      $("briefSrc").textContent="자료: "+(j.src||"");
+      $("brief").hidden=false;
+    }).catch(function(){});
+  }
+  loadBrief();
+  setInterval(function(){if(!document.hidden&&!$("p1").hidden)loadBrief()},60000);
 
   /* ---------- 통화(달러/원·엔/원·유로/원): ①②③ 모두 이 통화로 그린다. 엔은 100엔당 ---------- */
   var CURS={usd:{n:"달러/원",y:"KRW=X",tv:"FX_IDC:USDKRW",tvu:"USDKRW",per:""},
