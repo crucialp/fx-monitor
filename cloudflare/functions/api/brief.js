@@ -55,15 +55,21 @@ function josa(text, a, b) {
 }
 const comma = (v) => Math.round(v).toLocaleString("en-US");
 // 요인 목록 ds({e: 대상을 올리는 쪽 +1/내리는 쪽 −1, s: 평소 대비 크기, text, short}) 로 '왜' 문장. D: 대상 방향 +1/−1/0
-function explain(D, ds, lead, quiet) {
+function explain(D, ds, lead, quiet, domestic) {
   const strong = ds.filter((d) => d.s >= 1).sort((a, b) => b.s - a.s);
   if (D) {
     const pro = strong.filter((d) => d.e === D), con = strong.filter((d) => d.e === -D);
     let line;
     if (pro.length >= 2) line = `${lead} ${pro[0].text}${josa(pro[0].text, "과", "와")} ${pro[1].text}${josa(pro[1].text, "이", "가")} 겹친 영향으로 보입니다.`;
     else if (pro.length) line = `${lead} ${pro[0].text}${josa(pro[0].text, "이", "가")} 영향을 준 것으로 보입니다.`;
-    else line = `시세 자료로는 뚜렷한 이유가 보이지 않습니다(${quiet}). 국내 수급에 따른 움직임일 수 있습니다.`;
-    if (con.length) line += ` ${con[0].text}${josa(con[0].text, "은", "는")} 반대 방향이었습니다.`;
+    else {
+      // 큰 요인이 없으면, 평소의 절반 넘게 같은 쪽으로 움직인 작은 요인까지 들어 '약한 근거'로 적는다
+      const weak = ds.filter((d) => d.e === D && d.s >= 0.5).sort((a, b) => b.s - a.s);
+      line = weak.length
+        ? `큰 요인은 보이지 않고, 같은 쪽으로 움직인 것은 ${weak.slice(0, 2).map((d) => d.text).join(", ")} 정도입니다. ${domestic}의 영향이 더 컸을 수 있습니다.`
+        : `시세 자료로는 뚜렷한 이유가 보이지 않습니다(${quiet}). ${domestic}에 따른 움직임일 수 있습니다.`;
+    }
+    if (con.length) line += ` ${con[0].text}${josa(con[0].text, "은", "는")} 오히려 반대 방향이었습니다.`;
     return { line, pro };
   }
   const ups = strong.filter((d) => d.e > 0), dns = strong.filter((d) => d.e < 0);
@@ -165,7 +171,7 @@ function fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, now) 
   const D = U.dir === "up" ? 1 : U.dir === "down" ? -1 : 0;
   let why = null;
   if (!U.stale) {
-    why = explain(D, ds, D > 0 ? "원화가 약해진 것은" : "원화가 강해진 것은", "달러 전반·아시아 통화·외국인 주식 매매·미국 금리 모두 변화가 작음");
+    why = explain(D, ds, D > 0 ? "원화가 약해진 것은" : "원화가 강해진 것은", "달러 전반·아시아 통화·외국인 주식 매매·미국 금리 모두 변화가 작음", "국내 수급(수출입 업체의 달러 거래 등)");
     lines[0] = l1base;
     lines.splice(1, 0, why.line);
   }
@@ -227,7 +233,7 @@ function rateBrief(k3, k10, u2, u10, fc, rnews, usd, oil, evs, now) {
   const D = dir === "up" ? 1 : dir === "down" ? -1 : 0;
   let why = null;
   if (today) {
-    why = explain(D, ds, D > 0 ? "국고채 금리가 오른 것은" : "국고채 금리가 내린 것은", "미국 금리·지표 발표·유가 모두 변화가 작음");
+    why = explain(D, ds, D > 0 ? "국고채 금리가 오른 것은" : "국고채 금리가 내린 것은", "미국 금리·지표 발표·유가 모두 변화가 작음", "국내 수급(국채 발행·기관 매매 등)");
     lines.splice(1, 0, why.line);
   } else if (u10 && u10.at > k3.at && Math.abs(u10.chg) >= 2) {
     // 장 시작 전: 지난 거래일 이후 미국채가 크게 움직였으면 오늘 출발 방향을 추정
@@ -285,6 +291,6 @@ async function build(origin, k) {
 export const onRequestGet = (ctx) => {
   const origin = new URL(ctx.request.url).origin, k = new URL(ctx.request.url).searchParams.get("k") || "fx";
   if (k !== "fx" && k !== "rate") return new Response("Not Found", { status: 404 });
-  return cached(ctx, `brief-v9-${k}`, 60, () => build(origin, k), 300);
+  return cached(ctx, `brief-v10-${k}`, 60, () => build(origin, k), 300);
 };
 export const onRequestOptions = options;
