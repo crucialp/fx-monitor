@@ -47,7 +47,11 @@ function dayMove(ID, now) {
   const sd = dayStart(t[end]);
   let i0 = t.findIndex((x) => x >= sd);
   if (i0 < 0 || i0 > end) i0 = 0;
-  const v = c[end], d = Math.round((v - c[i0]) * 10) / 10;
+  // 월요일처럼 그날 첫 Yahoo 시세가 06:00 보다 늦으면 ③ 하루 그래프처럼 Wise 1시간 간격 시세로 06:00 시가를 잡는다
+  let open = c[i0];
+  const F = (ID && ID.fill) || { t: [], c: [] };
+  if (t[i0] - sd > 5) { const fi = (F.t || []).findIndex((x) => x >= sd && x < t[i0] - 5); if (fi >= 0) open = F.c[fi]; }
+  const v = c[end], d = Math.round((v - open) * 10) / 10;
   return { v, d, dir: dirOf(d, 1), stale, sd, at: t[end] * 60000 };
 }
 
@@ -154,12 +158,12 @@ async function build(origin, k) {
     out = rateBrief(k3, k10, u2, u10, fc, rnews, now);
   }
   if (!out) throw new Error("시세를 받지 못함");
-  return { k, updated: kstNow().iso, ...out };
+  return { k, updated: kstNow().iso, ...out, lines: out.lines.map((text) => ({ text })) };   // 화면은 lines[i].text 를 읽는다
 }
 
 export const onRequestGet = (ctx) => {
   const origin = new URL(ctx.request.url).origin, k = new URL(ctx.request.url).searchParams.get("k") || "fx";
   if (k !== "fx" && k !== "rate") return new Response("Not Found", { status: 404 });
-  return cached(ctx, `brief-v5-${k}`, 60, () => build(origin, k), 300);
+  return cached(ctx, `brief-v7-${k}`, 60, () => build(origin, k), 300);
 };
 export const onRequestOptions = options;
