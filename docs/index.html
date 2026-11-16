@@ -1529,9 +1529,9 @@ td.corr{font-family:var(--font-num)}
   })();
 
 
-  /* ---------- 오늘의 브리핑: /api/brief(달러/원·달러인덱스·국고채·미국채를 규칙대로 문장으로), 1분마다 ---------- */
+  /* ---------- 오늘의 브리핑(환율만): /api/brief?k=fx — 달러/원·엔·유로·달러인덱스를 규칙대로 문장으로, 1분마다. 금리 브리핑은 금리 모니터 쪽 ---------- */
   function loadBrief(){
-    fetch(API+"/api/brief",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(j){
+    fetch(API+"/api/brief?k=fx",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(j){
       if(!j||!j.lines||!j.lines.length)return;
       $("briefT").textContent=j.title||"";
       $("briefTime").textContent=(j.updated||"").slice(5).replace("-","/").replace("T"," ")+" 기준";
