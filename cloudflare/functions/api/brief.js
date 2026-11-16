@@ -45,6 +45,11 @@ const sameKDay = (a, b) => { const x = kp(a), y = kp(b); return x.y === y.y && x
 function dayStart(m) { const k = m + 540; let s0 = Math.floor(k / 1440) * 1440 + 360; if (k < s0) s0 -= 1440; return s0 - 540; }
 const won = (v) => v.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "원";
 const sg = (v, dec, unit) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(dec)}${unit}`;
+// 다음 회의: 일정표에서 오늘(한국 시간) 이후 첫 날짜, 없으면 예전 칸
+function nextMeet(list, old, now) {
+  const t = new Date(now + 9 * 3600e3).toISOString().slice(0, 10);
+  return (list || []).find((d) => d >= t) || (old && old >= t ? old : null);
+}
 const dirOf = (v, th) => (v >= th ? "up" : v <= -th ? "down" : "flat");
 
 // 받침 있으면 a(이·은·과·을), 없으면 b — 괄호 안 숫자는 건너뛰고 앞 낱말로 판단
@@ -185,7 +190,7 @@ function fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, now) 
 }
 
 // ---------------- 금리
-function rateBrief(k3, k10, u2, u10, fc, rnews, usd, oil, evs, now) {
+function rateBrief(k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, now) {
   if (!k3) return null;
   const today = sameKDay(k3.at, now), dir = dirOf(k3.chg, 1);
   const head = today ? `국고채 3년은 ${k3.now.toFixed(3)}%로 전 거래일보다` : `국고채 3년은 지난 거래일(${md(k3.at)}) ${k3.now.toFixed(3)}%로 마감해 그 전보다`;
@@ -206,11 +211,18 @@ function rateBrief(k3, k10, u2, u10, fc, rnews, usd, oil, evs, now) {
   const ds = [];
   if (u10) ds.push({ e: Math.sign(u10.chg), s: Math.abs(u10.chg) / 3, short: u10.chg > 0 ? "미국 금리 상승" : "미국 금리 하락", text: `미국채 금리 ${u10.chg > 0 ? "상승" : "하락"}(10년 ${sg(u10.chg, 1, "bp")})` });
   for (const x of surprises(evs, now, ["US", "KR"])) ds.push({ e: x.hawk, s: 1.5, short: x.short, text: x.text });
-  if (fc && fc.next_mpc && fc.base_now != null) {
-    const days = (Date.parse(fc.next_mpc + "T10:00:00+09:00") - now) / 864e5, rows = (fc.base || []).filter((r) => r.path && r.path[0] != null);
-    const hike = rows.filter((r) => r.path[0] > fc.base_now + 1e-9).length;
-    if (days >= 0 && days <= 21 && rows.length && hike / rows.length >= 0.6)
-      ds.push({ e: 1, s: 1, short: "금통위 인상 기대", text: `${md(Date.parse(fc.next_mpc + "T00:00:00+09:00"))} 금통위 인상 기대(경로를 밝힌 기관 ${rows.length}곳 중 ${hike}곳 인상 전망)` });
+  // 금통위 기대: 다음 회의(일정표)가 든 분기의 기관 전망 vs 지금 기준금리(매일 ECOS → meta.json). 회의 3주 전부터
+  const nextMpc = nextMeet(fc && fc.mpc_dates, fc && fc.next_mpc, now), baseNow = meta && Number.isFinite(meta.base_last) ? meta.base_last : fc && fc.base_now;
+  if (fc && nextMpc && baseNow != null) {
+    const days = (Date.parse(nextMpc + "T10:00:00+09:00") - now) / 864e5;
+    const qi = (fc.quarter_end || []).findIndex((qe) => qe >= nextMpc);
+    const rows = qi < 0 ? [] : (fc.base || []).filter((r) => r.path && r.path[qi] != null);
+    const hike = rows.filter((r) => r.path[qi] > baseNow + 1e-9).length, cutN = rows.filter((r) => r.path[qi] < baseNow - 1e-9).length;
+    if (days >= 0 && days <= 21 && rows.length) {
+      const when = md(Date.parse(nextMpc + "T00:00:00+09:00"));
+      if (hike / rows.length >= 0.6) ds.push({ e: 1, s: 1, short: "금통위 인상 기대", text: `${when} 금통위 인상 기대(${fc.quarters[qi]} 경로를 밝힌 기관 ${rows.length}곳 중 ${hike}곳 인상 전망)` });
+      else if (cutN / rows.length >= 0.6) ds.push({ e: -1, s: 1, short: "금통위 인하 기대", text: `${when} 금통위 인하 기대(${fc.quarters[qi]} 경로를 밝힌 기관 ${rows.length}곳 중 ${cutN}곳 인하 전망)` });
+    }
   }
   const op = oil && oil.prev ? (oil.now / oil.prev - 1) * 100 : null;
   if (op != null) ds.push({ e: Math.sign(op), s: Math.abs(op) / 3, short: op > 0 ? "유가 상승" : "유가 하락", text: `국제유가 ${op > 0 ? "상승" : "하락"}(WTI ${sg(op, 2, "%")})` });
@@ -219,9 +231,9 @@ function rateBrief(k3, k10, u2, u10, fc, rnews, usd, oil, evs, now) {
   const D = dir === "up" ? 1 : dir === "down" ? -1 : 0;
   // 다가오는 금리 결정(금리 전망 탭 자료)
   const ahead = [];
-  const nowD = `${kp(now).y}-${pad(kp(now).mo)}-${pad(kp(now).d)}`;
-  if (fc && fc.next_mpc && fc.next_mpc >= nowD) ahead.push(`한국은행 금통위 ${md(Date.parse(fc.next_mpc + "T00:00:00+09:00"))}`);
-  if (fc && fc.next_fomc && fc.next_fomc >= nowD) ahead.push(`미국 FOMC ${md(Date.parse(fc.next_fomc + "T00:00:00+09:00"))}`);
+  const nf = nextMeet(fc && fc.fomc_dates, fc && fc.next_fomc, now);
+  if (nextMpc) ahead.push(`한국은행 금통위 ${md(Date.parse(nextMpc + "T00:00:00+09:00"))}`);
+  if (nf) ahead.push(`미국 FOMC ${md(Date.parse(nf + "T00:00:00+09:00"))}`);
   if (ahead.length) lines.push(`다가오는 금리 결정: ${ahead.join(", ")} (기관 전망은 '금리 전망' 탭).`);
   const b = dir === "up" ? `국고채 금리 상승(3년 ${sg(k3.chg, 1, "bp")})` : dir === "down" ? `국고채 금리 하락(3년 ${sg(k3.chg, 1, "bp")})` : "국고채 금리 보합";
   let us = ud == null || ud === "flat" ? "" : dir === "flat" ? `, 미국채는 ${ud === "up" ? "상승" : "하락"}` : ud === dir ? `, 미국채도 ${ud === "up" ? "상승" : "하락"}` : `, 미국채는 ${ud === "up" ? "상승" : "하락"}`;
@@ -257,12 +269,12 @@ async function build(origin, k) {
     out = fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, now);
   } else {
     const ev = `${origin}/api/events?from=${Math.floor(now / 60000) - 1440}&to=${Math.floor(now / 60000)}`;
-    const [k3, k10, u2, u10, fc, rnews, usd, oil, evs] = await Promise.all([
+    const [k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs] = await Promise.all([
       settle(naverBond("KR3YT=RR")), settle(naverBond("KR10YT=RR")), settle(naverBond("US2YT=RR")), settle(naverBond("US10YT=RR")),
-      settle(getJSON(`${origin}/rates/data/forecast.json`, 8000)), settle(getJSON(`${origin}/rates/data/news.json`, 8000)),
+      settle(getJSON(`${origin}/rates/data/forecast.json`, 8000)), settle(getJSON(`${origin}/rates/data/meta.json`, 8000)), settle(getJSON(`${origin}/rates/data/news.json`, 8000)),
       settle(getJSON(`${origin}/api/intraday`, 8000)), settle(yahoo("CL=F")), settle(getJSON(ev, 9000)),
     ]);
-    out = rateBrief(k3, k10, u2, u10, fc, rnews, usd, oil, evs, now);
+    out = rateBrief(k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, now);
   }
   if (!out) throw new Error("시세를 받지 못함");
   return { k, updated: kstNow().iso, ...out, lines: out.lines.map((text) => ({ text })) };   // 화면은 lines[i].text 를 읽는다
@@ -271,6 +283,6 @@ async function build(origin, k) {
 export const onRequestGet = (ctx) => {
   const origin = new URL(ctx.request.url).origin, k = new URL(ctx.request.url).searchParams.get("k") || "fx";
   if (k !== "fx" && k !== "rate") return new Response("Not Found", { status: 404 });
-  return cached(ctx, `brief-v11-${k}`, 60, () => build(origin, k), 300);
+  return cached(ctx, `brief-v12-${k}`, 60, () => build(origin, k), 300);
 };
 export const onRequestOptions = options;
