@@ -403,6 +403,11 @@ td.corr{font-family:var(--font-num)}
 .brief-t{font-size:17px;font-weight:700;letter-spacing:-.01em}
 .brief-time{margin-left:auto;font-size:12.5px;color:var(--muted);font-family:var(--font-num)}
 .brief-l{margin:0;padding-left:1.1em;display:grid;gap:4px;font-size:14px;color:var(--ink-2);max-width:none}
+.brief-fh{font-size:13px;font-weight:600;color:var(--ink);margin-top:2px}
+.brief-f{margin:0;padding-left:1.6em;display:grid;gap:3px;font-size:14px;color:var(--ink-2)}
+.brief-f:empty{display:none}
+.brief-f .side{font-size:12.5px;font-weight:600;margin-left:6px;white-space:nowrap}
+.brief-f .side.up{color:var(--up)} .brief-f .side.down{color:var(--down)}
 .brief-links{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px}
 .brief-links:empty{display:none}
 .brief-links a{color:var(--ink-2)}
@@ -477,6 +482,8 @@ td.corr{font-family:var(--font-num)}
   <div class="brief" id="brief" hidden aria-live="polite">
     <div class="brief-h"><span class="brief-tag">오늘의 브리핑</span><b class="brief-t" id="briefT"></b><span class="brief-time" id="briefTime"></span></div>
     <ul class="brief-l" id="briefL"></ul>
+    <div class="brief-fh" id="briefFH" hidden></div>
+    <ol class="brief-f" id="briefF"></ol>
     <div class="brief-links" id="briefLinks"></div>
     <p class="brief-note">시세를 정해 둔 규칙으로 문장에 옮긴 자동 요약입니다(사람·AI가 쓴 글 아님). 원인은 같은 시간에 함께 움직인 지표로 추정한 것이라 확정된 원인이 아닙니다 · 투자 권유가 아닙니다 · <span id="briefSrc"></span></p>
   </div>
@@ -1537,6 +1544,9 @@ td.corr{font-family:var(--font-num)}
       $("briefTime").textContent=(j.updated||"").slice(5).replace("-","/").replace("T"," ")+" 기준";
       var L=$("briefL"); L.textContent="";
       j.lines.forEach(function(x){var li=document.createElement("li");li.textContent=x.text;L.appendChild(li)});
+      var FL=$("briefF"); FL.textContent=""; $("briefFH").hidden=!(j.factors&&j.factors.length); $("briefFH").textContent=j.factorHead||"";
+      (j.factors||[]).forEach(function(x){var li=document.createElement("li");li.appendChild(document.createTextNode(x.text));
+        var sp=document.createElement("span");sp.className="side "+(x.side==="up"?"up":"down");sp.textContent=x.side==="up"?"(상승 요인)":"(하락 요인)";li.appendChild(sp);FL.appendChild(li)});
       var K=$("briefLinks"); K.textContent="";
       (j.links||[]).forEach(function(x){if(!/^https?:\/\//.test(x.u))return;
         var a=document.createElement("a");a.href=x.u;a.target="_blank";a.rel="noopener";a.textContent=x.t;
