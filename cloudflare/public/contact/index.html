@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="환율 조회·금리 모니터 운영자에게 문의를 보냅니다. 사이트 이용, 데이터 오류 신고, 광고·제휴 문의.">
+<title>문의하기</title>
+<link rel="stylesheet" href="/fonts/pretendard/pretendardvariable-dynamic-subset.css">
+<style>
+/* 문의: 커뮤니티(public/community)·환율 조회와 같은 틀 — 머리글·페이지 탭·페이지 제목·검색줄·목록+보기 창·안내 목록·바닥글. 색·글꼴·간격은 그쪽 값 그대로. */
+:root{
+  --bg:#f3f5f7;--surface:#ffffff;--ink:#12161b;--ink-2:#46505b;--muted:#6c7581;
+  --rule:#dee2e7;--rule-strong:#c3c9d1;--chip:#eaeef2;--up:#d6453d;--down:#2a6fd6;--foreign:#2a78d6;
+  --font-display:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-num:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1215;--surface:#171b20;--ink:#eef1f4;--ink-2:#b4bcc6;--muted:#8a939e;
+    --rule:#2a3038;--rule-strong:#3b434d;--chip:#232930;--up:#ec6a62;--down:#5596ee;--foreign:#3987e5;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1215;--surface:#171b20;--ink:#eef1f4;--ink-2:#b4bcc6;--muted:#8a939e;
+  --rule:#2a3038;--rule-strong:#3b434d;--chip:#232930;--up:#ec6a62;--down:#5596ee;--foreign:#3987e5;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 64px}
+@media (max-width:480px){.wrap{padding-inline:16px}}
+h1,h2,h3,h4{font-family:var(--font-display);text-wrap:balance;margin:0;color:var(--ink);letter-spacing:-.015em}
+h1{font-size:clamp(28px,4.4vw,42px);line-height:1.2;font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(21px,2.6vw,26px);line-height:1.3;font-weight:700}
+h3{font-size:17px;line-height:1.4;font-weight:600}
+p{margin:0;max-width:68ch}
+a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--rule-strong);text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{text-decoration-color:var(--ink)}
+a[target="_blank"]::after{content:"↗";font-size:.78em;margin-left:2px;color:var(--muted)}
+a:focus-visible,[tabindex]:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--foreign);outline-offset:2px;border-radius:2px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)} .small{font-size:13px}
+
+.sitebar{background:#16181d;font-family:var(--font-body);font-size:13px;line-height:1.4}
+.sitebar-in{max-width:1180px;margin:0 auto;padding:6px 16px;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.sitebar a{color:#c9ced8;text-decoration:none;padding:4px 12px;border-radius:999px;font-weight:500}
+.sitebar a:hover{color:#fff}
+.sitebar a[aria-current=page]{background:#fff;color:#16181d;font-weight:600}
+.sitebar a:focus-visible{outline:2px solid #7ea2ff;outline-offset:2px}
+
+/* 머리글·페이지 탭(환율 조회와 같음) */
+header.top{display:grid;gap:14px;padding-block:8px 24px;border-bottom:1px solid var(--rule)}
+.toprow{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 20px}
+.updbox{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.updbtn{font:inherit;font-size:14px;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--surface);cursor:pointer;text-decoration:none;display:inline-block;line-height:1.4}
+.updbtn:hover{opacity:.9}
+.updmsg{font-size:12.5px;color:var(--muted);max-width:42ch}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--rule);margin-inline:-20px;padding-inline:20px}
+@media (max-width:480px){nav.toc{margin-inline:-16px;padding-inline:16px}}
+nav.toc .navrow{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding-block:10px}
+nav.toc ul{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1 1 260px;min-width:0}
+nav.toc ul::-webkit-scrollbar{display:none}
+nav.toc a{display:block;white-space:nowrap;text-decoration:none;font-size:13px;padding:5px 11px;border-radius:999px;background:var(--chip);color:var(--ink-2)}
+nav.toc a:hover{color:var(--ink)}
+.pager{display:inline-flex;border:1px solid var(--rule-strong);border-radius:8px;overflow:hidden;flex:none;background:var(--surface);max-width:100%;overflow-x:auto;scrollbar-width:none}
+.pager button{font:inherit;font-size:13.5px;font-weight:500;line-height:1.3;padding:6px 14px;border:0;background:transparent;color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.pager button + button{border-left:1px solid var(--rule-strong)}
+.pager button:hover{color:var(--ink)}
+.pager button[aria-selected="true"]{background:var(--ink);color:var(--surface)}
+.pager .pn{font-family:var(--font-num);font-size:12px;opacity:.7}
+.nx-badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:-1px;border-radius:999px;background:var(--down);color:#fff;font-size:11px;font-weight:600}
+.nx-badge.warn{background:var(--up)}
+
+.pagehead{display:grid;gap:6px;padding-top:32px}
+section{padding-block:40px 8px;display:grid;gap:16px;scroll-margin-top:120px}
+section > .head{display:grid;gap:6px}
+.notes{margin:0;padding-left:1.1em;display:grid;gap:6px;max-width:72ch;color:var(--ink-2)}
+.notes b{color:var(--ink);font-weight:600}
+.credit{font-size:12px;color:var(--muted);margin-top:-8px}
+.pagefoot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:44px;padding-top:16px;border-top:1px solid var(--rule)}
+.nextpg{text-decoration:none;font-weight:500;font-size:14px;padding:8px 14px;border:1px solid var(--rule-strong);border-radius:6px;background:var(--surface)}
+.nextpg:hover{border-color:var(--ink)}
+footer{margin-top:48px;padding-top:18px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--muted);display:grid;gap:4px}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.5}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+thead th{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em;background:var(--surface);white-space:nowrap;border-bottom:1px solid var(--rule-strong)}
+td.nw{white-space:nowrap}
+
+/* 글쓰기·댓글 칸 */
+.wf,.cf{display:grid;gap:10px}
+.cf{margin-top:6px;padding-top:12px;border-top:1px solid var(--rule)}
+.field{display:grid;gap:5px;font-size:13px;color:var(--ink-2);font-weight:500}
+.wf input:not([type=checkbox]):not([type=radio]),.wf select,.wf textarea,.cf input,.cf textarea,dialog input:not([type=radio]),dialog textarea{width:100%;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 10px;font:inherit;font-size:14.5px}
+textarea{resize:vertical;line-height:1.6}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.who{grid-template-columns:1fr}}
+.factions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.count{justify-self:end;font-size:12px;color:var(--muted);margin-top:-6px}
+.err{color:var(--up);font-size:13px}
+.err:empty{display:none}
+.hp{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;opacity:0}
+.note{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:none}
+
+
+.nx-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 16px;font:inherit;font-size:14px;cursor:pointer;line-height:1.5;white-space:nowrap}
+.nx-btn.primary{background:var(--ink);border-color:var(--ink);color:var(--surface);font-weight:600}
+.nx-btn:disabled{opacity:.55;cursor:default}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:22px 24px}
+@media (max-width:480px){.card{padding:18px 16px}}
+.kinds{display:flex;flex-wrap:wrap;gap:6px}
+.kinds label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule-strong);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13.5px;color:var(--ink-2);cursor:pointer;font-weight:400}
+.kinds input{margin:0}
+.kinds label:has(input:checked){border-color:var(--ink);color:var(--ink);font-weight:600}
+.agree{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;color:var(--ink-2);font-weight:400}
+.agree input{margin-top:4px}
+.done{display:grid;gap:10px;justify-items:start}
+.done h3{font-size:19px}
+.two{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:24px;align-items:start}
+@media (max-width:860px){.two{grid-template-columns:1fr}}
+.side{display:grid;gap:14px}
+.side .card{padding:18px 20px}
+</style>
+</head>
+<body>
+<nav class="sitebar" aria-label="사이트"><div class="sitebar-in"><a href="/" id="sb-fx">환율 조회</a><a href="/rates/" id="sb-rates">금리 모니터</a><a href="/community/" id="sb-com">커뮤니티</a><a href="/contact/" id="sb-ask" aria-current="page">문의</a></div></nav>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">USD/KRW · 금리 · 운영자에게 문의</div>
+    <div class="toprow">
+      <h1>문의하기</h1>
+      <div class="updbox"><span class="updmsg">보낸 문의는 운영자만 봅니다. 답장이 필요하면 이메일을 적어 주세요.</span></div>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="목차">
+    <div class="navrow">
+      <ul>
+        <li><a href="#write">문의 쓰기</a></li>
+        <li><a href="#privacy">개인정보 수집·이용 안내</a></li>
+        <li><a href="#limits">처리·제한</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+    <div class="pagehead"><span class="eyebrow">문의</span><h2>운영자에게 보내기</h2><p class="muted small">사이트 이용 방법, 환율·금리 데이터 오류, 광고·제휴, 그 밖의 의견을 보내 주세요. 커뮤니티 글과 달리 다른 이용자에게는 보이지 않습니다.</p></div>
+    <div class="two">
+      <section id="write" style="padding-top:16px">
+        <div class="card">
+          <form class="wf" id="f" novalidate>
+            <div class="field" role="radiogroup" aria-label="문의 종류">문의 종류
+              <div class="kinds" id="kinds">
+                <label><input type="radio" name="kind" value="사이트 이용">사이트 이용</label>
+                <label><input type="radio" name="kind" value="데이터 오류 신고">데이터 오류 신고</label>
+                <label><input type="radio" name="kind" value="광고·제휴">광고·제휴</label>
+                <label><input type="radio" name="kind" value="기타">기타</label>
+              </div>
+            </div>
+            <label class="field">제목<input id="ftitle" maxlength="80" autocomplete="off" required></label>
+            <label class="field">내용<textarea id="fbody" rows="9" maxlength="3000" required placeholder="오류 신고라면 어느 페이지·어떤 숫자인지 함께 적어 주세요."></textarea></label>
+            <span class="count" id="fcount">0 / 3,000</span>
+            <div class="who">
+              <label class="field"><span>이름 또는 닉네임 <span class="muted">(선택)</span></span><input id="fname" maxlength="30" autocomplete="name"></label>
+              <label class="field"><span>답장 받을 이메일 <span class="muted">(선택)</span></span><input id="femail" type="email" maxlength="100" autocomplete="email" inputmode="email"></label>
+            </div>
+            <input class="hp" id="fhp" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <label class="agree"><input type="checkbox" id="fagree"><span>[필수] 문의 처리를 위해 아래 '개인정보 수집·이용 안내'의 항목을 수집·이용하는 데 동의합니다.</span></label>
+            <p class="err" id="ferr" role="alert"></p>
+            <div class="factions"><button type="submit" class="nx-btn primary" id="fsend">보내기</button><span class="note">1분에 1건, 하루 5건까지</span></div>
+          </form>
+          <div class="done" id="done" hidden>
+            <h3>문의를 보냈습니다</h3>
+            <p class="muted" id="donemsg"></p>
+            <button type="button" class="nx-btn" id="again">다른 문의 쓰기</button>
+          </div>
+        </div>
+      </section>
+      <div class="side">
+        <section id="privacy" style="padding-top:16px">
+          <div class="head"><h3>개인정보 수집·이용 안내</h3></div>
+          <ul class="notes">
+            <li><b>수집 항목.</b> 문의 종류·제목·내용, 적은 경우 이름(닉네임)·이메일. 스팸 대응을 위해 접속 IP와 브라우저 정보.</li>
+            <li><b>이용 목적.</b> 문의 확인과 답장, 도배·악성 전송 막기. 다른 용도로 쓰거나 남에게 주지 않습니다.</li>
+            <li><b>보관 기간.</b> IP·브라우저 정보는 90일, 문의 내용과 이름·이메일은 받은 날부터 1년 보관 뒤 지웁니다. 지워 달라고 하시면 바로 지웁니다.</li>
+            <li><b>거부할 권리.</b> 동의하지 않을 수 있지만, 그러면 문의를 보낼 수 없습니다. 이름·이메일은 적지 않아도 됩니다(그 경우 답장은 못 드립니다).</li>
+          </ul>
+        </section>
+        <section id="limits" style="padding-top:8px">
+          <div class="head"><h3>처리·제한</h3></div>
+          <ul class="notes">
+            <li><b>답장.</b> 이메일을 적은 문의에만 운영자가 직접 메일로 답합니다. 개인이 운영하는 사이트라 며칠 걸릴 수 있습니다.</li>
+            <li><b>투자 상담은 하지 않습니다.</b> 환율·금리 전망이나 매매 시점에 대한 개인 상담에는 답하지 않습니다.</li>
+            <li><b>제한.</b> 1분에 1건, 1시간에 3건, 하루 5건. 제목 80자·내용 3,000자까지. 홍보성 문구는 보낼 수 없습니다.</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <span>환율 조회 · 금리 모니터 · 커뮤니티 운영자 문의 창구입니다.</span>
+    <span>문의를 보내면 스팸 대응을 위해 접속 IP와 브라우저 정보가 90일간 저장된다 · <a href="#privacy">개인정보 수집·이용 안내</a></span>
+  </footer>
+</div>
+<script src="/contact/app.js"></script>
+</body>
+</html>

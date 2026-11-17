@@ -481,6 +481,16 @@ def build_com():
     return s
 
 
+def build_contact():
+    # 본 사이트 문의 화면 그대로(같은 API·같은 D1, 들어온 곳은 site=v2 로 구분). 검색 제외, 처리방침 연결만 더한다
+    s = (ROOT / "cloudflare" / "public" / "contact" / "index.html").read_text(encoding="utf-8")
+    s = s.replace("<head>", '<head>\n<meta name="robots" content="noindex,nofollow">', 1)
+    s = rep(s, '</div></nav>\n<div class="wrap">', '</div></nav>\n' + v2bar("/contact/") + '<div class="wrap">')
+    s = rep(s, '<a href="#privacy">개인정보 수집·이용 안내</a></span>', '<a href="#privacy">개인정보 수집·이용 안내</a> · <a href="/privacy.html">개인정보처리방침</a></span>')
+    assert '<script src="/contact/app.js"></script>' in s
+    return s
+
+
 # 개인정보처리방침 원문은 v2/privacy.html (개인정보 보호법 제30조·시행령 제31조·제28조의8 항목)
 PRIVACY = (Path(__file__).resolve().parent / "privacy.html").read_text(encoding="utf-8")
 
@@ -508,6 +518,9 @@ def main():
     assert n == 1, n
     (OUT / "community" / "app.js").write_text(js, encoding="utf-8")
     (OUT / "community" / "index.html").write_text(com, encoding="utf-8")
+    (OUT / "contact").mkdir(exist_ok=True)
+    (OUT / "contact" / "index.html").write_text(sides(build_contact(), 1120), encoding="utf-8")
+    (OUT / "contact" / "app.js").write_text((ROOT / "cloudflare" / "public" / "contact" / "app.js").read_text(encoding="utf-8"), encoding="utf-8")
     (OUT / "index.html").write_text(fx.replace(FONT_ABS, "/fonts/pretendard/"), encoding="utf-8")
     (OUT / "rates" / "index.html").write_text(rates.replace(FONT_ABS, "/fonts/pretendard/"), encoding="utf-8")
     (OUT / "privacy.html").write_text(PRIVACY, encoding="utf-8")
