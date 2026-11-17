@@ -1699,9 +1699,12 @@ td.corr{font-family:var(--font-num)}
 
 
   /* ---------- 오늘의 브리핑(환율만): /api/brief?k=fx — 달러/원·엔·유로·달러인덱스를 규칙대로 문장으로, 1분마다. 금리 브리핑은 금리 모니터 쪽 ---------- */
+  // 위 통화 선택(달러/원·엔/원·유로/원)을 따라간다. 늦게 온 이전 통화 응답은 버림
+  var BSEQ=0;
   function loadBrief(){
-    fetch(API+"/api/brief?k=fx",{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(j){
-      if(!j||!j.lines||!j.lines.length)return;
+    var my=++BSEQ, bc=(typeof CUR==="string"&&CUR!=="usd")?CUR:"";
+    fetch(API+"/api/brief?k=fx"+(bc?"&c="+bc:""),{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(j){
+      if(my!==BSEQ||!j||!j.lines||!j.lines.length)return;
       $("briefT").textContent=j.title||"";
       $("briefTime").textContent=(j.updated||"").slice(5).replace("-","/").replace("T"," ")+" 기준";
       var L=$("briefL"); L.textContent="";
@@ -1729,6 +1732,7 @@ td.corr{font-family:var(--font-num)}
             eur:{n:"유로/원",y:"EURKRW=X",tv:"FX_IDC:EURKRW",tvu:"EURKRW",per:""}};
   var CUR="usd", IDS={};
   try{var cu0=localStorage.getItem("fx-cur");if(CURS[cu0])CUR=cu0}catch(e){}
+  if(CUR!=="usd")loadBrief();   // 지난번에 엔·유로를 골랐으면 브리핑도 그 통화로
   function curLabels(){
     $("rtTitle").textContent="실시간 "+CURS[CUR].n;
     $("dnowl").textContent="현재 "+CURS[CUR].n;
@@ -1742,7 +1746,7 @@ td.corr{font-family:var(--font-num)}
     TV.mounted=false;
     curLabels();
     if(!ID){msg($("dchart"),"장중 데이터를 불러오는 중…");msg($("rchart"),"장중 데이터를 불러오는 중…")}
-    renderP1();
+    renderP1(); loadBrief();
   }
   [].forEach.call(document.querySelectorAll("[data-cur]"),function(b){b.addEventListener("click",function(){setCur(b.dataset.cur)})});
   curLabels();
