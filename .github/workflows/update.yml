@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: 매매기준율 수집 (한국은행 ECOS 731Y001 · 서울외국환중개 고시값)
+      - name: 매매기준율·엔·유로 수집 (한국은행 ECOS 731Y001 매매기준율 · 731Y002 대미달러 환율)
         continue-on-error: true
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
@@ -48,7 +48,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
-          git add docs/usdkrw_smbs.json
+          git add docs/usdkrw_smbs.json $(ls docs/majors_ecos.json 2>/dev/null)
           if git diff --cached --quiet; then
             echo "변경 없음"
           else
