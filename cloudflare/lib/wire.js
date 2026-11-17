@@ -149,7 +149,7 @@ function classify(title) {
   if (near(EQ, "(?:rall(?:y|ies|ied)|rebound(?:s|ed)?|record(?:s)?|surg(?:e|es|ed)|jump(?:s|ed)?|climb(?:s|ed)?|gain(?:s|ed)?|rise[sn]?|rose)").test(h))
     return { cat: "risk", w: 0.7, fx: -1, kr: 1, ko: "위험선호(주가 강세)" };
   // 관세·규제: 미국·중국·한국·세계 무역 얘기만(다른 나라끼리의 품목 관세는 뺌)
-  if (/tariff|trade war|export (?:curbs|controls|restrictions)|new curbs|sanction/i.test(h) && /\b(?:us|trump|washington|white house|china|chinese|beijing|korea|korean|global|world)\b/i.test(h)) {
+  if (/tariff|trade war|export (?:curbs|controls|restrictions)|new curbs|sanction/i.test(h) && (/\bUS\b/.test(h) || /\b(?:trump|washington|white house|china|chinese|beijing|korea|korean|global|world)\b/i.test(h))) {   // 'us'(우리)와 헷갈리지 않게 미국은 대문자 US 만
     if (/relief|deal|truce|agreement|pause[sd]?|exempt|lift(?:s|ed)?|roll(?:s|ed)? back|cut(?:s)? tariffs?|lower(?:s|ed)? tariffs?/i.test(h)) return { cat: "trade", w: 0.65, fx: -1, kr: 0, ko: "무역 갈등 완화" };
     return { cat: "trade", w: 0.65, fx: 1, kr: 0, ko: "무역 갈등(관세·규제)" };
   }
