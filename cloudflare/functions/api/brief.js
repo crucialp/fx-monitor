@@ -192,6 +192,46 @@ function fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, wire,
   };
 }
 
+// ---------------- 엔/원(100엔)·유로/원: 1페이지에서 통화를 바꾸면(?k=fx&c=jpy|eur). 06:00 시가 대비(③ 하루 그래프와 같은 기준)
+// 엔/원 ≈ 달러/원 ÷ 달러/엔, 유로/원 ≈ 달러/원 × 유로/달러 → 원화 쪽(달러/원)과 상대 통화 쪽(달러/엔·유로/달러) 두 갈래로 나눠 본다
+function crossBrief(c, usd, X, yen, eu, kospi, wire, now) {
+  const T = dayMove(X, now);
+  if (!T) return null;
+  const nm = c === "jpy" ? "엔/원(100엔)" : "유로/원", sh = c === "jpy" ? "엔/원" : "유로/원", cur = c === "jpy" ? "엔화" : "유로화";
+  const head = T.stale
+    ? `${nm}은 마지막 거래일(${md(T.sd * 60000)} 06:00~${md((T.sd + 1440) * 60000)} 06:00)을 ${won(T.v)}으로 마쳐 그날 06:00보다`
+    : `${nm}은 ${won(T.v)}으로 오늘 06:00보다`;
+  const lines = [T.dir === "flat"
+    ? `${head} 거의 움직이지 않았습니다(${sg(T.d, 1, "원")}).`
+    : `${head} ${Math.abs(T.d).toFixed(1)}원 ${T.dir === "up" ? `올랐습니다(${cur} 강세·원화 약세)` : `내렸습니다(${cur} 약세·원화 강세)`}.`];
+  const U = dayMove(usd, now), pct = (q) => (q && q.prev ? (q.now / q.prev - 1) * 100 : null);
+  const yp = pct(yen), ep = pct(eu), parts = [];
+  if (U) parts.push(`달러/원 ${won(U.v)}(06:00 대비 ${sg(U.d, 1, "원")})`);
+  if (c === "jpy" && yen && yp != null) parts.push(`달러/엔 ${yen.now.toFixed(2)}(전일 대비 ${sg(yp, 2, "%")})`);
+  if (c === "eur" && eu && ep != null) parts.push(`유로/달러 ${eu.now.toFixed(4)}(전일 대비 ${sg(ep, 2, "%")})`);
+  if (parts.length) lines.push(`같은 시간 ${parts.join(", ")}입니다.`);
+  // ---- 왜(추정): 대상 = 엔/원·유로/원. +1 이면 올리는 쪽
+  const ds = [];
+  if (U && !U.stale) ds.push({ e: Math.sign(U.d), s: Math.abs(U.d) / 5, short: U.d > 0 ? "원화 약세" : "원화 강세", text: `원화 ${U.d > 0 ? "약세" : "강세"}(달러/원 ${sg(U.d, 1, "원")})` });
+  if (c === "jpy" && yp != null) ds.push({ e: -Math.sign(yp), s: Math.abs(yp) / 0.4, short: yp < 0 ? "엔화 강세" : "엔화 약세", text: `엔화 ${yp < 0 ? "강세" : "약세"}(달러/엔 ${sg(yp, 2, "%")})` });
+  if (c === "eur" && ep != null) ds.push({ e: Math.sign(ep), s: Math.abs(ep) / 0.35, short: ep > 0 ? "유로화 강세" : "유로화 약세", text: `유로화 ${ep > 0 ? "강세" : "약세"}(유로/달러 ${sg(ep, 2, "%")})` });
+  if (kospi && kospi.today && Number.isFinite(kospi.foreign)) {
+    const fn = kospi.foreign;
+    ds.push({ e: fn < 0 ? 1 : -1, s: Math.abs(fn) / 2500, short: fn < 0 ? "외국인 주식 순매도" : "외국인 주식 순매수",
+      text: `외국인 코스피 ${fn < 0 ? "순매도" : "순매수"}(${fn < 0 ? "−" : "+"}${comma(Math.abs(fn))}억 원${kospi.pct != null ? `, 지수 ${sg(kospi.pct, 2, "%")}` : ""}) — 원화 쪽` });
+  }
+  const D = T.dir === "up" ? 1 : T.dir === "down" ? -1 : 0;
+  const f = T.dir === "up" ? `${sh} 상승(${sg(T.d, 1, "원")})` : T.dir === "down" ? `${sh} 하락(${sg(T.d, 1, "원")})` : `${sh} 보합`;
+  const pre = !T.stale && D ? titleCause(ds, D) : "";
+  return {
+    title: (T.stale ? "지난 거래일 " : "") + pre + f,
+    lines, links: [], asof: `${md(T.at)} ${hm(T.at)}`,
+    factorHead: `${sh} 움직임 요인 (추정 · 큰 순서)`,
+    factors: factorList(ds, wireFactors(wire, c, now)),
+    src: "Yahoo Finance(환율) · 네이버 증권(외국인 매매) · " + WIRE_SRC,
+  };
+}
+
 // ---------------- 금리
 function rateBrief(k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, wire, now) {
   if (!k3) return null;
@@ -259,10 +299,17 @@ function rateBrief(k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, wire, now) 
   };
 }
 
-async function build(origin, k) {
+async function build(origin, k, c) {
   const now = Date.now();
   let out;
-  if (k === "fx") {
+  if (k === "fx" && c !== "usd") {
+    const [usd, X, yen, eu, kospi, wire] = await Promise.all([
+      settle(getJSON(`${origin}/api/intraday`, 8000)), settle(getJSON(`${origin}/api/intraday?c=${c}`, 8000)),
+      c === "jpy" ? settle(yahoo("JPY=X")) : null, c === "eur" ? settle(yahoo("EURUSD=X")) : null,
+      settle(kospiFlow(now)), settle(wireItems()),
+    ]);
+    out = crossBrief(c, usd, X, yen, eu, kospi, wire, now);
+  } else if (k === "fx") {
     const ev = `${origin}/api/events?from=${Math.floor(now / 60000) - 1440}&to=${Math.floor(now / 60000)}`;
     const [usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, wire] = await Promise.all([
       settle(getJSON(`${origin}/api/intraday`, 8000)), settle(getJSON(`${origin}/api/intraday?c=jpy`, 8000)), settle(getJSON(`${origin}/api/intraday?c=eur`, 8000)),
@@ -284,8 +331,8 @@ async function build(origin, k) {
 }
 
 export const onRequestGet = (ctx) => {
-  const origin = new URL(ctx.request.url).origin, k = new URL(ctx.request.url).searchParams.get("k") || "fx";
-  if (k !== "fx" && k !== "rate") return new Response("Not Found", { status: 404 });
-  return cached(ctx, `brief-v14-${k}`, 60, () => build(origin, k), 300);
+  const u = new URL(ctx.request.url), origin = u.origin, k = u.searchParams.get("k") || "fx", c = u.searchParams.get("c") || "usd";
+  if ((k !== "fx" && k !== "rate") || !["usd", "jpy", "eur"].includes(c)) return new Response("Not Found", { status: 404 });
+  return cached(ctx, `brief-v14-${k}${k === "fx" && c !== "usd" ? "-" + c : ""}`, 60, () => build(origin, k, c), 300);
 };
 export const onRequestOptions = options;

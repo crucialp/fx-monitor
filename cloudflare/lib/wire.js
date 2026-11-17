@@ -70,6 +70,7 @@ const dir = (h, subj) => (near(subj, UP).test(h) ? 1 : near(subj, DOWN).test(h) 
 const FED = "\\bfed\\b|fed's|\\bfomc\\b|federal reserve|powell|warsh|waller|bowman|jefferson|logan|hammack|kashkari|musalem|schmid|goolsbee|bostic|daly|barkin|miran";
 const BOK = "bank of korea|\\bbok\\b|korea(?:n)? central bank|governor rhee|rhee chang";
 const BOJ = "\\bboj\\b|bank of japan|ueda|kuroda|himino|uchida";
+const ECB = "\\becb\\b|european central bank|lagarde|schnabel|nagel|villeroy|de guindos|holzmann|kazaks";
 
 // 제목 하나 → {cat, w(무게), fx, kr, ko(한국어 요약)} 또는 null. 위에서부터 먼저 맞는 규칙 하나만
 function classify(title) {
@@ -121,6 +122,7 @@ function classify(title) {
   }
   // 일본·중국·유럽
   if ((d = policy(h, BOJ))) return { cat: "boj", w: 0.8, fx: -d, kr: d, ko: d > 0 ? "일본은행 금리 인상 쪽 신호" : "일본은행 완화 쪽 신호" };
+  if ((d = policy(h, ECB))) return { cat: "ecb", w: 0.75, fx: 0, kr: 0, ue: d, ko: d > 0 ? "ECB 금리 인상(긴축) 쪽 신호" : "ECB 금리 인하(완화) 쪽 신호" };
   if (/japan|tokyo|katayama|mimura|ministry of finance|\bmof\b/i.test(h) && /yen|currency|\bfx\b/i.test(h) && /interven|rate check|warn|excessive|speculat|vigilan|alarm|decisive/i.test(h))
     return { cat: "jpfx", w: 0.8, fx: -1, kr: 0, ko: "일본 엔화 방어(개입 경계)" };
   if ((d = dir(h, "\\bjgb yields?|japan(?:ese|'s)? (?:\\w+ )?(?:bond )?yields?|\\bjgbs?\\b"))) return { cat: "jgb", w: 0.7, fx: 0, kr: d, ko: d > 0 ? "일본 국채 금리 상승" : "일본 국채 금리 하락" };
@@ -146,8 +148,9 @@ function classify(title) {
     return { cat: "risk", w: 0.7, fx: 1, kr: -1, ko: "위험회피(주가 약세)" };
   if (near(EQ, "(?:rall(?:y|ies|ied)|rebound(?:s|ed)?|record(?:s)?|surg(?:e|es|ed)|jump(?:s|ed)?|climb(?:s|ed)?|gain(?:s|ed)?|rise[sn]?|rose)").test(h))
     return { cat: "risk", w: 0.7, fx: -1, kr: 1, ko: "위험선호(주가 강세)" };
-  if (/tariff|trade war|export (?:curbs|controls|restrictions)|new curbs|sanction/i.test(h)) {
-    if (/deal|truce|agreement|pause[sd]?|exempt|lift(?:s|ed)?|roll(?:s|ed)? back|cut(?:s)? tariffs?|lower(?:s|ed)? tariffs?/i.test(h)) return { cat: "trade", w: 0.65, fx: -1, kr: 0, ko: "무역 갈등 완화" };
+  // 관세·규제: 미국·중국·한국·세계 무역 얘기만(다른 나라끼리의 품목 관세는 뺌)
+  if (/tariff|trade war|export (?:curbs|controls|restrictions)|new curbs|sanction/i.test(h) && /\b(?:us|trump|washington|white house|china|chinese|beijing|korea|korean|global|world)\b/i.test(h)) {
+    if (/relief|deal|truce|agreement|pause[sd]?|exempt|lift(?:s|ed)?|roll(?:s|ed)? back|cut(?:s)? tariffs?|lower(?:s|ed)? tariffs?/i.test(h)) return { cat: "trade", w: 0.65, fx: -1, kr: 0, ko: "무역 갈등 완화" };
     return { cat: "trade", w: 0.65, fx: 1, kr: 0, ko: "무역 갈등(관세·규제)" };
   }
   if (/ceasefire|peace (?:deal|talks|agreement)|truce/i.test(h) && !/collaps|violat|break/i.test(h)) return { cat: "geo", w: 0.65, fx: -1, kr: 0, ko: "지정학 긴장 완화" };
@@ -155,9 +158,29 @@ function classify(title) {
     return { cat: "geo", w: 0.65, fx: 1, kr: 0, ko: "지정학 긴장" };
   return null;
 }
-const RUMOR = /\bsources?\b|reportedly|people familiar|according to (?:a )?(?:person|people|source)|rumou?r|unconfirmed|said to\b|\bconsidering\b|\bweighs?\b|\bmulls?\b/i;
+const RUMOR = /\bsources?\b|reportedly|people familiar|according to (?:a )?(?:person|people|source)|rumou?r|unconfirmed|said to\b|\bconsidering\b|\bmulls?\b/i;
+// 엔/원·유로/원 브리핑에서 뺄 종류(그 통화와 거리가 먼 아시아·유럽 소식)
+const SKIP = { jpy: new Set(["cny", "eur", "ecb"]), eur: new Set(["cny", "yen", "jpfx", "boj", "jgb"]) };
 
-// 최근 8시간 외신 → 브리핑 요인(최대 n개, 종류마다 하나, 무게×신선도 큰 순). kind = "fx" | "kr"
+// 엔/원·유로/원 브리핑용: 같은 소식이 달러/엔(uj)·유로/달러(ue)를 어느 쪽으로 미는지(+1 = 그 환율 상승).
+// 엔/원 ≈ 달러/원 ÷ 달러/엔 → 효과 = fx − uj, 유로/원 ≈ 달러/원 × 유로/달러 → 효과 = fx + ue (0 이면 그 브리핑에선 안 씀)
+function cross(c) {
+  const d = c.fx, k = c.kr;
+  switch (c.cat) {
+    case "fed": case "usd": return { uj: d, ue: -d };
+    case "ust": case "data": return { uj: k, ue: -k };
+    case "boj": case "jgb": return { uj: -k, ue: 0 };
+    case "jpfx": return { uj: -1, ue: 0 };
+    case "yen": return { uj: d, ue: 0 };
+    case "eur": return { uj: 0, ue: -d };
+    case "ecb": return { uj: 0, ue: c.ue };
+    case "oil": return { uj: d, ue: -d };
+    case "risk": case "geo": case "trade": return { uj: -d, ue: -d };
+    default: return { uj: 0, ue: 0 };   // 한국·중국 소식: 원화 쪽만
+  }
+}
+
+// 최근 8시간 외신 → 브리핑 요인(최대 n개, 종류마다 하나, 무게×신선도 큰 순). kind = "fx" | "kr" | "jpy" | "eur"
 export function wireFactors(items, kind, now, n = 3) {
   const cut = now - 8 * 3600e3, best = new Map(), seen = new Set();
   for (const it of items || []) {
@@ -166,7 +189,8 @@ export function wireFactors(items, kind, now, n = 3) {
     if (seen.has(key)) continue;
     seen.add(key);
     const c = classify(it.t);
-    if (!c || !c[kind]) continue;
+    if (c) { const x = cross(c); c.jpy = Math.sign(c.fx - x.uj); c.eur = Math.sign(c.fx + x.ue); }
+    if (!c || !c[kind] || (SKIP[kind] && SKIP[kind].has(c.cat))) continue;
     const age = Math.max(0, now - it.m) / 3600e3, fresh = age <= 1 ? 1 : Math.max(0.4, 1 - (age - 1) * (0.6 / 7));
     const score = c.w * fresh, old = best.get(c.cat);
     if (!old || score > old.score) best.set(c.cat, { ...c, score, it });
