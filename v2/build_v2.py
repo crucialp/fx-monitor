@@ -488,6 +488,16 @@ def build_com():
     return s
 
 
+def addcom(s):
+    # 본 사이트(비상업)는 2026-11-17 커뮤니티를 뺐다(사이트 바: 환율 조회·금리 모니터·문의). ver2 는 커뮤니티를 두므로 바에 다시 넣는다
+    for a, b in (('<a href="/contact/" id="sb-ask" data-i18n="siteAsk">', '<a href="/community/" id="sb-com" data-i18n="siteCom">커뮤니티</a><a href="/contact/" id="sb-ask" data-i18n="siteAsk">'),
+                 ('<a href="/contact/" id="sb-ask" aria-current="page">', '<a href="/community/" id="sb-com">커뮤니티</a><a href="/contact/" id="sb-ask" aria-current="page">'),
+                 ('<a href="/contact/" id="sb-ask">', '<a href="/community/" id="sb-com">커뮤니티</a><a href="/contact/" id="sb-ask">')):
+        if a in s and 'id="sb-com"' not in s:
+            return s.replace(a, b, 1)
+    return s
+
+
 def build_contact():
     # 본 사이트 문의 화면 그대로(같은 API·같은 D1, 들어온 곳은 site=v2 로 구분). 검색 제외, 처리방침 연결만 더한다
     s = (ROOT / "cloudflare" / "public" / "contact" / "index.html").read_text(encoding="utf-8")
@@ -495,7 +505,8 @@ def build_contact():
     s = rep(s, '</div></nav>\n<div class="wrap">', '</div></nav>\n' + v2bar("/contact/") + '<div class="wrap">')
     s = rep(s, '<a href="#privacy">개인정보 수집·이용 안내</a></span>', '<a href="#privacy">개인정보 수집·이용 안내</a> · <a href="/privacy.html">개인정보처리방침</a></span>')
     assert '<script src="/contact/app.js"></script>' in s
-    return s
+    s = s.replace("<span>환율 조회 · 금리 모니터 운영자 문의 창구입니다.</span>", "<span>환율 조회 · 금리 모니터 · 커뮤니티 운영자 문의 창구입니다.</span>")
+    return addcom(s)
 
 
 # 개인정보처리방침 원문은 v2/privacy.html (개인정보 보호법 제30조·시행령 제31조·제28조의8 항목)
@@ -511,7 +522,7 @@ def main():
     (OUT / "rates").mkdir(exist_ok=True)
     shutil.copytree(ROOT / "cloudflare" / "public" / "fonts", OUT / "fonts", dirs_exist_ok=True)
     (OUT / "_headers").write_text((ROOT / "cloudflare" / "public" / "_headers").read_text(encoding="utf-8"), encoding="utf-8")
-    fx, rates = build_fx(), build_rates()
+    fx, rates = addcom(build_fx()), addcom(build_rates())
     assert FONT_ABS in fx and FONT_ABS in rates
     com = build_com()
     # 양옆 광고: 환율 조회·커뮤니티 본문 1120px, 금리 모니터 1180px(흰 상단 바가 붙어 있어 그 아래 108px 부터)
