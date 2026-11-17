@@ -265,6 +265,13 @@ def build_fx():
   /* ---------- 5페이지 끝 ---------- */
 ''' + s[b:]
 
+    # ---------------- 2페이지 달러/엔·유로/달러: 설문(svy, 예: 로이터 외환 설문) 집계는 상업용에서 뺀다(원/달러 쪽 설문 인용 삭제와 같은 기준)
+    m = re.search(r"/\*FX2-DATA\*/var FX2=(\{.*?\});/\*FX2-END\*/", s, re.S)
+    fx2 = json.loads(m.group(1))
+    for c in fx2.values():
+        c["agg"] = [a for a in c.get("agg", []) if not a.get("svy")]
+    s = s[:m.start()] + "/*FX2-DATA*/var FX2=" + json.dumps(fx2, ensure_ascii=False, separators=(",", ":")) + ";/*FX2-END*/" + s[m.end():]
+
     # ---------------- 2페이지: 기관 전망(자체 공개 수치만) ----------------
     m = re.search(r"var INST=\{\s*f:(\{.*?\}),\s*d:(\{.*?\})\s*\};", s, re.S)
     f, d = json.loads(m.group(1)), json.loads(m.group(2))
