@@ -408,6 +408,7 @@ td.corr{font-family:var(--font-num)}
 .brief-f:empty{display:none}
 .brief-f .side{font-size:12.5px;font-weight:600;margin-left:6px;white-space:nowrap}
 .brief-f .side.up{color:var(--up)} .brief-f .side.down{color:var(--down)}
+.brief-f a.q{color:var(--ink-2)} .brief-f .s{color:var(--muted);font-size:12px;margin-left:5px;white-space:nowrap}
 .brief-links{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px}
 .brief-links:empty{display:none}
 .brief-links a{color:var(--ink-2)}
@@ -485,7 +486,7 @@ td.corr{font-family:var(--font-num)}
     <div class="brief-fh" id="briefFH" hidden></div>
     <ol class="brief-f" id="briefF"></ol>
     <div class="brief-links" id="briefLinks"></div>
-    <p class="brief-note">시세를 정해 둔 규칙으로 문장에 옮긴 자동 요약입니다(사람·AI가 쓴 글 아님). 원인은 같은 시간에 함께 움직인 지표로 추정한 것이라 확정된 원인이 아닙니다 · 투자 권유가 아닙니다 · <span id="briefSrc"></span></p>
+    <p class="brief-note">시세를 정해 둔 규칙으로 문장에 옮긴 자동 요약입니다(사람·AI가 쓴 글 아님). 원인은 같은 시간에 함께 움직인 지표로 추정한 것이라 확정된 원인이 아닙니다 · (외신)은 해외 매체 속보 제목(최근 8시간)을 낱말 규칙으로 분류한 것이라 오보·미확인 보도가 섞일 수 있습니다 · 투자 권유가 아닙니다 · <span id="briefSrc"></span></p>
   </div>
   <section id="rt">
     <div class="rt-bar">
@@ -1546,6 +1547,8 @@ td.corr{font-family:var(--font-num)}
       j.lines.forEach(function(x){var li=document.createElement("li");li.textContent=x.text;L.appendChild(li)});
       var FL=$("briefF"); FL.textContent=""; $("briefFH").hidden=!(j.factors&&j.factors.length); $("briefFH").textContent=j.factorHead||"";
       (j.factors||[]).forEach(function(x){var li=document.createElement("li");li.appendChild(document.createTextNode(x.text));
+        if(x.q&&/^https?:\/\//.test(x.u)){li.appendChild(document.createTextNode(" — "));var qa=document.createElement("a");qa.href=x.u;qa.target="_blank";qa.rel="noopener";qa.className="q";qa.textContent="“"+x.q+"”";li.appendChild(qa);
+          var qs=document.createElement("span");qs.className="s";qs.textContent=x.src||"";li.appendChild(qs)}
         var sp=document.createElement("span");sp.className="side "+(x.side==="up"?"up":"down");sp.textContent=x.side==="up"?"(상승 요인)":"(하락 요인)";li.appendChild(sp);FL.appendChild(li)});
       var K=$("briefLinks"); K.textContent="";
       (j.links||[]).forEach(function(x){if(!/^https?:\/\//.test(x.u))return;

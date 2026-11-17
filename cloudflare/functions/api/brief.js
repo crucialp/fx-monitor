@@ -6,8 +6,10 @@
 //        달러인덱스(DX-Y.NYB)·달러/엔(JPY=X) = Yahoo, 전일 종가 대비 / 기사 = 이 사이트 /api/news(외환)
 //  금리: 국고채 3·10년, 미국채 2·10년 = 네이버 증권 시장지표(실시간), 전 거래일 대비
 //        다음 금통위·FOMC 날짜 = 금리 모니터 data/forecast.json / 기사 = 금리 모니터 뉴스(국고채·시장)
+//  외신: 해외 매체 RSS 제목(최근 8시간)을 규칙으로 분류해 요인 목록 끝에 "(외신)"을 붙여 최대 3개(lib/wire.js). 시장 요인은 그 앞에 최대 5개
 // 비상업 본 사이트에서만 쓴다(Yahoo·네이버 자료). ver2 에는 이 함수가 없다.
 import { cached, kstNow, options } from "../../lib/common.js";
+import { wireItems, wireFactors, WIRE_SRC } from "../../lib/wire.js";
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36";
 
@@ -60,8 +62,9 @@ function josa(text, a, b) {
 }
 const comma = (v) => Math.round(v).toLocaleString("en-US");
 // 요인 목록 ds({e: 대상을 올리는 쪽 +1/내리는 쪽 −1, s: 평소 대비 크기, text, short}) → 큰 순서 번호 목록(최대 6개)
-function factorList(ds) {
-  return ds.filter((d) => d.e && d.s >= 0.05).sort((a, b) => b.s - a.s).slice(0, 6).map((d) => ({ text: d.text, side: d.e > 0 ? "up" : "down" }));
+function factorList(ds, wf) {
+  const w = (wf || []).map((x) => ({ text: `(외신) ${x.ko}`, q: x.t, u: x.u, src: `${x.s} ${hm(x.m)}`, side: x.e > 0 ? "up" : "down" }));
+  return ds.filter((d) => d.e && d.s >= 0.05).sort((a, b) => b.s - a.s).slice(0, w.length ? 5 : 6).map((d) => ({ text: d.text, side: d.e > 0 ? "up" : "down" })).concat(w);
 }
 // 제목 앞머리: 대상과 같은 쪽으로 평소보다 크게(점수 1 이상) 움직인 요인 1~2개 → "A·B에 "
 function titleCause(ds, D) {
@@ -112,7 +115,7 @@ function dayMove(ID, now) {
 }
 
 // ---------------- 환율
-function fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, now) {
+function fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, wire, now) {
   const U = dayMove(usd, now);
   if (!U) return null;
   const head = U.stale
@@ -184,13 +187,13 @@ function fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, now) 
     title: (U.stale ? "지난 거래일 " : "") + pre + f,
     lines, links, asof: `${md(U.at)} ${hm(U.at)}`,
     factorHead: U.stale ? "달러/원 움직임 요인 (추정 · 전일 대비 시세 · 큰 순서)" : "달러/원 움직임 요인 (추정 · 큰 순서)",
-    factors: factorList(ds),
-    src: "Yahoo Finance(환율·달러인덱스·유가) · 네이버 증권(외국인 매매·미국채) · Nasdaq 경제 캘린더",
+    factors: factorList(ds, wireFactors(wire, "fx", now)),
+    src: "Yahoo Finance(환율·달러인덱스·유가) · 네이버 증권(외국인 매매·미국채) · Nasdaq 경제 캘린더 · " + WIRE_SRC,
   };
 }
 
 // ---------------- 금리
-function rateBrief(k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, now) {
+function rateBrief(k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, wire, now) {
   if (!k3) return null;
   const today = sameKDay(k3.at, now), dir = dirOf(k3.chg, 1);
   const head = today ? `국고채 3년은 ${k3.now.toFixed(3)}%로 전 거래일보다` : `국고채 3년은 지난 거래일(${md(k3.at)}) ${k3.now.toFixed(3)}%로 마감해 그 전보다`;
@@ -251,8 +254,8 @@ function rateBrief(k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, now) {
     title: (today ? "" : "지난 거래일 ") + pre + b + us,
     lines, links, asof: `${md(k3.at)} ${hm(k3.at)}`,
     factorHead: today ? "국고채 금리 움직임 요인 (추정 · 큰 순서)" : "오늘 국고채 금리에 영향을 줄 요인 (추정 · 큰 순서)",
-    factors: factorList(ds),
-    src: "네이버 증권(국고채·미국채) · Yahoo Finance(유가·달러/원) · Nasdaq 경제 캘린더 · 금리 전망 탭(금통위 기대)",
+    factors: factorList(ds, wireFactors(wire, "kr", now)),
+    src: "네이버 증권(국고채·미국채) · Yahoo Finance(유가·달러/원) · Nasdaq 경제 캘린더 · 금리 전망 탭(금통위 기대) · " + WIRE_SRC,
   };
 }
 
@@ -261,20 +264,20 @@ async function build(origin, k) {
   let out;
   if (k === "fx") {
     const ev = `${origin}/api/events?from=${Math.floor(now / 60000) - 1440}&to=${Math.floor(now / 60000)}`;
-    const [usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news] = await Promise.all([
+    const [usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, wire] = await Promise.all([
       settle(getJSON(`${origin}/api/intraday`, 8000)), settle(getJSON(`${origin}/api/intraday?c=jpy`, 8000)), settle(getJSON(`${origin}/api/intraday?c=eur`, 8000)),
       settle(yahoo("DX-Y.NYB")), settle(yahoo("JPY=X")), settle(yahoo("CNY=X")), settle(yahoo("CL=F")), settle(naverBond("US10YT=RR")),
-      settle(kospiFlow(now)), settle(getJSON(ev, 9000)), settle(getJSON(`${origin}/api/news`, 8000)),
+      settle(kospiFlow(now)), settle(getJSON(ev, 9000)), settle(getJSON(`${origin}/api/news`, 8000)), settle(wireItems()),
     ]);
-    out = fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, now);
+    out = fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, wire, now);
   } else {
     const ev = `${origin}/api/events?from=${Math.floor(now / 60000) - 1440}&to=${Math.floor(now / 60000)}`;
-    const [k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs] = await Promise.all([
+    const [k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, wire] = await Promise.all([
       settle(naverBond("KR3YT=RR")), settle(naverBond("KR10YT=RR")), settle(naverBond("US2YT=RR")), settle(naverBond("US10YT=RR")),
       settle(getJSON(`${origin}/rates/data/forecast.json`, 8000)), settle(getJSON(`${origin}/rates/data/meta.json`, 8000)), settle(getJSON(`${origin}/rates/data/news.json`, 8000)),
-      settle(getJSON(`${origin}/api/intraday`, 8000)), settle(yahoo("CL=F")), settle(getJSON(ev, 9000)),
+      settle(getJSON(`${origin}/api/intraday`, 8000)), settle(yahoo("CL=F")), settle(getJSON(ev, 9000)), settle(wireItems()),
     ]);
-    out = rateBrief(k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, now);
+    out = rateBrief(k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, wire, now);
   }
   if (!out) throw new Error("시세를 받지 못함");
   return { k, updated: kstNow().iso, ...out, lines: out.lines.map((text) => ({ text })) };   // 화면은 lines[i].text 를 읽는다
@@ -283,6 +286,6 @@ async function build(origin, k) {
 export const onRequestGet = (ctx) => {
   const origin = new URL(ctx.request.url).origin, k = new URL(ctx.request.url).searchParams.get("k") || "fx";
   if (k !== "fx" && k !== "rate") return new Response("Not Found", { status: 404 });
-  return cached(ctx, `brief-v12-${k}`, 60, () => build(origin, k), 300);
+  return cached(ctx, `brief-v14-${k}`, 60, () => build(origin, k), 300);
 };
 export const onRequestOptions = options;
