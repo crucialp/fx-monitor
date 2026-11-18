@@ -428,6 +428,8 @@ img{max-width:100%}
 .wn-act a,.wn-act button,.wn-open{font:inherit;font-size:14px;line-height:1.3;padding:8px 16px;border-radius:999px;border:1px solid var(--rule-strong);background:transparent;color:var(--ink);cursor:pointer;text-decoration:none}
 .wn-act .wn-go{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .wn-open{font-size:12px;padding:3px 10px;color:var(--ink-2)}
+.wn-today{display:flex;align-items:center;gap:6px;margin-right:auto;font-size:13px;color:var(--ink-2);cursor:pointer;user-select:none}
+.wn-today input{width:16px;height:16px;margin:0;accent-color:var(--ink);cursor:pointer}
 .rtip .tr .k{display:inline-block;width:12px;height:2px;border-radius:2px;margin-right:6px;vertical-align:middle}
 td.corr{font-family:var(--font-num)}
 
@@ -2842,12 +2844,13 @@ td.corr{font-family:var(--font-num)}
     <p class="wn-sub" id="wnS"></p>
     <ul class="wn-list" id="wnL"></ul>
     <details class="wn-old"><summary>지난 업데이트</summary><div id="wnO"></div></details>
-    <div class="wn-act"><button type="button" id="wnX">닫기</button><a class="wn-go" id="wnGo" href="#p5"></a></div>
+    <div class="wn-act"><label class="wn-today"><input type="checkbox" id="wnToday">오늘은 그만 보기</label><button type="button" id="wnX">닫기</button><a class="wn-go" id="wnGo" href="#p5"></a></div>
   </div>
 </div>
 <script>
-/* 새 기능 알림: 맨 위(가장 최근) 항목을 접속 때 한 번 보여 준다. 닫으면 그 id 를 기억해 다음 업데이트 전까지 다시 안 뜸.
-   새 업데이트를 알리려면 WN 맨 앞에 항목을 하나 더하면 된다(id 가 바뀌면 다시 뜸). */
+/* 새 기능 알림: 맨 위(가장 최근) 항목을 접속할 때마다 보여 준다(업데이트 날부터 14일 동안).
+   그냥 닫으면 다음 접속 때 또 뜨고, '오늘은 그만 보기'를 체크하고 닫으면 그날(한국 날짜)만 안 뜬다.
+   새 업데이트를 알리려면 WN 맨 앞에 항목을 하나 더하면 된다. */
 (function(){
   var WN=[
     {id:"2026-11-18-cmp",date:"2026.11.18",title:"비교 차트에 금리·주가가 들어왔습니다",sub:"5페이지 '비교 차트'에서 지표를 골라 그래프로 비교하고, 그림과 표로 저장할 수 있습니다.",
@@ -2865,7 +2868,8 @@ td.corr{font-family:var(--font-num)}
     {id:"2026-11-16",date:"2026.11.16",title:"오늘의 브리핑",
      items:["1페이지 맨 위에 '오늘의 브리핑' — 지금 환율 흐름과 함께 움직인 상승·하락 요인을 문장으로(1분마다 갱신)"]}
   ];
-  var KEY="fx-wn-seen", cur=WN[0], box=document.getElementById("wn"), last=null;
+  var KEY="fx-wn-hide", DAYS=14, cur=WN[0], box=document.getElementById("wn"), last=null;
+  function today(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,10)}
   if(!box)return;
   function fill(){
     document.getElementById("wnD").textContent="새 기능 · "+cur.date;
@@ -2875,16 +2879,19 @@ td.corr{font-family:var(--font-num)}
     document.getElementById("wnO").innerHTML=WN.slice(1).map(function(w){return '<div class="d">'+w.date+" · "+w.title+"</div><ul>"+w.items.map(function(t){return "<li>"+t+"</li>"}).join("")+"</ul>"}).join("");
     var g=document.getElementById("wnGo"); if(cur.go){g.href=cur.go.href;g.textContent=cur.go.text;g.hidden=false}else g.hidden=true;
   }
-  function open(){fill();last=document.activeElement;box.hidden=false;document.getElementById(cur.go?"wnGo":"wnX").focus()}
-  function close(){box.hidden=true;try{localStorage.setItem(KEY,cur.id)}catch(e){}if(last&&last.focus)try{last.focus()}catch(e){}}
+  function open(){fill();document.getElementById("wnToday").checked=false;last=document.activeElement;box.hidden=false;document.getElementById(cur.go?"wnGo":"wnX").focus()}
+  function close(){box.hidden=true;
+    try{if(document.getElementById("wnToday").checked)localStorage.setItem(KEY,JSON.stringify({id:cur.id,day:today()}));else localStorage.removeItem(KEY)}catch(e){}if(last&&last.focus)try{last.focus()}catch(e){}}
   document.getElementById("wnX").addEventListener("click",close);
   document.getElementById("wnGo").addEventListener("click",function(){close()});   /* 페이지 이동은 문서의 #링크 처리기가 한다 */
   box.addEventListener("click",function(ev){if(ev.target===box)close()});
   document.addEventListener("keydown",function(ev){if(ev.key==="Escape"&&!box.hidden)close()});
   document.getElementById("wnOpen").addEventListener("click",open);
-  var seen=null; try{seen=localStorage.getItem(KEY)}catch(e){}
+  var hide=null; try{hide=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){}
+  var hidden=!!(hide&&hide.id===cur.id&&hide.day===today());
+  var fresh=(Date.parse(today())-Date.parse(cur.date.replace(/\./g,"-")))/864e5<DAYS;
   /* 비교 차트 공유 링크(?cmp=)로 들어온 사람은 이미 그 기능을 쓰는 중이라 띄우지 않는다 */
-  if(seen!==cur.id&&!/[?&]cmp=/.test(location.search))setTimeout(open,700);
+  if(!hidden&&fresh&&!/[?&]cmp=/.test(location.search))setTimeout(open,700);
 })();
 </script>
 <!--/whatsnew-->
