@@ -203,6 +203,10 @@ def build_fx():
     s = rep(s, "  function drawDay(){\n", "  function drawDay(){if(!ID)return;\n")
     s = rep(s, "  function drawRange(){\n", "  function drawRange(){if(!ID)return;\n")
 
+    # ---------------- 새 기능 알림(업데이트 내역 팝업): 본 사이트 기능 기준이라 ver2 에서는 뺀다 ----------------
+    s, nwn = re.subn(r"<!--whatsnew-->.*?<!--/whatsnew-->\n?", "", s, flags=re.S)
+    assert nwn >= 2, "whatsnew 표시를 못 찾음"
+
     # ---------------- 5페이지: 비교 차트 → TradingView 비교 차트(compareSymbols) ----------------
     # 본 사이트는 금리·주가까지 넓힌 고르기 화면(Yahoo·각국 공식 자료)이지만, ver2 는 예전 환율 8개 고르기 화면을 그대로 쓴다
     a, b = cut(s, '  <main id="p5" data-page="5" hidden>', "      <!--cmp-area-->", include_end=False)

@@ -412,6 +412,22 @@ img{max-width:100%}
 .cmpgrid{max-height:440px;overflow:auto}
 .cmpgrid th{position:sticky;top:0;background:var(--surface);z-index:1}
 .axt{font-family:var(--font-body)}
+/* 새 기능 알림(업데이트 내역) */
+.wn{position:fixed;inset:0;z-index:1000;background:rgba(10,12,15,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+.wn[hidden]{display:none}
+.wn-box{background:var(--surface);color:var(--ink);border:1px solid var(--rule);border-radius:12px;width:100%;max-width:540px;max-height:calc(100vh - 32px);overflow:auto;padding:22px 22px 18px;box-shadow:0 14px 44px rgba(0,0,0,.28)}
+.wn-box h2{margin:6px 0 4px;font-size:20px;line-height:1.35}
+.wn-sub{font-size:13px;color:var(--muted);margin:0 0 12px}
+.wn-list{margin:0;padding-left:18px;font-size:14px;line-height:1.6}
+.wn-list li{margin:7px 0}
+.wn-old{margin-top:14px;border-top:1px solid var(--rule);padding-top:10px}
+.wn-old summary{cursor:pointer;font-size:13px;color:var(--ink-2)}
+.wn-old .d{font-size:12.5px;color:var(--muted);margin-top:12px;font-weight:600}
+.wn-old ul{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2);line-height:1.55}
+.wn-act{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:18px}
+.wn-act a,.wn-act button,.wn-open{font:inherit;font-size:14px;line-height:1.3;padding:8px 16px;border-radius:999px;border:1px solid var(--rule-strong);background:transparent;color:var(--ink);cursor:pointer;text-decoration:none}
+.wn-act .wn-go{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.wn-open{font-size:12px;padding:3px 10px;color:var(--ink-2)}
 .rtip .tr .k{display:inline-block;width:12px;height:2px;border-radius:2px;margin-right:6px;vertical-align:middle}
 td.corr{font-family:var(--font-num)}
 
@@ -1175,6 +1191,7 @@ td.corr{font-family:var(--font-num)}
     <span>환율 데이터: 서울외국환중개 매매기준율(<a href="https://ecos.bok.or.kr/" target="_blank" rel="noopener">한국은행 ECOS</a> 통계표 731Y001 제공, 공공데이터) · 최종 갱신 <span id="updStamp">2026-10-21</span></span>
     <span>실시간 시세: TradingView (FX_IDC:USDKRW) · 전망 작성 기준일 2026-10-21 · 공개 웹 출처 기반 조사 · Claude 작성</span>
     <span>방문 통계를 위해 접속 IP·대략적 위치·브라우저 정보를 90일간 기록합니다(사이트 운영자만 열람).</span>
+    <!--whatsnew--><span><button type="button" class="wn-open" id="wnOpen">업데이트 내역 보기</button></span><!--/whatsnew-->
   </footer>
 </div>
 
@@ -2817,5 +2834,59 @@ td.corr{font-family:var(--font-num)}
   else window.addEventListener("resize",draw);
 })();
 </script>
+<!--whatsnew-->
+<div class="wn" id="wn" hidden role="dialog" aria-modal="true" aria-labelledby="wnT">
+  <div class="wn-box">
+    <span class="eyebrow" id="wnD"></span>
+    <h2 id="wnT"></h2>
+    <p class="wn-sub" id="wnS"></p>
+    <ul class="wn-list" id="wnL"></ul>
+    <details class="wn-old"><summary>지난 업데이트</summary><div id="wnO"></div></details>
+    <div class="wn-act"><button type="button" id="wnX">닫기</button><a class="wn-go" id="wnGo" href="#p5"></a></div>
+  </div>
+</div>
+<script>
+/* 새 기능 알림: 맨 위(가장 최근) 항목을 접속 때 한 번 보여 준다. 닫으면 그 id 를 기억해 다음 업데이트 전까지 다시 안 뜸.
+   새 업데이트를 알리려면 WN 맨 앞에 항목을 하나 더하면 된다(id 가 바뀌면 다시 뜸). */
+(function(){
+  var WN=[
+    {id:"2026-11-18-cmp",date:"2026.11.18",title:"비교 차트에 금리·주가가 들어왔습니다",sub:"5페이지 '비교 차트'에서 지표를 골라 그래프로 비교하고, 그림과 표로 저장할 수 있습니다.",
+     items:["<b>지표 47개</b>를 6개까지 골라 한 그래프에서 비교 — 환율에 더해 코스피·S&P 500·금·유가 같은 주가·원자재, 한국·미국·일본·유로·영국의 정책금리와 국채 금리, 한미 금리차",
+            "<b>보기 3가지</b> — 기간 시작 대비 변화(%·%p), 실제 값을 한 그림에(두 축), 지표별 칸 나눔 · 기간은 1일부터 20년까지",
+            "<b>그림 저장·복사</b> — 제목·범례·출처가 들어간 흰 바탕 PNG라 보고서·메신저에 바로 붙여 쓸 수 있습니다",
+            "<b>표 저장·복사</b> — 날짜별 값을 엑셀에서 여는 표(CSV)로 받거나 그대로 복사해 붙여 넣기",
+            "<b>링크 복사·내 조합 저장</b> — 고른 조합을 링크로 보내거나, 자주 보는 조합을 버튼으로 저장"],
+     go:{href:"#p5",text:"비교 차트 열어 보기"}},
+    {id:"2026-11-17",date:"2026.11.17",title:"엔·유로 전망과 통화별 브리핑",
+     items:["2페이지 추이·전망에 <b>달러/엔·유로/달러</b> 국내외 기관 분기 전망 추가",
+            "1페이지 '오늘의 브리핑'이 고른 통화(달러/원·엔/원·유로/원)를 따라 바뀜",
+            "상승·하락 요인에 <b>(외신)</b> 해외 속보 제목을 원문 링크와 함께 표시",
+            "사이트 맨 위 바에 <b>문의·건의사항</b> 창구"]},
+    {id:"2026-11-16",date:"2026.11.16",title:"오늘의 브리핑",
+     items:["1페이지 맨 위에 '오늘의 브리핑' — 지금 환율 흐름과 함께 움직인 상승·하락 요인을 문장으로(1분마다 갱신)"]}
+  ];
+  var KEY="fx-wn-seen", cur=WN[0], box=document.getElementById("wn"), last=null;
+  if(!box)return;
+  function fill(){
+    document.getElementById("wnD").textContent="새 기능 · "+cur.date;
+    document.getElementById("wnT").textContent=cur.title;
+    var sb=document.getElementById("wnS"); sb.textContent=cur.sub||""; sb.hidden=!cur.sub;
+    document.getElementById("wnL").innerHTML=cur.items.map(function(t){return "<li>"+t+"</li>"}).join("");
+    document.getElementById("wnO").innerHTML=WN.slice(1).map(function(w){return '<div class="d">'+w.date+" · "+w.title+"</div><ul>"+w.items.map(function(t){return "<li>"+t+"</li>"}).join("")+"</ul>"}).join("");
+    var g=document.getElementById("wnGo"); if(cur.go){g.href=cur.go.href;g.textContent=cur.go.text;g.hidden=false}else g.hidden=true;
+  }
+  function open(){fill();last=document.activeElement;box.hidden=false;document.getElementById(cur.go?"wnGo":"wnX").focus()}
+  function close(){box.hidden=true;try{localStorage.setItem(KEY,cur.id)}catch(e){}if(last&&last.focus)try{last.focus()}catch(e){}}
+  document.getElementById("wnX").addEventListener("click",close);
+  document.getElementById("wnGo").addEventListener("click",function(){close()});   /* 페이지 이동은 문서의 #링크 처리기가 한다 */
+  box.addEventListener("click",function(ev){if(ev.target===box)close()});
+  document.addEventListener("keydown",function(ev){if(ev.key==="Escape"&&!box.hidden)close()});
+  document.getElementById("wnOpen").addEventListener("click",open);
+  var seen=null; try{seen=localStorage.getItem(KEY)}catch(e){}
+  /* 비교 차트 공유 링크(?cmp=)로 들어온 사람은 이미 그 기능을 쓰는 중이라 띄우지 않는다 */
+  if(seen!==cur.id&&!/[?&]cmp=/.test(location.search))setTimeout(open,700);
+})();
+</script>
+<!--/whatsnew-->
 </body>
 </html>
