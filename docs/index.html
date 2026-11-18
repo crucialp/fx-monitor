@@ -395,6 +395,23 @@ img{max-width:100%}
 .endlab{font-family:var(--font-body);font-size:12px;fill:var(--ink-2)}
 .endlab b,.endlab .v{font-weight:600;fill:var(--ink)}
 .plab{font-family:var(--font-body);font-size:12px;font-weight:600;fill:var(--ink)}
+.cmp-chip .nm,.cmp-chip .sb{grid-column:2}
+.cmp-chip.picked{grid-template-columns:auto auto auto}
+.cmp-chip .x{grid-row:1/3;grid-column:3;font-size:16px;line-height:1;color:var(--muted);margin-left:4px}
+.cmp-chip.picked:hover .x{color:var(--ink)}
+.cmp-picked{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px 10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--rule)}
+.cmp-picked .cmp-label{padding-top:10px}
+.cmp-picked .cmp-ser{margin-bottom:0}
+.cmpcat{margin-bottom:10px}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.seg button.mine .x{margin-left:8px;color:var(--muted);padding:0 2px}
+.seg button.mine[aria-pressed="true"] .x{color:var(--surface)}
+.cmp-act{margin:4px 0 12px}
+.cmpgridbox{margin-top:12px}
+.cmpgridbox summary{cursor:pointer;font-size:13.5px;color:var(--ink-2);padding:6px 0}
+.cmpgrid{max-height:440px;overflow:auto}
+.cmpgrid th{position:sticky;top:0;background:var(--surface);z-index:1}
+.axt{font-family:var(--font-body)}
 .rtip .tr .k{display:inline-block;width:12px;height:2px;border-radius:2px;margin-right:6px;vertical-align:middle}
 td.corr{font-family:var(--font-num)}
 
@@ -1084,19 +1101,28 @@ td.corr{font-family:var(--font-num)}
   </main>
 
   <main id="p5" data-page="5" hidden>
-    <div class="pagehead"><span class="eyebrow">5페이지</span><h2>비교 차트</h2><p class="muted small">환율과 달러인덱스를 골라 한 그래프에서 비교합니다. 단위가 서로 달라 기본은 기간 시작 대비 변화율(%)로 겹쳐 그리고, '실제 값'을 고르면 계열마다 칸을 나눠 그립니다. 한 번에 4개까지 고를 수 있습니다.</p></div>
+    <div class="pagehead"><span class="eyebrow">5페이지</span><h2>비교 차트</h2><p class="muted small">환율·주가·원자재와 한국·미국·일본·유로·영국의 정책금리·국채 금리, 금리차까지 골라 한 그래프에서 비교합니다. 한 번에 6개까지 고를 수 있고, 그래프는 그림(PNG)으로, 값은 엑셀에서 여는 표(CSV)로 저장할 수 있습니다.</p></div>
     <section id="cmp" style="padding-top:16px">
       <div class="ctl">
         <span class="cmp-label">빠른 선택</span>
         <div class="seg" id="cmpPre" role="group" aria-label="빠른 선택">
           <button type="button" data-pre="dxy,usdkrw">달러인덱스 vs 달러/원</button>
-          <button type="button" data-pre="usdkrw,usdjpy">달러/원 vs 달러/엔</button>
+          <button type="button" data-pre="usdkrw,sp_krus_10y" data-pv="one">달러/원 vs 한미 10년 금리차</button>
+          <button type="button" data-pre="kr_base,us_fftu,jp_call,ez_dfr" data-pv="one">한·미·일·유로 정책금리</button>
+          <button type="button" data-pre="kr_ktb10,us_10y,jp_10y,de_10y" data-pv="one">한·미·일·독 10년 국채</button>
+          <button type="button" data-pre="dxy,us_10y" data-pv="one">달러인덱스 vs 미 국채 10년</button>
+          <button type="button" data-pre="usdkrw,kospi">달러/원 vs 코스피</button>
           <button type="button" data-pre="usdkrw,jpykrw,eurkrw">원화: 달러·엔·유로</button>
-          <button type="button" data-pre="dxy,eurusd,usdjpy">달러 강세: 지수·유로·엔</button>
           <button type="button" data-pre="usdkrw,usdcny,usdjpy">아시아: 원·위안·엔</button>
         </div>
       </div>
-      <div class="cmp-ser" id="cmpSer" role="group" aria-label="비교할 계열"></div>
+      <div class="ctl" id="cmpMineRow" hidden>
+        <span class="cmp-label">내 조합</span>
+        <div class="seg" id="cmpMine" role="group" aria-label="내가 저장한 조합"></div>
+      </div>
+      <div class="cmp-picked"><span class="cmp-label">고른 지표</span><div class="cmp-ser" id="cmpPicked" role="group" aria-label="고른 지표(누르면 빠짐)"></div></div>
+      <div class="seg cmpcat" id="cmpCat" role="group" aria-label="지표 분류"></div>
+      <div class="cmp-ser" id="cmpSer" role="group" aria-label="이 분류의 지표"></div>
       <div class="ctl">
         <div class="seg" id="cmpRange" role="group" aria-label="기간">
           <button type="button" data-cr="1d">1일</button>
@@ -1106,23 +1132,39 @@ td.corr{font-family:var(--font-num)}
           <button type="button" data-cr="1y">1년</button>
           <button type="button" data-cr="3y">3년</button>
           <button type="button" data-cr="10y">10년</button>
+          <button type="button" data-cr="20y">20년</button>
         </div>
         <div class="seg" id="cmpView" role="group" aria-label="보기">
-          <button type="button" data-cv="pct">변화율(%)</button>
-          <button type="button" data-cv="abs">실제 값</button>
+          <button type="button" data-cv="pct">변화(기간 시작 대비)</button>
+          <button type="button" data-cv="one">실제 값 · 한 그림</button>
+          <button type="button" data-cv="abs">실제 값 · 칸 나눔</button>
         </div>
       </div>
       <!--cmp-area-->
+      <div class="ctl cmp-act">
+        <div class="seg" id="cmpAct" role="group" aria-label="저장">
+          <button type="button" data-act="png">그림 저장(PNG)</button>
+          <button type="button" data-act="pngc">그림 복사</button>
+          <button type="button" data-act="csv">표 저장(엑셀·CSV)</button>
+          <button type="button" data-act="tsv">표 복사</button>
+          <button type="button" data-act="link">링크 복사</button>
+          <button type="button" data-act="mine">내 조합으로 저장</button>
+        </div>
+      </div>
       <div class="sumrow" id="cmpSum"></div>
-      <div class="rchart cmpchart" id="cmpChart"><div class="msg">계열을 고르면 그래프가 나옵니다.</div></div>
+      <div class="rchart cmpchart" id="cmpChart"><div class="msg">지표를 고르면 그래프가 나옵니다.</div></div>
       <div class="credit" id="cmpCredit"></div>
       <div class="tbl" style="margin-top:14px"><table id="cmpTbl"></table></div>
+      <details class="cmpgridbox" id="cmpGridBox"><summary>날짜별 값 표 보기</summary><div class="tbl cmpgrid"><table id="cmpGrid"></table></div></details>
       <!--/cmp-area-->
       <ul class="notes" id="cmpnotes" style="margin-top:16px">
-        <li><b>변화율.</b> 고른 기간의 첫 값을 0%로 두고 그 뒤 얼마나 오르내렸는지 겹쳐 그립니다. 달러/원·달러/엔·달러인덱스가 함께 오르면 달러가 넓게 강해진 것이고, 달러/원만 오르면 원화만 약해진 것입니다.</li>
-        <li><b>실제 값.</b> 계열마다 칸을 나눠 각자의 단위로 그립니다(축 하나에 두 단위를 섞지 않음). 마우스를 올리면 모든 칸의 같은 시각 값이 함께 나옵니다.</li>
-        <li><b>상관계수.</b> 첫 번째로 고른 계열과 봉마다의 변동률이 얼마나 같이 움직였는지입니다. +1에 가까우면 같은 방향, −1에 가까우면 반대 방향, 0 근처면 따로 움직였다는 뜻입니다.</li>
-        <li><b>시각.</b> 거래가 없는 시간(주말 등)은 건너뛰고 이어 그립니다. 시각은 한국 시간입니다. 엔/원은 100엔당, 위안/원은 달러/원 ÷ 달러/위안으로 계산한 값입니다. 달러인덱스(ICE)는 유로·엔·파운드 등 6개 통화 대비 달러 가치입니다.</li>
+        <li><b>변화.</b> 고른 기간의 첫 값을 기준으로 얼마나 움직였는지 겹쳐 그립니다. 환율·주가·원자재는 변화율(%), 금리·금리차는 변화폭(%p)이며, 둘을 함께 고르면 왼쪽 축이 %, 오른쪽 축이 %p입니다(두 축의 0을 같은 높이에 맞춤).</li>
+        <li><b>실제 값 · 한 그림.</b> 금리 계열은 모두 왼쪽 % 축 하나에, 환율·지수는 계열마다 자기 축에 그립니다. 축은 2개까지라 금리 여러 개 + 환율·지수 1개, 또는 환율·지수 2개까지 한 그림에 들어가고, 그보다 많으면 칸 나눔으로 그립니다.</li>
+        <li><b>실제 값 · 칸 나눔.</b> 계열마다 칸을 나눠 각자의 단위로 그립니다. 마우스를 올리면 모든 칸의 같은 날(시각) 값이 함께 나옵니다.</li>
+        <li><b>상관계수.</b> 첫 번째로 고른 지표와 봉마다의 움직임(환율·지수는 변동률, 금리는 변화폭)이 얼마나 같이 움직였는지입니다. +1에 가까우면 같은 방향, −1에 가까우면 반대 방향입니다.</li>
+        <li><b>금리 자료.</b> 하루 한 번 값이라 금리를 고르면 1개월부터 볼 수 있고, 각국 전 영업일까지 반영됩니다. 한국은 한국은행 ECOS, 미국 국채는 미 재무부 수익률 곡선, 미국 정책금리는 뉴욕연은(목표 범위 상단·실효 연방기금금리), 일본 국채는 일본 재무성, 일본 무담보콜(1일)은 일본은행, 유로 예금금리는 ECB, 독일 국채는 분데스방크 수익률 곡선, 영국은 영란은행 자료입니다. 금리차는 앞 금리 − 뒤 금리이며, 정책금리처럼 띄엄띄엄 바뀌는 쪽은 7일 안의 최근 값을 씁니다.</li>
+        <li><b>봉.</b> 3개월~3년은 일별, 10년은 주별(그 주 마지막 값), 20년은 월별(그 달 마지막 값)로 맞춥니다. 거래가 없는 날은 건너뛰고 이어 그립니다. 엔/원은 100엔당, 위안/원은 달러/원 ÷ 달러/위안으로 계산한 값입니다.</li>
+        <li><b>저장.</b> 그림은 화면 테마와 상관없이 흰 바탕으로 저장되고 제목·범례·출처가 함께 들어갑니다. 표(CSV)는 엑셀에서 바로 열리며, '표 복사'는 엑셀에 붙여 넣을 수 있는 형태로 복사합니다. '내 조합으로 저장'은 이 브라우저에만 남습니다.</li>
       </ul>
     </section>
     <div class="pagefoot"><a class="nextpg" href="#p4">← 4페이지 · 뉴스</a><span class="muted small">5 / 5</span></div>
@@ -2300,123 +2342,213 @@ td.corr{font-family:var(--font-num)}
 
 
   /* ---------- 5페이지: 비교 차트(직접 고른 계열을 한 그래프에) ---------- */
+  var CMPG=[["fx","환율·달러"],["eq","주가·원자재"],["kr","한국 금리"],["us","미국 금리"],["jp","일본 금리"],["eu","유로·영국 금리"],["sp","금리차"]];
+  var CMPSRC={yh:"Yahoo Finance",ecos:"한국은행 ECOS",nyf:"뉴욕연은",ust:"미 재무부",boj:"일본은행",mof:"일본 재무성",ecb:"ECB",bbk:"독일 분데스방크",boe:"영란은행",calc:"계산"};
+  function CS(g,n,src,d,x,u){return {g:g,n:n,src:src,d:d,x:x||"",u:u||"px"}}
+  function CR(g,n,src,d,x){return CS(g,n,src,d,x,"rt")}
   var CMPS={
-    usdkrw:{n:"달러/원",c:"var(--k1)",d:2,src:"KRW=X"},
-    jpykrw:{n:"엔/원(100엔)",c:"var(--k2)",d:2,src:"JPYKRW=X ×100"},
-    eurkrw:{n:"유로/원",c:"var(--k3)",d:2,src:"EURKRW=X"},
-    cnykrw:{n:"위안/원",c:"var(--k4)",d:2,src:"KRW=X ÷ CNY=X"},
-    dxy:{n:"달러인덱스",c:"var(--k5)",d:2,src:"DX-Y.NYB"},
-    usdjpy:{n:"달러/엔",c:"var(--k6)",d:2,src:"JPY=X"},
-    eurusd:{n:"유로/달러",c:"var(--k7)",d:4,src:"EURUSD=X"},
-    usdcny:{n:"달러/위안",c:"var(--k8)",d:4,src:"CNY=X"}
+    usdkrw:CS("fx","달러/원","yh",2,"KRW=X"), jpykrw:CS("fx","엔/원(100엔)","yh",2,"JPYKRW=X ×100"), eurkrw:CS("fx","유로/원","yh",2,"EURKRW=X"), cnykrw:CS("fx","위안/원","yh",2,"KRW=X ÷ CNY=X"),
+    dxy:CS("fx","달러인덱스","yh",2,"DX-Y.NYB"), usdjpy:CS("fx","달러/엔","yh",2,"JPY=X"), eurusd:CS("fx","유로/달러","yh",4,"EURUSD=X"), usdcny:CS("fx","달러/위안","yh",4,"CNY=X"),
+    kospi:CS("eq","코스피","yh",2,"^KS11"), kosdaq:CS("eq","코스닥","yh",2,"^KQ11"), spx:CS("eq","S&P 500","yh",2,"^GSPC"), ndx:CS("eq","나스닥","yh",2,"^IXIC"), n225:CS("eq","닛케이 225","yh",2,"^N225"),
+    gold:CS("eq","금(달러/온스)","yh",1,"GC=F"), wti:CS("eq","WTI 유가(달러)","yh",2,"CL=F"), vix:CS("eq","VIX 변동성","yh",2,"^VIX"), btc:CS("eq","비트코인(달러)","yh",0,"BTC-USD"),
+    kr_base:CR("kr","한국 기준금리","ecos",2), kr_call:CR("kr","콜금리(1일)","ecos",3), kr_cd91:CR("kr","CD(91일)","ecos",2), kr_cp91:CR("kr","CP(91일)","ecos",2), kr_msb1:CR("kr","통안채 1년","ecos",3),
+    kr_ktb1:CR("kr","국고채 1년","ecos",3), kr_ktb2:CR("kr","국고채 2년","ecos",3), kr_ktb3:CR("kr","국고채 3년","ecos",3), kr_ktb5:CR("kr","국고채 5년","ecos",3), kr_ktb10:CR("kr","국고채 10년","ecos",3),
+    kr_ktb20:CR("kr","국고채 20년","ecos",3), kr_ktb30:CR("kr","국고채 30년","ecos",3), kr_kdb1:CR("kr","산금채 1년","ecos",3), kr_aa3:CR("kr","회사채 3년(AA-)","ecos",3), kr_bbb3:CR("kr","회사채 3년(BBB-)","ecos",3),
+    us_fftu:CR("us","미국 정책금리(상단)","nyf",2), us_effr:CR("us","미국 실효 연방기금금리","nyf",2), us_3m:CR("us","미 국채 3개월","ust",2), us_2y:CR("us","미 국채 2년","ust",2),
+    us_5y:CR("us","미 국채 5년","ust",2), us_10y:CR("us","미 국채 10년","ust",2), us_30y:CR("us","미 국채 30년","ust",2),
+    jp_call:CR("jp","일본 무담보콜(1일)","boj",3), jp_2y:CR("jp","일 국채 2년","mof",3), jp_5y:CR("jp","일 국채 5년","mof",3), jp_10y:CR("jp","일 국채 10년","mof",3), jp_30y:CR("jp","일 국채 30년","mof",3),
+    ez_dfr:CR("eu","ECB 예금금리","ecb",2), de_2y:CR("eu","독일 국채 2년","bbk",2), de_10y:CR("eu","독일 국채 10년","bbk",2), uk_bank:CR("eu","영국 기준금리","boe",2), uk_10y:CR("eu","영국 국채 10년","boe",3),
+    sp_krus_base:CR("sp","한미 기준금리차(한−미)","calc",2,"한국 기준금리 − 미국 정책금리 상단"), sp_krus_2y:CR("sp","한미 2년 금리차(한−미)","calc",3,"국고채 2년 − 미 국채 2년"),
+    sp_krus_10y:CR("sp","한미 10년 금리차(한−미)","calc",3,"국고채 10년 − 미 국채 10년"), sp_us_10_2:CR("sp","미 장단기(10년−2년)","calc",2,"미 국채 10년 − 2년"),
+    sp_kr_10_3:CR("sp","한 장단기(10년−3년)","calc",3,"국고채 10년 − 3년"), sp_jp_us_10y:CR("sp","미일 10년 금리차(미−일)","calc",3,"미 국채 10년 − 일 국채 10년")
   };
-  var CMPR={"1d":"5분봉","1w":"15분봉","1m":"1시간봉","3m":"일봉","1y":"일봉","3y":"일봉","10y":"주봉"};
-  var CMP={s:["dxy","usdkrw"],r:"1y",v:"pct"}, CMPD={}, CMPW={};
-  try{var cm0=JSON.parse(localStorage.getItem("fx-cmp")||"null");
-    if(cm0&&cm0.s&&cm0.s.length){CMP.s=cm0.s.filter(function(k){return CMPS[k]}).slice(0,4);if(CMPR[cm0.r])CMP.r=cm0.r;if(cm0.v==="abs")CMP.v="abs"}
-    if(!CMP.s.length)CMP.s=["dxy","usdkrw"]}catch(e){}
+  var CMPR={"1d":"5분봉","1w":"15분봉","1m":"1시간봉","3m":"일별","1y":"일별","3y":"일별","10y":"주별","20y":"월별"};
+  var CMAX=6, CMP={s:["dxy","usdkrw"],r:"1y",v:"pct",g:"fx"}, CMPD={}, CMPW={}, CMPA=null, CMPL=null;
+  function cmpFix(o){
+    if(!o)return;
+    if(o.s&&o.s.length){var s=o.s.filter(function(k,i){return CMPS[k]&&o.s.indexOf(k)===i}).slice(0,CMAX);if(s.length)CMP.s=s}
+    if(CMPR[o.r])CMP.r=o.r; if(o.v==="pct"||o.v==="one"||o.v==="abs")CMP.v=o.v;
+    if(o.g&&CMPG.some(function(x){return x[0]===o.g}))CMP.g=o.g;
+    if(hasD()&&(CMP.r==="1d"||CMP.r==="1w"))CMP.r="1m";
+  }
+  function hasD(){return CMP.s.some(function(k){return CMPS[k].u==="rt"})}
+  try{cmpFix(JSON.parse(localStorage.getItem("fx-cmp")||"null"))}catch(e){}
+  try{(function(){var q=new URLSearchParams(location.search);if(q.get("cmp")){cmpFix({s:q.get("cmp").split(","),r:q.get("cr"),v:q.get("cv")});CMP.g=CMPS[CMP.s[0]].g}})()}catch(e){}
   function cmpSave(){try{localStorage.setItem("fx-cmp",JSON.stringify(CMP))}catch(e){}}
-  function cmpKey(k){return k+"|"+CMP.r}
+  function cmpCol(i){return "var(--k"+(i+1)+")"}
+  function cmpGran(){var r=CMP.r;if(r==="1d")return 300;if(r==="1w")return 900;if(r==="1m")return hasD()?"D":3600;if(r==="10y")return "W";if(r==="20y")return "M";return "D"}
+  function cmpRng(k){return CMPS[k].u==="rt"?CMP.r:(CMP.r==="1m"&&hasD()?"1md":CMP.r)}
+  function cmpKey(k){return k+"|"+cmpRng(k)}
   function cmpLoad(k){
-    var key=cmpKey(k), r=CMP.r;
+    var key=cmpKey(k), r=cmpRng(k);
     if(CMPD[key]||CMPW[key])return;
     CMPW[key]=1;
-    fetch(API+"/api/fx?s="+k+"&r="+r).then(function(x){if(!x.ok)throw new Error(x.status);return x.json()})
-      .then(function(j){CMPD[key]=j;delete CMPW[key];if(!$("p5").hidden)renderCmp()})
-      .catch(function(){delete CMPW[key];CMPD[key]={err:1,t:[],c:[]};if(!$("p5").hidden)renderCmp()});
+    fetch(API+"/api/"+(CMPS[k].u==="rt"?"macro":"fx")+"?s="+k+"&r="+r).then(function(x){if(!x.ok)throw new Error(x.status);return x.json()})
+      .then(function(j){if(!j||!j.t)throw new Error("bad");CMPD[key]=j;delete CMPW[key];if(!$("p5").hidden)renderCmp()})
+      .catch(function(){   /* 한 번 실패하면 3초 뒤 한 번 더(처음 여러 개를 한꺼번에 받을 때 원본이 잠깐 거절하는 경우) */
+        if(!CMPRT[key]){CMPRT[key]=1;setTimeout(function(){delete CMPW[key];cmpLoad(k)},3000);return}
+        delete CMPW[key];CMPD[key]={err:1,t:[],c:[]};if(!$("p5").hidden)renderCmp()});
+  }
+  var CMPRT={};
+  /* 값·변화 글자: 환율·지수는 값과 %, 금리는 %와 %p */
+  function fmtV(S,v,unit){if(isNaN(v))return "–";return S.u==="rt"?v.toFixed(S.d)+(unit===false?"":"%"):v.toLocaleString("en-US",{minimumFractionDigits:S.d,maximumFractionDigits:S.d})}
+  function fmtC(S,a,b){if(isNaN(a)||isNaN(b))return "–";var c=S.u==="rt"?b-a:(b/a-1)*100;return (c>=0?"+":"")+c.toFixed(2)+(S.u==="rt"?"%p":"%")}
+  function cmpToggle(k){
+    var i=CMP.s.indexOf(k);
+    if(i>=0){if(CMP.s.length>1)CMP.s.splice(i,1);else{toastMsg("지표가 하나는 있어야 합니다.");return}}
+    else{if(CMP.s.length>=CMAX){toastMsg("한 번에 "+CMAX+"개까지 고를 수 있습니다. 다른 지표를 먼저 빼세요.");return}CMP.s.push(k)}
+    if(hasD()&&(CMP.r==="1d"||CMP.r==="1w")){CMP.r="1m";toastMsg("금리는 하루 한 번 값이라 1개월부터 볼 수 있어 기간을 1개월로 바꿨습니다.")}
+    cmpSave(); renderCmp();
+  }
+  function cmpChip(k,on,col,sub,x){
+    var S=CMPS[k], b=document.createElement("button"); b.type="button"; b.className="cmp-chip"+(x?" picked":""); b.setAttribute("aria-pressed",String(on));
+    if(col)b.style.setProperty("--c",col);
+    var kk=document.createElement("span"); kk.className="k";
+    var nm=document.createElement("span"); nm.className="nm"; nm.textContent=S.n;
+    var sb=document.createElement("span"); sb.className="sb"; sb.textContent=sub;
+    b.append(kk,nm,sb);
+    if(x){var xx=document.createElement("span");xx.className="x";xx.textContent="×";xx.setAttribute("aria-hidden","true");b.appendChild(xx);b.title="누르면 뺍니다"}
+    b.addEventListener("click",function(){cmpToggle(k)});
+    return b;
   }
   function cmpChips(){
+    var pk=$("cmpPicked"); pk.textContent="";
+    CMP.s.forEach(function(k,i){
+      var S=CMPS[k], d=CMPD[cmpKey(k)], sub;
+      if(d&&d.c&&d.c.length){var a=d.c[0],z=d.c[d.c.length-1];sub=fmtV(S,z)+" · "+fmtC(S,a,z)}
+      else sub=d?"못 불러옴":"불러오는 중…";
+      pk.appendChild(cmpChip(k,true,cmpCol(i),sub,true));
+    });
+    var cg=$("cmpCat"); cg.textContent="";
+    CMPG.forEach(function(g){
+      var b=document.createElement("button"); b.type="button"; b.setAttribute("aria-pressed",String(g[0]===CMP.g));
+      var n=CMP.s.filter(function(k){return CMPS[k].g===g[0]}).length;
+      b.textContent=g[1]+(n?" · "+n:"");
+      b.addEventListener("click",function(){CMP.g=g[0];cmpSave();cmpChips()});
+      cg.appendChild(b);
+    });
     var box=$("cmpSer"); box.textContent="";
     Object.keys(CMPS).forEach(function(k){
-      var S=CMPS[k], on=CMP.s.indexOf(k)>=0, d=CMPD[cmpKey(k)];
-      var b=document.createElement("button"); b.type="button"; b.className="cmp-chip"; b.setAttribute("aria-pressed",String(on));
-      b.style.setProperty("--c",S.c);
-      var kk=document.createElement("span"); kk.className="k";
-      var nm=document.createElement("span"); nm.className="nm"; nm.textContent=S.n;
-      var sb=document.createElement("span"); sb.className="sb";
-      if(d&&d.c&&d.c.length){var a=d.c[0],z=d.c[d.c.length-1];sb.textContent=z.toFixed(S.d)+" · "+(z>=a?"+":"")+((z/a-1)*100).toFixed(2)+"%"}
-      else sb.textContent=on?"불러오는 중…":S.src;
-      b.append(kk,nm,sb);
-      b.addEventListener("click",function(){
-        var i=CMP.s.indexOf(k);
-        if(i>=0){if(CMP.s.length>1)CMP.s.splice(i,1)}
-        else{if(CMP.s.length>=4){toastMsg("한 번에 4개까지 고를 수 있습니다. 다른 계열을 먼저 끄세요.");return}CMP.s.push(k)}
-        cmpSave(); renderCmp();
-      });
-      box.appendChild(b);
+      var S=CMPS[k]; if(S.g!==CMP.g)return;
+      var i=CMP.s.indexOf(k);
+      box.appendChild(cmpChip(k,i>=0,i>=0?cmpCol(i):"",S.x||CMPSRC[S.src]));
     });
-    [].forEach.call(document.querySelectorAll("[data-cr]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.cr===CMP.r))});
+    var dd=hasD();
+    [].forEach.call(document.querySelectorAll("[data-cr]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.cr===CMP.r));
+      var off=dd&&(b.dataset.cr==="1d"||b.dataset.cr==="1w"); b.disabled=off; b.title=off?"금리는 하루 한 번 값이라 1개월부터 볼 수 있습니다":""});
     [].forEach.call(document.querySelectorAll("[data-cv]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.cv===CMP.v))});
     [].forEach.call(document.querySelectorAll("[data-pre]"),function(b){b.setAttribute("aria-pressed",String(b.dataset.pre===CMP.s.join(",")))});
+    cmpMineDraw();
   }
-  function toastMsg(t){var c=$("cmpCredit");c.textContent=t;c.style.color="var(--up)";setTimeout(function(){c.style.color="";cmpCredit()},2500)}
-  [].forEach.call(document.querySelectorAll("[data-cr]"),function(b){b.addEventListener("click",function(){CMP.r=b.dataset.cr;cmpSave();renderCmp()})});
+  function toastMsg(t){var c=$("cmpCredit");c.textContent=t;c.style.color="var(--up)";clearTimeout(toastMsg.h);toastMsg.h=setTimeout(function(){c.style.color="";cmpCredit()},2800)}
+  [].forEach.call(document.querySelectorAll("[data-cr]"),function(b){b.addEventListener("click",function(){if(b.disabled)return;CMP.r=b.dataset.cr;cmpSave();renderCmp()})});
   [].forEach.call(document.querySelectorAll("[data-cv]"),function(b){b.addEventListener("click",function(){CMP.v=b.dataset.cv;cmpSave();renderCmp()})});
-  [].forEach.call(document.querySelectorAll("[data-pre]"),function(b){b.addEventListener("click",function(){CMP.s=b.dataset.pre.split(",");cmpSave();renderCmp()})});
+  [].forEach.call(document.querySelectorAll("[data-pre]"),function(b){b.addEventListener("click",function(){cmpFix({s:b.dataset.pre.split(","),v:b.dataset.pv||"pct"});CMP.g=CMPS[CMP.s[0]].g;cmpSave();renderCmp()})});
+
+  /* 내 조합: 이 브라우저(localStorage)에만 */
+  function cmpMine(){try{var a=JSON.parse(localStorage.getItem("fx-cmp-mine")||"[]");return Array.isArray(a)?a:[]}catch(e){return []}}
+  function cmpMineDraw(){
+    var a=cmpMine(), box=$("cmpMine"); box.textContent=""; $("cmpMineRow").hidden=!a.length;
+    a.forEach(function(m,i){
+      var b=document.createElement("button"); b.type="button"; b.className="mine"; b.textContent=m.n;
+      b.setAttribute("aria-pressed",String(m.s.join(",")===CMP.s.join(",")&&m.r===CMP.r&&m.v===CMP.v));
+      var x=document.createElement("span"); x.className="x"; x.textContent="×"; x.title="이 조합 지우기"; b.appendChild(x);
+      b.addEventListener("click",function(ev){
+        if(ev.target===x){var z=cmpMine();z.splice(i,1);try{localStorage.setItem("fx-cmp-mine",JSON.stringify(z))}catch(e){}cmpMineDraw();return}
+        cmpFix(m);CMP.g=CMPS[CMP.s[0]].g;cmpSave();renderCmp()});
+      box.appendChild(b);
+    });
+  }
 
   /* 한국 시간 글자 */
+  var CG="D";
   function kst(sec){return new Date((sec+9*3600)*1000)}
-  function kYMD(sec){var x=kst(sec);return x.getUTCFullYear()+"-"+pad(x.getUTCMonth()+1)+"-"+pad(x.getUTCDate())}
   function kLabel(sec,r){var x=kst(sec);
     if(r==="1d")return pad(x.getUTCHours())+":"+pad(x.getUTCMinutes());
     if(r==="1w"||r==="1m")return (x.getUTCMonth()+1)+"/"+x.getUTCDate();
     if(r==="3m"||r==="1y")return x.getUTCMonth()?(x.getUTCMonth()+1)+"월":String(x.getUTCFullYear());
     return String(x.getUTCFullYear())}
-  function kTip(sec,r){var x=kst(sec),d=x.getUTCFullYear()+"."+pad(x.getUTCMonth()+1)+"."+pad(x.getUTCDate());
-    return (r==="1d"||r==="1w"||r==="1m")?d+" "+pad(x.getUTCHours())+":"+pad(x.getUTCMinutes()):d}
+  function kTip(sec){var x=kst(sec),ym=x.getUTCFullYear()+"."+pad(x.getUTCMonth()+1),d=ym+"."+pad(x.getUTCDate());
+    if(CG==="M")return ym; return typeof CG==="number"?d+" "+pad(x.getUTCHours())+":"+pad(x.getUTCMinutes()):d}
+  function kCell(sec){var x=kst(sec),ym=x.getUTCFullYear()+"-"+pad(x.getUTCMonth()+1),d=ym+"-"+pad(x.getUTCDate());
+    if(CG==="M")return ym; return typeof CG==="number"?d+" "+pad(x.getUTCHours())+":"+pad(x.getUTCMinutes()):d}
   function cTicks(lo,hi,n){
     var raw=(hi-lo)/Math.max(1,n)||1, p=Math.pow(10,Math.floor(Math.log10(raw))), st=p;
     [1,2,2.5,5,10].some(function(k){st=k*p;return st>=raw});
     var dec=Math.max(0,-Math.floor(Math.log10(st)+1e-9)+(st/p===2.5?1:0)), a=Math.floor(lo/st)*st, b=Math.ceil(hi/st)*st, out=[];
     for(var v=a;v<=b+st/2;v+=st)out.push(+v.toFixed(dec));
-    return {min:a,max:b,ticks:out,dec:dec};
+    return {min:a,max:b,ticks:out,dec:dec,st:st};
   }
-  /* 고른 계열을 같은 시간 칸(봉)에 맞춘다: 시간 칸은 모든 계열의 칸을 합친 것, 거래 없는 시간은 건너뜀 */
-  function cmpAlign(list){
-    var bucket=list[0].d.bucket||86400, set={}, keys;
-    list.forEach(function(o){o.m={};o.d.t.forEach(function(t,i){var k=Math.floor(t/bucket);o.m[k]=o.d.c[i];set[k]=1})});
+  /* 봉 맞추기: 장중은 고정 초 단위, 일·주·월은 날짜로(Yahoo 일봉 시각이 거래소마다 달라 2시간 밀어 같은 날로 묶음) */
+  function gKey(g,t){if(typeof g==="number")return Math.floor(t/g);var u=t+7200;
+    if(g==="D")return Math.floor(u/86400); if(g==="W")return Math.floor((u+259200)/604800);
+    var x=new Date(u*1000);return x.getUTCFullYear()*12+x.getUTCMonth()}
+  function gT(g,k){if(typeof g==="number")return k*g;if(g==="D")return k*86400;if(g==="W")return k*604800-259200;return Date.UTC(Math.floor(k/12),k%12,1)/1000}
+  function cmpAlign(list,g){
+    var set={}, keys;
+    list.forEach(function(o){o.m={};o.d.t.forEach(function(t,i){var k=gKey(g,t);o.m[k]=o.d.c[i];set[k]=1})});
     keys=Object.keys(set).map(Number).sort(function(a,b){return a-b});
     list.forEach(function(o){
+      var rt=o.S.u==="rt";
       o.v=keys.map(function(k){return k in o.m?o.m[k]:NaN});
       o.v0=NaN;for(var i=0;i<o.v.length;i++)if(!isNaN(o.v[i])){o.v0=o.v[i];o.i0=i;break}
       o.last=NaN;for(i=o.v.length-1;i>=0;i--)if(!isNaN(o.v[i])){o.last=o.v[i];o.i1=i;break}
-      o.p=o.v.map(function(v){return isNaN(v)?NaN:(v/o.v0-1)*100});
+      o.p=o.v.map(function(v){return isNaN(v)?NaN:(rt?v-o.v0:(v/o.v0-1)*100)});
     });
-    return {bucket:bucket,keys:keys,t:keys.map(function(k){return k*bucket})};
+    return {g:g,keys:keys,t:keys.map(function(k){return gT(g,k)})};
   }
-  function corr(a,b){
-    var xs=[],ys=[],i;
-    for(i=1;i<a.length;i++)if(!isNaN(a[i])&&!isNaN(a[i-1])&&!isNaN(b[i])&&!isNaN(b[i-1])){xs.push(a[i]/a[i-1]-1);ys.push(b[i]/b[i-1]-1)}
+  function corr(a,b,ra,rb){
+    var xs=[],ys=[],i,pa=NaN,pb=NaN;
+    for(i=0;i<a.length;i++){if(isNaN(a[i])||isNaN(b[i]))continue;
+      if(!isNaN(pa)){xs.push(ra?a[i]-pa:a[i]/pa-1);ys.push(rb?b[i]-pb:b[i]/pb-1)} pa=a[i];pb=b[i]}
     var n=xs.length; if(n<5)return NaN;
     var mx=0,my=0; for(i=0;i<n;i++){mx+=xs[i];my+=ys[i]} mx/=n; my/=n;
     var sxy=0,sxx=0,syy=0; for(i=0;i<n;i++){var dx=xs[i]-mx,dy=ys[i]-my;sxy+=dx*dy;sxx+=dx*dx;syy+=dy*dy}
     return sxx&&syy?sxy/Math.sqrt(sxx*syy):NaN;
   }
-  function cmpCredit(){
-    $("cmpCredit").textContent="데이터: Yahoo Finance(국제 시세) — "+CMP.s.map(function(k){return CMPS[k].n+" "+CMPS[k].src}).join(" · ")+" · "+CMPR[CMP.r]+" · 짧은 기간은 약 2분, 긴 기간은 약 30분 늦을 수 있음";
+  var CMPSS={sp_krus_base:["ecos","nyf"],sp_krus_2y:["ecos","ust"],sp_krus_10y:["ecos","ust"],sp_us_10_2:["ust"],sp_kr_10_3:["ecos"],sp_jp_us_10y:["ust","mof"]};
+  function cmpSrcText(){
+    var seen={}, src=[];
+    CMP.s.forEach(function(k){(CMPS[k].src==="calc"?CMPSS[k]:[CMPS[k].src]).forEach(function(s){if(seen[s])return;seen[s]=1;src.push(CMPSRC[s])})});
+    return src.join(" · ");
   }
+  function cmpCredit(){
+    var t="데이터: "+cmpSrcText();
+    if(CMP.s.some(function(k){return CMPS[k].u!=="rt"}))t+=" · 환율·주가는 짧은 기간 약 2분, 긴 기간 약 30분 늦을 수 있음";
+    var last=CMP.s.filter(function(k){return CMPS[k].u==="rt"}).map(function(k){var d=CMPD[cmpKey(k)];return d&&d.last?CMPS[k].n+" "+d.last.slice(5).replace("-","/"):""}).filter(Boolean);
+    if(last.length)t+=" · 금리 최근 자료일: "+last.join(", ");
+    $("cmpCredit").textContent=t;
+  }
+  var VIEWN={pct:"변화(기간 시작 대비)",one:"실제 값 · 한 그림",abs:"실제 값 · 칸 나눔"};
   function renderCmp(){
     if($("p5").hidden)return;
     cmpChips();
-    var miss=CMP.s.filter(function(k){var d=CMPD[cmpKey(k)];return !d});
+    var miss=CMP.s.filter(function(k){return !CMPD[cmpKey(k)]});
     miss.forEach(cmpLoad);
     var box=$("cmpChart");
     if(miss.length){if(!box.querySelector("svg"))msg(box,"시세를 불러오는 중…");return}
-    var list=CMP.s.map(function(k){return {k:k,S:CMPS[k],d:CMPD[cmpKey(k)]}}).filter(function(o){return o.d&&o.d.t&&o.d.t.length>1});
+    var list=CMP.s.map(function(k,i){return {k:k,S:CMPS[k],d:CMPD[cmpKey(k)],col:cmpCol(i)}}).filter(function(o){return o.d&&o.d.t&&o.d.t.length>1});
     var bad=CMP.s.filter(function(k){var d=CMPD[cmpKey(k)];return !d||!d.t||d.t.length<2}).map(function(k){return CMPS[k].n});
-    if(!list.length){msg(box,"시세를 불러오지 못했습니다. 잠시 후 다시 열어 주세요.");$("cmpSum").textContent="";$("cmpTbl").textContent="";return}
-    var A=cmpAlign(list);
-    $("cmpSum").innerHTML='<span>기간 <b>'+kTip(A.t[0],CMP.r)+' ~ '+kTip(A.t[A.t.length-1],CMP.r)+'</b></span><span>'+CMPR[CMP.r]+' <b>'+A.t.length.toLocaleString()+'개</b></span><span>한국 시간</span>'+(bad.length?'<span class="muted">못 불러온 계열: '+bad.join(", ")+'</span>':'');
+    CMPA=null; CMPL=null;
+    if(!list.length){msg(box,"자료를 불러오지 못했습니다. 잠시 후 다시 열어 주세요.");$("cmpSum").textContent="";$("cmpTbl").textContent="";$("cmpGrid").textContent="";return}
+    CG=cmpGran();
+    var A=cmpAlign(list,CG), note="";
+    CMPA=A; CMPL=list;
+    var v=CMP.v;
+    if(v==="one"&&cmpAxes(list,"one").length>2){v="abs";note="한 그림은 축이 2개까지라(금리 묶음 + 환율·지수 1개, 또는 환율·지수 2개) 칸 나눔으로 그렸습니다."}
+    CMPA.view=v;
+    $("cmpSum").innerHTML='<span>기간 <b>'+kTip(A.t[0])+' ~ '+kTip(A.t[A.t.length-1])+'</b></span><span>'+CMPR[CMP.r==="1m"&&CG==="D"?"3m":CMP.r]+' <b>'+A.t.length.toLocaleString()+'개</b></span>'+(typeof CG==="number"?'<span>한국 시간</span>':'')+(bad.length?'<span class="muted">못 불러온 지표: '+bad.join(", ")+'</span>':'')+(note?'<span class="muted">'+note+'</span>':'');
     cmpCredit();
-    if(CMP.v==="abs")cmpDrawAbs(box,list,A);else cmpDrawPct(box,list,A);
+    if(v==="abs")cmpDrawAbs(box,list,A);else cmpDrawOver(box,list,A,v);
     cmpTable(list,A);
+    if($("cmpGridBox").open)cmpGridDraw();
   }
   function cmpXTicks(svg,A,X,m,ph,W,yb){
     var n=A.t.length, maxN=Math.max(3,Math.floor((W-m.l-m.r)/80)), cand=[], prev=null, i;
     for(i=0;i<n;i++){var l=kLabel(A.t[i],CMP.r), key=CMP.r==="1d"?Math.floor((A.t[i]+9*3600)/10800):l;
       if(key!==prev){cand.push(i);prev=key}}
-    var step=Math.ceil(cand.length/maxN);
-    cand.forEach(function(ci,j){if(j%step)return;var x=X(ci);
+    var step=Math.ceil(cand.length/maxN), lastX=-1e9;
+    cand.forEach(function(ci,j){if(j%step)return;var x=X(ci);if(x-lastX<56)return;lastX=x;
       el("line",{x1:x,x2:x,y1:yb,y2:yb+4,"class":"tickmark"},svg);
       var tx=el("text",{x:x,y:yb+17,"class":"xt","text-anchor":x-m.l<24?"start":"middle"},svg); tx.textContent=kLabel(A.t[ci],CMP.r)});
   }
@@ -2426,73 +2558,109 @@ td.corr{font-family:var(--font-num)}
     return d;
   }
   function cmpTip(f,A,list,i,W,top,x){
-    var h='<div class="tq">'+kTip(A.t[i],CMP.r)+'</div>';
+    var h='<div class="tq">'+kTip(A.t[i])+'</div>';
     list.forEach(function(o){
       var v=NaN,j; for(j=i;j>=0;j--)if(!isNaN(o.v[j])){v=o.v[j];break}
-      h+='<div class="tr"><span><span class="k" style="background:'+o.S.c+'"></span>'+o.S.n+'</span><b>'+(isNaN(v)?"–":v.toFixed(o.S.d)+' <span class="muted">('+((v/o.v0-1)*100>=0?"+":"")+((v/o.v0-1)*100).toFixed(2)+'%)</span>')+'</b></div>';
+      h+='<div class="tr"><span><span class="k" style="background:'+o.col+'"></span>'+o.S.n+'</span><b>'+(isNaN(v)?"–":fmtV(o.S,v)+' <span class="muted">('+fmtC(o.S,o.v0,v)+')</span>')+'</b></div>';
     });
     f.tip.innerHTML=h; placeTip(f.tip,x,W,top);
   }
-  function cmpDrawPct(box,list,A){
+  /* 한 그래프에 겹칠 때의 축: 변화 보기는 % 축(환율·지수)과 %p 축(금리), 실제 값 보기는 금리 묶음 하나 + 환율·지수마다 하나 */
+  function cmpAxes(list,mode){
+    var px=list.filter(function(o){return o.S.u!=="rt"}), rt=list.filter(function(o){return o.S.u==="rt"}), ax=[];
+    if(mode==="pct"){if(px.length)ax.push({k:"pct",l:px});if(rt.length)ax.push({k:"pp",l:rt})}
+    else{if(rt.length)ax.push({k:"rt",l:rt});px.forEach(function(o){ax.push({k:"px",l:[o]})})}
+    return ax;
+  }
+  function axFmt(a,v,dec){
+    if(a.k==="pct")return (v>0?"+":"")+v.toFixed(dec)+"%";
+    if(a.k==="pp")return (v>0?"+":"")+v.toFixed(dec)+"%p";
+    if(a.k==="rt")return v.toFixed(dec)+"%";
+    return v.toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec});
+  }
+  function cmpDrawOver(box,list,A,mode){
     var W=Math.max(280,box.clientWidth), narrow=W<600, H=narrow?340:440;
     box.style.height=H+"px";
     if(!box.clientWidth)return;
-    var labW=0; list.forEach(function(o){labW=Math.max(labW,(o.S.n.length+8)*7.2)});
-    var m={l:narrow?44:54,r:narrow?12:Math.min(190,labW+26),t:18,b:34}, pw=W-m.l-m.r, ph=H-m.t-m.b, n=A.t.length;
-    var lo=0,hi=0; list.forEach(function(o){o.p.forEach(function(v){if(!isNaN(v)){if(v<lo)lo=v;if(v>hi)hi=v}})});
-    var pad0=Math.max((hi-lo)*0.06,0.2), yt=cTicks(lo-pad0,hi+pad0,narrow?4:6);
-    var X=function(i){return m.l+(n>1?i/(n-1):0.5)*pw}, Y=function(v){return m.t+(1-(v-yt.min)/(yt.max-yt.min))*ph};
-    var f=frame(box,W,H,m), svg=f.svg;
-    yt.ticks.forEach(function(v){if(v<yt.min-1e-9||v>yt.max+1e-9)return;
-      el("line",{x1:m.l,x2:m.l+pw,y1:Y(v),y2:Y(v),"class":"grid"},svg);
-      var tx=el("text",{x:m.l-8,y:Y(v)+4,"class":"tick","text-anchor":"end"},svg); tx.textContent=(v>0?"+":"")+v.toFixed(yt.dec)+"%"});
-    el("line",{x1:m.l,x2:m.l+pw,y1:Y(0),y2:Y(0),"class":"zero"},svg);
+    var ax=cmpAxes(list,mode), two=ax.length>1, n=A.t.length, nt=narrow?4:6;
+    ax.forEach(function(a,ai){
+      a.lo=Infinity;a.hi=-Infinity;
+      a.l.forEach(function(o){o.ax=ai;o.y=mode==="pct"?o.p:o.v;o.y.forEach(function(v){if(!isNaN(v)){if(v<a.lo)a.lo=v;if(v>a.hi)a.hi=v}})});
+      if(mode==="pct"){a.lo=Math.min(a.lo,0);a.hi=Math.max(a.hi,0)}
+      var sp=Math.max(a.hi-a.lo,a.k==="px"?Math.abs(a.hi)*0.002:0.02);
+      a.lo-=sp*0.05;a.hi+=sp*0.05;
+    });
+    if(mode==="pct"){   /* 두 축의 0과 눈금 칸 수를 맞춘다 */
+      var U=1,D=0;
+      ax.forEach(function(a){var t=cTicks(a.lo,a.hi,nt);a.st=t.st;a.dec=t.dec;a.up=Math.max(1,Math.ceil(a.hi/a.st-1e-9));a.dn=Math.max(0,Math.ceil(-a.lo/a.st-1e-9));U=Math.max(U,a.up);D=Math.max(D,a.dn)});
+      ax.forEach(function(a){a.min=-D*a.st;a.max=U*a.st;a.ticks=[];for(var j=-D;j<=U;j++)a.ticks.push(+(j*a.st).toFixed(a.dec))});
+    } else ax.forEach(function(a){var t=cTicks(a.lo,a.hi,nt);a.min=t.min;a.max=t.max;a.ticks=t.ticks;a.dec=t.dec;a.st=t.st});
+    ax.forEach(function(a){a.w=0;a.ticks.forEach(function(v){a.w=Math.max(a.w,axFmt(a,v,a.dec).length*6.6)})});
+    var labW=0; if(!narrow)list.forEach(function(o){labW=Math.max(labW,(o.S.n.length+9)*7.4)});
+    var m={l:Math.max(narrow?40:48,ax[0].w+14),r:(two?ax[1].w+14:(narrow?12:6))+(narrow?0:Math.min(230,labW+22)),t:two||mode!=="pct"?28:18,b:34};
+    var pw=W-m.l-m.r, ph=H-m.t-m.b;
+    var X=function(i){return m.l+(n>1?i/(n-1):0.5)*pw};
+    ax.forEach(function(a){a.Y=function(v){return m.t+(1-(v-a.min)/(a.max-a.min))*ph}});
+    var f=frame(box,W,H,m), svg=f.svg, L=ax[0];
+    L.ticks.forEach(function(v){if(v<L.min-1e-9||v>L.max+1e-9)return;el("line",{x1:m.l,x2:m.l+pw,y1:L.Y(v),y2:L.Y(v),"class":"grid"},svg)});
+    ax.forEach(function(a,ai){
+      var tint=two&&a.l.length===1?a.l[0].col:"";
+      a.ticks.forEach(function(v){if(v<a.min-1e-9||v>a.max+1e-9)return;
+        var tx=el("text",{x:ai?m.l+pw+8:m.l-8,y:a.Y(v)+4,"class":"tick","text-anchor":ai?"start":"end"},svg); tx.textContent=axFmt(a,v,a.dec); if(tint)tx.style.fill=tint});
+      if(m.t>20){var tt=el("text",{x:ai?m.l+pw+8:2,y:m.t-12,"class":"tick axt","text-anchor":"start"},svg);
+        tt.textContent=a.k==="pct"?"변화율(%)":a.k==="pp"?"변화폭(%p)":a.k==="rt"?"금리(%)":a.l[0].S.n; if(tint)tt.style.fill=tint}
+      if(a.min<0&&a.max>0&&(ai===0||mode!=="pct"))el("line",{x1:m.l,x2:m.l+pw,y1:a.Y(0),y2:a.Y(0),"class":"zero"},svg);
+    });
     el("line",{x1:m.l,x2:m.l+pw,y1:m.t+ph,y2:m.t+ph,"class":"base"},svg);
     cmpXTicks(svg,A,X,m,ph,W,m.t+ph);
-    list.forEach(function(o){var p=el("path",{d:cmpPath(o.p,X,Y),"class":"cline"},svg);p.style.stroke=o.S.c});
+    list.forEach(function(o){var p=el("path",{d:cmpPath(o.y,X,ax[o.ax].Y),"class":"cline"},svg);p.style.stroke=o.col});
     /* 오른쪽 끝 이름표(겹치지 않게) */
     if(!narrow){
-      var items=list.map(function(o){var v=o.p[o.i1];return {o:o,v:v,y0:Y(v),xe:X(o.i1)}}).sort(function(a,b){return a.y0-b.y0}), gap=15;
+      var lx=m.l+pw+(two?ax[1].w+14:6);
+      var items=list.map(function(o){var v=o.y[o.i1];return {o:o,v:v,y0:ax[o.ax].Y(v),xe:X(o.i1)}}).sort(function(a,b){return a.y0-b.y0}), gap=15;
       items.forEach(function(it,k){it.y=k?Math.max(it.y0,items[k-1].y+gap):it.y0});
       if(items.length){var over=items[items.length-1].y-(m.t+ph);if(over>0)items.forEach(function(it){it.y-=over});
         for(var k=items.length-2;k>=0;k--)items[k].y=Math.min(items[k].y,items[k+1].y-gap)}
       items.forEach(function(it){
-        el("path",{d:"M"+(it.xe+4)+","+it.y0+"L"+(m.l+pw+8)+","+it.y+"L"+(m.l+pw+12)+","+it.y,fill:"none",stroke:"var(--rule-strong)","stroke-width":1},svg);
-        var tx=el("text",{x:m.l+pw+16,y:it.y+4,"class":"endlab"},svg);
-        tx.textContent=it.o.S.n+" "+(it.v>=0?"+":"")+it.v.toFixed(2)+"%";
+        if(!two)el("path",{d:"M"+(it.xe+4)+","+it.y0+"L"+(lx+4)+","+it.y+"L"+(lx+8)+","+it.y,fill:"none",stroke:"var(--rule-strong)","stroke-width":1},svg);   /* 두 축이면 오른쪽 눈금을 가리지 않게 선 없이 */
+        var tx=el("text",{x:lx+12,y:it.y+4,"class":"endlab"},svg);
+        tx.textContent=it.o.S.n+" "+(mode==="pct"?fmtC(it.o.S,it.o.v0,it.o.last):fmtV(it.o.S,it.o.last));
+        var sw=el("rect",{x:lx+12-9,y:it.y-1,width:6,height:2},svg); sw.style.fill=it.o.col;
       });
     }
-    var cross=el("line",{x1:0,x2:0,y1:m.t,y2:m.t+ph,"class":"cross",visibility:"hidden"},svg), dots=list.map(function(o){var c=el("circle",{cx:0,cy:0,r:4,"class":"hov",visibility:"hidden"},svg);c.style.fill=o.S.c;return c});
+    var cross=el("line",{x1:0,x2:0,y1:m.t,y2:m.t+ph,"class":"cross",visibility:"hidden"},svg), dots=list.map(function(o){var c=el("circle",{cx:0,cy:0,r:4,"class":"hov",visibility:"hidden"},svg);c.style.fill=o.col;return c});
     hover(svg,m,pw,ph,function(px){
       var i=Math.max(0,Math.min(n-1,Math.round((px-m.l)/pw*(n-1)))), x=X(i);
       cross.setAttribute("x1",x);cross.setAttribute("x2",x);cross.setAttribute("visibility","visible");
-      list.forEach(function(o,k){var j,v=NaN;for(j=i;j>=0;j--)if(!isNaN(o.p[j])){v=o.p[j];break}
+      list.forEach(function(o,k){var j,v=NaN;for(j=i;j>=0;j--)if(!isNaN(o.y[j])){v=o.y[j];break}
         if(isNaN(v)){dots[k].setAttribute("visibility","hidden");return}
-        dots[k].setAttribute("cx",x);dots[k].setAttribute("cy",Y(v));dots[k].setAttribute("visibility","visible")});
+        dots[k].setAttribute("cx",x);dots[k].setAttribute("cy",ax[o.ax].Y(v));dots[k].setAttribute("visibility","visible")});
       cmpTip(f,A,list,i,W,m.t+6,x);
     },function(){f.tip.hidden=true;cross.setAttribute("visibility","hidden");dots.forEach(function(d){d.setAttribute("visibility","hidden")})});
   }
   function cmpDrawAbs(box,list,A){
-    var W=Math.max(280,box.clientWidth), narrow=W<600, k=list.length, panelH=narrow?120:140, gapP=44;
-    var m={l:narrow?52:62,r:narrow?12:18,t:30,b:34}, H=m.t+m.b+k*panelH+(k-1)*gapP;
+    var W=Math.max(280,box.clientWidth), narrow=W<600, k=list.length, panelH=narrow?110:(k>4?120:140), gapP=44;
+    var m={l:narrow?52:66,r:narrow?12:18,t:30,b:34}, H=m.t+m.b+k*panelH+(k-1)*gapP;
     box.style.height=H+"px";
     if(!box.clientWidth)return;
     var pw=W-m.l-m.r, n=A.t.length, X=function(i){return m.l+(n>1?i/(n-1):0.5)*pw};
     var f=frame(box,W,H,m), svg=f.svg, Ys=[];
     list.forEach(function(o,pi){
-      var top=m.t+pi*(panelH+gapP), lo=Infinity, hi=-Infinity;
+      var top=m.t+pi*(panelH+gapP), lo=Infinity, hi=-Infinity, rt=o.S.u==="rt";
       o.v.forEach(function(v){if(!isNaN(v)){if(v<lo)lo=v;if(v>hi)hi=v}});
-      var pad0=Math.max((hi-lo)*0.08,Math.pow(10,-o.S.d)), yt=cTicks(lo-pad0,hi+pad0,3);
+      var pad0=Math.max((hi-lo)*0.08,rt?0.01:Math.pow(10,-o.S.d)), yt=cTicks(lo-pad0,hi+pad0,3);
       var Y=function(v){return top+(1-(v-yt.min)/(yt.max-yt.min))*panelH}; Ys.push(Y);
       yt.ticks.forEach(function(v){if(v<yt.min-1e-9||v>yt.max+1e-9)return;
         el("line",{x1:m.l,x2:m.l+pw,y1:Y(v),y2:Y(v),"class":"grid"},svg);
-        var tx=el("text",{x:m.l-8,y:Y(v)+4,"class":"tick","text-anchor":"end"},svg); tx.textContent=v.toLocaleString("en-US",{minimumFractionDigits:yt.dec,maximumFractionDigits:yt.dec})});
+        var tx=el("text",{x:m.l-8,y:Y(v)+4,"class":"tick","text-anchor":"end"},svg); tx.textContent=v.toLocaleString("en-US",{minimumFractionDigits:yt.dec,maximumFractionDigits:yt.dec})+(rt?"%":"")});
+      if(rt&&yt.min<0&&yt.max>0)el("line",{x1:m.l,x2:m.l+pw,y1:Y(0),y2:Y(0),"class":"zero"},svg);
       el("line",{x1:m.l,x2:m.l+pw,y1:top+panelH,y2:top+panelH,"class":"base"},svg);
-      var p=el("path",{d:cmpPath(o.v,X,Y),"class":"cline"},svg); p.style.stroke=o.S.c;
-      var lb=el("text",{x:m.l,y:top-12,"class":"plab"},svg); lb.textContent=o.S.n+"  "+o.last.toFixed(o.S.d)+" ("+((o.last/o.v0-1)*100>=0?"+":"")+((o.last/o.v0-1)*100).toFixed(2)+"%)";
+      var p=el("path",{d:cmpPath(o.v,X,Y),"class":"cline"},svg); p.style.stroke=o.col;
+      var sw=el("rect",{x:m.l,y:top-17,width:10,height:3},svg); sw.style.fill=o.col;
+      var lb=el("text",{x:m.l+16,y:top-12,"class":"plab"},svg); lb.textContent=o.S.n+"  "+fmtV(o.S,o.last)+" ("+fmtC(o.S,o.v0,o.last)+")";
     });
     cmpXTicks(svg,A,X,m,0,W,H-m.b);
-    var cross=el("line",{x1:0,x2:0,y1:m.t,y2:H-m.b,"class":"cross",visibility:"hidden"},svg), dots=list.map(function(o){var c=el("circle",{cx:0,cy:0,r:4,"class":"hov",visibility:"hidden"},svg);c.style.fill=o.S.c;return c});
+    var cross=el("line",{x1:0,x2:0,y1:m.t,y2:H-m.b,"class":"cross",visibility:"hidden"},svg), dots=list.map(function(o){var c=el("circle",{cx:0,cy:0,r:4,"class":"hov",visibility:"hidden"},svg);c.style.fill=o.col;return c});
     hover(svg,m,pw,H-m.t-m.b,function(px){
       var i=Math.max(0,Math.min(n-1,Math.round((px-m.l)/pw*(n-1)))), x=X(i);
       cross.setAttribute("x1",x);cross.setAttribute("x2",x);cross.setAttribute("visibility","visible");
@@ -2505,18 +2673,117 @@ td.corr{font-family:var(--font-num)}
   function cmpTable(list,A){
     var tb=$("cmpTbl"); tb.textContent="";
     var hr=tb.createTHead().insertRow();
-    ["계열","시작","끝","변화율","고가","저가","상관계수 ("+list[0].S.n+" 기준)"].forEach(function(h,i){var th=document.createElement("th");th.textContent=h;if(i)th.className="n";hr.appendChild(th)});
+    ["지표","시작","끝","변화","고가","저가","상관계수 ("+list[0].S.n+" 기준)"].forEach(function(h,i){var th=document.createElement("th");th.textContent=h;if(i)th.className="n";hr.appendChild(th)});
     var bd=tb.createTBody();
     list.forEach(function(o,q){
       var hi=-Infinity,lo=Infinity,ih=0,il=0; o.v.forEach(function(v,i){if(isNaN(v))return;if(v>hi){hi=v;ih=i}if(v<lo){lo=v;il=i}});
       var tr=bd.insertRow(), c0=tr.insertCell(); c0.className="inst";
-      var sw=document.createElement("span"); sw.className="sw line"; sw.style.borderTopColor=o.S.c; sw.style.marginRight="8px"; sw.style.verticalAlign="middle";
+      var sw=document.createElement("span"); sw.className="sw line"; sw.style.borderTopColor=o.col; sw.style.marginRight="8px"; sw.style.verticalAlign="middle";
       c0.appendChild(sw); c0.appendChild(document.createTextNode(o.S.n));
-      var ch=(o.last/o.v0-1)*100, cr=q?corr(list[0].v,o.v):NaN;
-      [o.v0.toFixed(o.S.d),o.last.toFixed(o.S.d),(ch>=0?"+":"")+ch.toFixed(2)+"%",hi.toFixed(o.S.d)+" ("+kTip(A.t[ih],CMP.r)+")",lo.toFixed(o.S.d)+" ("+kTip(A.t[il],CMP.r)+")",q?(isNaN(cr)?"–":(cr>=0?"+":"")+cr.toFixed(2)):"기준"]
+      var rt=o.S.u==="rt", cr=q?corr(list[0].v,o.v,list[0].S.u==="rt",rt):NaN, ch=fmtC(o.S,o.v0,o.last);
+      if(rt&&!isNaN(o.last))ch+=" ("+(o.last-o.v0>=0?"+":"")+Math.round((o.last-o.v0)*100)+"bp)";
+      [fmtV(o.S,o.v0),fmtV(o.S,o.last),ch,fmtV(o.S,hi)+" ("+kTip(A.t[ih])+")",fmtV(o.S,lo)+" ("+kTip(A.t[il])+")",q?(isNaN(cr)?"–":(cr>=0?"+":"")+cr.toFixed(2)):"기준"]
         .forEach(function(t,i){var c=tr.insertCell();c.textContent=t;c.className="n"+(i===5?" corr":"")});
     });
   }
+  /* 날짜별 값 표(그리드): 화면은 최근 것부터, 파일은 오래된 것부터 */
+  function cmpRows(){
+    if(!CMPA||!CMPL)return null;
+    var head=[CG==="M"?"월":CG==="W"?"주(월요일)":typeof CG==="number"?"시각(한국)":"날짜"].concat(CMPL.map(function(o){return o.S.n+(o.S.u==="rt"?"(%)":"")}));
+    var rows=CMPA.t.map(function(t,i){return [kCell(t)].concat(CMPL.map(function(o){var v=o.v[i];return isNaN(v)?"":fmtV(o.S,v,false).replace(/,/g,"")}))});
+    return {head:head,rows:rows};
+  }
+  function cmpGridDraw(){
+    var R=cmpRows(), tb=$("cmpGrid"); tb.textContent=""; if(!R)return;
+    var hr=tb.createTHead().insertRow();
+    R.head.forEach(function(h,i){var th=document.createElement("th");th.textContent=h;if(i)th.className="n";hr.appendChild(th)});
+    var bd=tb.createTBody();
+    for(var i=R.rows.length-1;i>=0;i--){var tr=bd.insertRow();R.rows[i].forEach(function(t,j){var c=tr.insertCell();c.textContent=t||"–";if(j)c.className="n"})}
+  }
+  $("cmpGridBox").addEventListener("toggle",function(){if($("cmpGridBox").open)cmpGridDraw()});
+  function cmpFile(ext){var d=kst(Date.now()/1000);return "비교차트_"+d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+"_"+CMP.r+"."+ext}
+  function dlBlob(b,name){var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500)}
+  function cmpCsv(){
+    var R=cmpRows(); if(!R){toastMsg("저장할 자료가 없습니다.");return}
+    var q=function(s){s=String(s);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+    var txt=[R.head].concat(R.rows).map(function(r){return r.map(q).join(",")}).join("\r\n");
+    txt+="\r\n\r\n"+q("출처: "+cmpSrcText()+" · fx-monitor.pages.dev 비교 차트 · "+CMPR[CMP.r==="1m"&&CG==="D"?"3m":CMP.r]+(typeof CG==="number"?" · 한국 시간":""));
+    dlBlob(new Blob(["﻿"+txt],{type:"text/csv;charset=utf-8"}),cmpFile("csv"));
+    toastMsg("표를 CSV 파일로 저장했습니다. 엑셀에서 바로 열립니다.");
+  }
+  function cmpTsv(){
+    var R=cmpRows(); if(!R){toastMsg("복사할 자료가 없습니다.");return}
+    var txt=[R.head].concat(R.rows).map(function(r){return r.join("\t")}).join("\n");
+    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){toastMsg("표를 복사했습니다. 엑셀에 붙여 넣으세요("+R.rows.length.toLocaleString()+"줄).")},function(){toastMsg("이 브라우저에서는 복사가 막혀 있습니다. '표 저장'을 써 주세요.")});
+  }
+  /* 그림: 지금 그래프(SVG)를 흰 바탕으로 다시 그려 제목·범례·출처를 붙이고 PNG 로 */
+  function cmpPngBlob(cb){
+    var root=document.documentElement, prev=root.getAttribute("data-theme"), swap=isDark(), out;
+    if(swap){root.setAttribute("data-theme","light");renderCmp()}
+    try{out=cmpSvgOut()}finally{if(swap){if(prev===null)root.removeAttribute("data-theme");else root.setAttribute("data-theme",prev);renderCmp()}}
+    if(!out){cb(null);return}
+    var img=new Image();
+    img.onload=function(){var sc=2,c=document.createElement("canvas");c.width=out.w*sc;c.height=out.h*sc;var g=c.getContext("2d");g.scale(sc,sc);g.drawImage(img,0,0);c.toBlob(cb,"image/png")};
+    img.onerror=function(){cb(null)};
+    img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(out.s);
+  }
+  function cmpSvgOut(){
+    var box=$("cmpChart"), svg=box.querySelector("svg"); if(!svg||!CMPL)return null;
+    var W=+svg.getAttribute("width"), H=+svg.getAttribute("height"), cl=svg.cloneNode(true);
+    var src=svg.querySelectorAll("*"), dst=cl.querySelectorAll("*"), drop=[], P=["fill","stroke","stroke-width","stroke-dasharray","stroke-linecap","stroke-linejoin","opacity","font-family","font-size","font-weight"];
+    for(var i=0;i<src.length;i++){
+      var e=src[i], cs=getComputedStyle(e);
+      if(e.getAttribute("visibility")==="hidden"||cs.visibility==="hidden"||(e.classList&&e.classList.contains("hit"))){drop.push(dst[i]);continue}
+      P.forEach(function(p){dst[i].style.setProperty(p,cs.getPropertyValue(p))});
+    }
+    drop.forEach(function(d){if(d.parentNode)d.parentNode.removeChild(d)});
+    var rs=getComputedStyle(root0()), col=function(v,f){return rs.getPropertyValue(v).trim()||f};
+    var bg=col("--surface","#ffffff"), ink=col("--ink","#111"), mut=col("--muted","#777"), font=getComputedStyle(document.body).fontFamily;
+    var mc=document.createElement("canvas").getContext("2d"), tw=function(t,sz,wt){mc.font=(wt||400)+" "+sz+"px "+font;return mc.measureText(t).width};
+    var padX=20, TW=W+padX*2, y=30, parts=[];
+    var esc=function(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")};
+    var txt=function(x,yy,t,sz,fill,wt){parts.push('<text x="'+x+'" y="'+yy+'" style="font-family:'+esc(font).replace(/"/g,"'")+';font-size:'+sz+'px;font-weight:'+(wt||400)+';fill:'+fill+'">'+esc(t)+'</text>')};
+    txt(padX,y,CMPL.map(function(o){return o.S.n}).join(" · "),17,ink,700);
+    y+=20; txt(padX,y,kTip(CMPA.t[0])+" ~ "+kTip(CMPA.t[CMPA.t.length-1])+" · "+CMPR[CMP.r==="1m"&&CG==="D"?"3m":CMP.r]+" · "+VIEWN[CMPA.view]+(typeof CG==="number"?" · 한국 시간":""),12.5,mut);
+    y+=24; var x=padX;
+    CMPL.forEach(function(o){
+      var lab=o.S.n+" "+fmtV(o.S,o.last)+" ("+fmtC(o.S,o.v0,o.last)+")", w=18+tw(lab,12.5)*1.1+26;
+      if(x+w>TW-padX&&x>padX){x=padX;y+=20}
+      var c=getComputedStyle(root0()).getPropertyValue(o.col.slice(4,-1)).trim()||"#333";
+      parts.push('<rect x="'+x+'" y="'+(y-6)+'" width="12" height="3" style="fill:'+c+'"/>');
+      txt(x+18,y,lab,12.5,ink); x+=w;
+    });
+    var top=y+14, TH=top+H+40;
+    var foot="출처: "+cmpSrcText()+" · 환율 조회 fx-monitor.pages.dev";
+    var s='<svg xmlns="http://www.w3.org/2000/svg" width="'+TW+'" height="'+TH+'" viewBox="0 0 '+TW+' '+TH+'"><rect width="100%" height="100%" style="fill:'+bg+'"/>'+parts.join("")+
+      '<g transform="translate('+padX+','+top+')">'+new XMLSerializer().serializeToString(cl).replace(/<svg[^>]*>/,'<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" overflow="visible">')+'</g>';
+    parts=[]; txt(padX,TH-16,foot,11.5,mut); s+=parts.join("")+'</svg>';
+    return {s:s,w:TW,h:TH};
+  }
+  function root0(){return document.documentElement}
+  function cmpPng(copy){
+    if(!$("cmpChart").querySelector("svg")){toastMsg("저장할 그래프가 없습니다.");return}
+    if(copy&&!(navigator.clipboard&&window.ClipboardItem)){toastMsg("이 브라우저에서는 그림 복사가 안 됩니다. '그림 저장'을 써 주세요.");return}
+    if(copy){   /* 사파리 등은 클릭 직후에 write 를 불러야 해서 Promise 를 바로 넘긴다 */
+      var pr=new Promise(function(ok,no){cmpPngBlob(function(b){b?ok(b):no()})});
+      navigator.clipboard.write([new ClipboardItem({"image/png":pr})]).then(function(){toastMsg("그림을 복사했습니다. 문서·메신저에 붙여 넣으세요.")},function(){toastMsg("그림 복사가 막혀 있습니다. '그림 저장'을 써 주세요.")});
+      return;
+    }
+    cmpPngBlob(function(b){if(!b){toastMsg("그림을 만들지 못했습니다.");return}dlBlob(b,cmpFile("png"));toastMsg("그래프를 PNG 그림으로 저장했습니다.")});
+  }
+  function cmpLink(){
+    var u=location.origin+location.pathname+"?cmp="+CMP.s.join(",")+"&cr="+CMP.r+"&cv="+CMP.v+"#p5";
+    (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(function(){toastMsg("지금 고른 조합을 여는 링크를 복사했습니다.")},function(){window.prompt("이 링크를 복사하세요",u)});
+  }
+  function cmpMineAdd(){
+    var a=cmpMine(), n=window.prompt("이 조합의 이름(이 브라우저에만 저장됩니다)",CMP.s.map(function(k){return CMPS[k].n}).join(" vs ").slice(0,40));
+    if(n===null)return; n=n.trim().slice(0,40)||"내 조합";
+    a=a.filter(function(m){return m.n!==n}); a.push({n:n,s:CMP.s.slice(),r:CMP.r,v:CMP.v}); if(a.length>12)a=a.slice(-12);
+    try{localStorage.setItem("fx-cmp-mine",JSON.stringify(a))}catch(e){}
+    cmpMineDraw(); toastMsg("'"+n+"' 조합을 저장했습니다. 위 '내 조합'에서 다시 열 수 있습니다.");
+  }
+  [].forEach.call(document.querySelectorAll("[data-act]"),function(b){b.addEventListener("click",function(){var a=b.dataset.act;
+    if(a==="png")cmpPng(false);else if(a==="pngc")cmpPng(true);else if(a==="csv")cmpCsv();else if(a==="tsv")cmpTsv();else if(a==="link")cmpLink();else if(a==="mine")cmpMineAdd()})});
   if(window.ResizeObserver){var cw0=0;new ResizeObserver(function(){var w=$("cmpChart").clientWidth;if(Math.abs(w-cw0)>1){cw0=w;if(!$("p5").hidden)renderCmp()}}).observe($("cmpChart"))}
   /* ---------- 5페이지 끝 ---------- */
 

@@ -203,7 +203,10 @@ def build_fx():
     s = rep(s, "  function drawDay(){\n", "  function drawDay(){if(!ID)return;\n")
     s = rep(s, "  function drawRange(){\n", "  function drawRange(){if(!ID)return;\n")
 
-    # ---------------- 5페이지: 비교 차트 → TradingView 비교 차트(compareSymbols). 고르는 화면은 그대로 ----------------
+    # ---------------- 5페이지: 비교 차트 → TradingView 비교 차트(compareSymbols) ----------------
+    # 본 사이트는 금리·주가까지 넓힌 고르기 화면(Yahoo·각국 공식 자료)이지만, ver2 는 예전 환율 8개 고르기 화면을 그대로 쓴다
+    a, b = cut(s, '  <main id="p5" data-page="5" hidden>', "      <!--cmp-area-->", include_end=False)
+    s = s[:a] + (Path(__file__).parent / "p5_controls_v2.html").read_text(encoding="utf-8") + s[b:]
     a, b = cut(s, "      <!--cmp-area-->", "      <!--/cmp-area-->\n")
     s = s[:a] + '''      <div class="sumrow" id="cmpSum"></div>
       <div class="tvbox" style="height:600px" id="cmpTv"></div><div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
