@@ -67,7 +67,7 @@ tr.isbot td{color:var(--muted)}
 <body><div class="wrap">
 <div class="top">
   <div><p class="muted" style="margin:0">관리자 전용 · 환율 조회 · 금리 모니터</p><h1>방문 기록</h1></div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="/">환율 조회</a><a class="btn" href="/rates/">금리 모니터</a><a class="btn" href="/community/">커뮤니티</a><a class="btn" href="/community/?queue">신고·가림 목록</a><a class="btn" href="/admin/inquiries" id="inqBtn">문의함</a><a class="btn" href="/admin/logout">로그아웃</a></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="/">환율 조회</a><a class="btn" href="/rates/">금리 모니터</a><a class="btn" href="/community/">커뮤니티</a><a class="btn" href="/community/?queue">신고·가림 목록</a><a class="btn" href="/admin/inquiries" id="inqBtn">문의·건의함</a><a class="btn" href="/admin/logout">로그아웃</a></div>
 </div>
 <div class="ctl" role="group" aria-label="기간">
   <button type="button" data-d="1">오늘</button><button type="button" data-d="7">7일</button><button type="button" data-d="30">30일</button><button type="button" data-d="90">90일</button>
@@ -185,7 +185,7 @@ tr.isbot td{color:var(--muted)}
   load(); setInterval(function(){if(!document.hidden)load()},60000);
   /* 문의함 버튼에 새 문의 개수 */
   function inq(){fetch("/api/contact/admin/count",{cache:"no-store",credentials:"same-origin"}).then(function(r){return r.json()}).then(function(j){
-    var b=$("inqBtn"); b.textContent=j&&j.new?"문의함 · 새 "+j.new+"건":"문의함"; b.style.fontWeight=j&&j.new?"600":""}).catch(function(){})}
+    var b=$("inqBtn"); b.textContent=j&&j.new?"문의·건의함 · 새 "+j.new+"건":"문의·건의함"; b.style.fontWeight=j&&j.new?"600":""}).catch(function(){})}
   inq(); setInterval(function(){if(!document.hidden)inq()},60000);
 })();
 </script>
@@ -194,7 +194,7 @@ tr.isbot td{color:var(--muted)}
 
 // 문의함(/admin/inquiries): /contact/ 로 들어온 문의(본 사이트·ver2). 문의 글은 방문자가 쓴 것이라 반드시 textContent 로만 넣는다.
 export function inqPage() {
-  return `${HEAD("문의함 · 환율 조회")}
+  return `${HEAD("문의·건의함 · 환율 조회")}
 <style>
 .top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:1px solid var(--rule);padding-bottom:14px}
 .ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0 12px}
@@ -219,7 +219,7 @@ export function inqPage() {
 </style>
 <body><div class="wrap">
 <div class="top">
-  <div><p class="muted" style="margin:0">관리자 전용 · 환율 조회 · 금리 모니터</p><h1>문의함</h1></div>
+  <div><p class="muted" style="margin:0">관리자 전용 · 환율 조회 · 금리 모니터</p><h1>문의·건의함</h1></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="/admin">방문 기록</a><a class="btn" href="/contact/">문의 화면</a><a class="btn" href="/admin/logout">로그아웃</a></div>
 </div>
 <div class="ctl" role="group" aria-label="보기">
@@ -280,7 +280,7 @@ export function inqPage() {
         if(!L.children.length)el("div","empty","해당하는 문의가 없습니다.",L);
         OFF+=j.items.length; $("more").hidden=!j.more;
         var c=j.counts; $("cnt").textContent="새 문의 "+c.new+" · 읽음 "+c.read+" · 처리 완료 "+c.done;
-        document.title=(c.new?"("+c.new+") ":"")+"문의함 · 환율 조회";
+        document.title=(c.new?"("+c.new+") ":"")+"문의·건의함 · 환율 조회";
       }).catch(function(e){if(e!==0){$("err").hidden=false;$("err").textContent="불러오지 못했습니다."}});
   }
   [].forEach.call(document.querySelectorAll("[data-st]"),function(b){b.addEventListener("click",function(){ST=b.dataset.st;try{localStorage.setItem("fx-inq-st",ST)}catch(e){}btns();load(true)})});

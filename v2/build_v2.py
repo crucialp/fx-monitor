@@ -505,7 +505,9 @@ def build_contact():
     s = rep(s, '</div></nav>\n<div class="wrap">', '</div></nav>\n' + v2bar("/contact/") + '<div class="wrap">')
     s = rep(s, '<a href="#privacy">개인정보 수집·이용 안내</a></span>', '<a href="#privacy">개인정보 수집·이용 안내</a> · <a href="/privacy.html">개인정보처리방침</a></span>')
     assert '<script src="/contact/app.js"></script>' in s
-    s = s.replace("<span>환율 조회 · 금리 모니터 운영자 문의 창구입니다.</span>", "<span>환율 조회 · 금리 모니터 · 커뮤니티 운영자 문의 창구입니다.</span>")
+    s = rep(s, "<span>환율 조회 · 금리 모니터 운영자에게 문의·건의사항을 보내는 곳입니다.</span>", "<span>환율 조회 · 금리 모니터 · 커뮤니티 운영자에게 문의·건의사항을 보내는 곳입니다.</span>")
+    s = rep(s, '<label><input type="radio" name="kind" value="건의사항">건의사항</label>\n', '<label><input type="radio" name="kind" value="건의사항">건의사항</label>\n                <label><input type="radio" name="kind" value="광고·제휴">광고·제휴</label>\n')   # 상업용은 광고·제휴 문의를 받는다
+    s = s.replace("있었으면 하는 기능 같은 건의, 그 밖의", "있었으면 하는 기능 같은 건의, 광고·제휴, 그 밖의")
     return addcom(s)
 
 

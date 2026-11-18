@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="환율 조회·금리 모니터 운영자에게 문의를 보냅니다. 사이트 이용, 데이터 오류 신고, 광고·제휴 문의.">
-<title>문의하기</title>
+<meta name="description" content="환율 조회·금리 모니터 운영자에게 문의·건의사항을 보냅니다. 사이트 이용, 데이터 오류 신고, 기능 건의.">
+<title>문의·건의사항</title>
 <link rel="stylesheet" href="/fonts/pretendard/pretendardvariable-dynamic-subset.css">
 <style>
 /* 문의: 커뮤니티(public/community)·환율 조회와 같은 틀 — 머리글·페이지 탭·페이지 제목·검색줄·목록+보기 창·안내 목록·바닥글. 색·글꼴·간격은 그쪽 값 그대로. */
@@ -126,20 +126,20 @@ textarea{resize:vertical;line-height:1.6}
 </style>
 </head>
 <body>
-<nav class="sitebar" aria-label="사이트"><div class="sitebar-in"><a href="/" id="sb-fx">환율 조회</a><a href="/rates/" id="sb-rates">금리 모니터</a><a href="/contact/" id="sb-ask" aria-current="page">문의</a></div></nav>
+<nav class="sitebar" aria-label="사이트"><div class="sitebar-in"><a href="/" id="sb-fx">환율 조회</a><a href="/rates/" id="sb-rates">금리 모니터</a><a href="/contact/" id="sb-ask" aria-current="page">문의·건의사항</a></div></nav>
 <div class="wrap">
   <header class="top">
-    <div class="eyebrow">USD/KRW · 금리 · 운영자에게 문의</div>
+    <div class="eyebrow">USD/KRW · 금리 · 운영자에게 문의·건의</div>
     <div class="toprow">
-      <h1>문의하기</h1>
-      <div class="updbox"><span class="updmsg">보낸 문의는 운영자만 봅니다. 답장이 필요하면 이메일을 적어 주세요.</span></div>
+      <h1>문의·건의사항</h1>
+      <div class="updbox"><span class="updmsg">보낸 글은 운영자만 봅니다. 답장이 필요하면 이메일을 적어 주세요.</span></div>
     </div>
   </header>
 
   <nav class="toc" aria-label="목차">
     <div class="navrow">
       <ul>
-        <li><a href="#write">문의 쓰기</a></li>
+        <li><a href="#write">문의·건의 쓰기</a></li>
         <li><a href="#privacy">개인정보 수집·이용 안내</a></li>
         <li><a href="#limits">처리·제한</a></li>
       </ul>
@@ -147,7 +147,7 @@ textarea{resize:vertical;line-height:1.6}
   </nav>
 
   <main>
-    <div class="pagehead"><span class="eyebrow">문의</span><h2>운영자에게 보내기</h2><p class="muted small">사이트 이용 방법, 환율·금리 데이터 오류, 광고·제휴, 그 밖의 의견을 보내 주세요. 커뮤니티 글과 달리 다른 이용자에게는 보이지 않습니다.</p></div>
+    <div class="pagehead"><span class="eyebrow">문의·건의사항</span><h2>운영자에게 보내기</h2><p class="muted small">사이트 이용 방법, 환율·금리 데이터 오류, 있었으면 하는 기능 같은 건의, 그 밖의 의견을 보내 주세요. 커뮤니티 글과 달리 다른 이용자에게는 보이지 않습니다.</p></div>
     <div class="two">
       <section id="write" style="padding-top:16px">
         <div class="card">
@@ -156,8 +156,8 @@ textarea{resize:vertical;line-height:1.6}
               <div class="kinds" id="kinds">
                 <label><input type="radio" name="kind" value="사이트 이용">사이트 이용</label>
                 <label><input type="radio" name="kind" value="데이터 오류 신고">데이터 오류 신고</label>
-                <label><input type="radio" name="kind" value="광고·제휴">광고·제휴</label>
-                <label><input type="radio" name="kind" value="기타">기타</label>
+                <label><input type="radio" name="kind" value="건의사항">건의사항</label>
+                                <label><input type="radio" name="kind" value="기타">기타</label>
               </div>
             </div>
             <label class="field">제목<input id="ftitle" maxlength="80" autocomplete="off" required></label>
@@ -173,9 +173,9 @@ textarea{resize:vertical;line-height:1.6}
             <div class="factions"><button type="submit" class="nx-btn primary" id="fsend">보내기</button><span class="note">1분에 1건, 하루 5건까지</span></div>
           </form>
           <div class="done" id="done" hidden>
-            <h3>문의를 보냈습니다</h3>
+            <h3>보냈습니다</h3>
             <p class="muted" id="donemsg"></p>
-            <button type="button" class="nx-btn" id="again">다른 문의 쓰기</button>
+            <button type="button" class="nx-btn" id="again">하나 더 쓰기</button>
           </div>
         </div>
       </section>
@@ -202,7 +202,7 @@ textarea{resize:vertical;line-height:1.6}
   </main>
 
   <footer>
-    <span>환율 조회 · 금리 모니터 운영자 문의 창구입니다.</span>
+    <span>환율 조회 · 금리 모니터 운영자에게 문의·건의사항을 보내는 곳입니다.</span>
     <span>문의를 보내면 스팸 대응을 위해 접속 IP와 브라우저 정보가 90일간 저장된다 · <a href="#privacy">개인정보 수집·이용 안내</a></span>
   </footer>
 </div>

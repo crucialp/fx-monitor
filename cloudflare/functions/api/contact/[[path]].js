@@ -9,7 +9,7 @@
 import { isAdmin } from "../../../lib/auth.js";
 import { isBot } from "../../../lib/botrule.js";
 
-const KINDS = ["사이트 이용", "데이터 오류 신고", "광고·제휴", "기타"];
+const KINDS = ["사이트 이용", "데이터 오류 신고", "건의사항", "광고·제휴", "기타"];   // 광고·제휴는 ver2(상업용) 화면에만
 const MAX = { title: 80, body: 3000, name: 30, email: 100 };
 const SPAM = /open\.kakao\.com|t\.me\/|텔레\s?그램|리딩\s?방|수익\s?보장|원금\s?보장|무료\s?(리딩|추천주|종목)|카지노|토토|바카라/i;
 const EMAIL = /^[^\s@<>()",;:]{1,64}@[^\s@<>()",;:]{1,190}\.[a-z]{2,}$/i;
