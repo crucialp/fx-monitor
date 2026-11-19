@@ -66,7 +66,7 @@ tr.isbot td{color:var(--muted)}
 </style>
 <body><div class="wrap">
 <div class="top">
-  <div><p class="muted" style="margin:0">관리자 전용 · 환율 조회 · 금리 모니터</p><h1>방문 기록</h1></div>
+  <div><p class="muted" style="margin:0">관리자 전용 · 환율 조회 · 금리 모니터</p><h1>방문 기록</h1><p class="note" id="fxHealth" style="margin:4px 0 0"></p></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="/">환율 조회</a><a class="btn" href="/rates/">금리 모니터</a><a class="btn" href="/community/">커뮤니티</a><a class="btn" href="/community/?queue">신고·가림 목록</a><a class="btn" href="/admin/inquiries" id="inqBtn">문의·건의함</a><a class="btn" href="/admin/logout">로그아웃</a></div>
 </div>
 <div class="ctl" role="group" aria-label="기간">
@@ -187,6 +187,15 @@ tr.isbot td{color:var(--muted)}
   function inq(){fetch("/api/contact/admin/count",{cache:"no-store",credentials:"same-origin"}).then(function(r){return r.json()}).then(function(j){
     var b=$("inqBtn"); b.textContent=j&&j.new?"문의·건의함 · 새 "+j.new+"건":"문의·건의함"; b.style.fontWeight=j&&j.new?"600":""}).catch(function(){})}
   inq(); setInterval(function(){if(!document.hidden)inq()},60000);
+  /* 시세 상태: Yahoo 1분 시세와 예비 기록(backup-worker, Wise 1분)이 제때 들어오는지 */
+  function health(){fetch("/api/intraday",{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){
+    var now=Date.now()/60000, t=j.m1.t, W={}, i, y=null;
+    (j.m1.w||[]).forEach(function(r){for(var q=r[0];q<=r[1];q++)W[q]=1});
+    for(i=t.length-1;i>=0;i--)if(!W[i]){y=t[i];break}
+    var b=j.backup||{}, ago=function(m){return m==null?"없음":Math.round(now-m)+"분 전"}, bad=b.last==null||now-b.last>5;
+    var e=$("fxHealth"); e.textContent="시세 상태 · Yahoo 마지막 1분 시세 "+ago(y)+" · 예비 기록(Wise 1분, backup-worker) 마지막 "+ago(b.last)+" (최근 72시간 "+(b.n||0)+"건)"+(bad?" — 예비 기록이 멈춤, 확인 필요":"");
+    e.style.color=bad?"var(--bad)":""}).catch(function(){})}
+  health(); setInterval(function(){if(!document.hidden)health()},60000);
 })();
 </script>
 </body></html>`;

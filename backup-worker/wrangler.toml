@@ -1,0 +1,14 @@
+# 환율 조회 예비 시세 기록기: 1분마다 Wise 시장 중간 환율(달러·엔·유로 → 원)을 D1 에 남긴다.
+# /api/intraday 가 Yahoo 1분 시세의 빈 구간(새벽 끊김 등)을 이 값으로 메운다. (2026-11-19 사용자 승인)
+name = "fx-backup"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+workers_dev = false
+
+[triggers]
+crons = ["* * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fx-monitor-visits"
+database_id = "b0a080bc-ecea-437e-995a-993de1d2d14f"

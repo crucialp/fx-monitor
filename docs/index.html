@@ -370,7 +370,7 @@ img{max-width:100%}
 .band{fill:var(--ink);fill-opacity:.09;stroke:none}
 .cline{fill:none;stroke:var(--ink);stroke-width:1.25;stroke-linejoin:round}
 .wick{stroke-width:1}
-.c-up{fill:var(--up);stroke:var(--up)} .c-dn{fill:var(--down);stroke:var(--down)}
+.c-up{fill:var(--up);stroke:var(--up)} .c-dn{fill:var(--down);stroke:var(--down)} .c-wise{opacity:.4}
 .dsep{stroke:var(--rule);stroke-width:1;stroke-dasharray:2 3}
 .curseg{margin-top:8px}
 .c2bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding-top:24px}
@@ -602,7 +602,7 @@ td.corr{font-family:var(--font-num)}
       <p class="spec"><b>하루 = 06:00 ~ 익일 06:00 (1분 단위).</b> 06:00부터 지금까지를 화면 폭 전체에 맞춰 그립니다. 시간이 흐를수록 같은 폭에 더 많은 움직임이 담겨 선의 굴곡이 늘어납니다.</p>
       <div class="nowbox" aria-live="polite"><span class="nlab" id="dnowl">현재 달러/원</span><span class="nval"><span id="dnowv">–</span><span class="nunit">원</span></span><span class="nchg" id="dnowc"></span><span class="ntime" id="dnowt"></span></div>
       <div class="sumrow" id="dsum"></div>
-      <div class="legend" aria-hidden="true"><span><span class="sw line"></span>1분 시세(국제 시세)</span><span><span class="sw evsw"></span>주요 지표·금리 결정(발표 · 예상 · 이전)</span><span id="dfillLg" hidden><span class="sw fill"></span>Yahoo 시세가 끊긴 구간: Wise 1시간 간격 시세</span><span class="muted">시세가 없던 구간은 직선으로 이어 그림 · 연한 가로선은 눈금</span></div>
+      <div class="legend" aria-hidden="true"><span><span class="sw line"></span>1분 시세(국제 시세)</span><span><span class="sw evsw"></span>주요 지표·금리 결정(발표 · 예상 · 이전)</span><span id="dfillLg" hidden><span class="sw fill"></span>Yahoo 시세가 끊긴 구간: Wise 시장 환율로 메움</span><span class="muted">시세가 없던 구간은 직선으로 이어 그림 · 연한 가로선은 눈금</span></div>
       <div class="rchart" id="dchart"><div class="msg">장중 데이터를 불러오는 중…</div></div>
       <div class="credit" id="dcredit"></div>
       <div class="evlist" id="devents"></div>
@@ -2156,7 +2156,7 @@ td.corr{font-family:var(--font-num)}
     $("dnowv").textContent=f1(now);
     $("dnowc").innerHTML="06:00 시가 대비 "+chg(open,now);
     $("dnowt").textContent=(stale?"마지막 거래 ":"")+mdhm(endT)+" 기준";
-    $("dcredit").textContent="데이터: Yahoo Finance "+CURS[CUR].y+"(국제 시세"+CURS[CUR].per+") · 1분 단위 · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)"+(nW?" · Yahoo 시세가 10분 넘게 끊긴 구간(새벽·월요일 아침 등): Wise 시장 중간 환율(1시간 간격, 옅은 선)":"")+" · 지표: Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각과 한은 의결문 공개 시각: 언론 첫 속보(네이버 뉴스 입력 시각)";
+    $("dcredit").textContent="데이터: Yahoo Finance "+CURS[CUR].y+"(국제 시세"+CURS[CUR].per+") · 1분 단위 · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)"+(nW?" · Yahoo 시세가 10분 넘게 끊긴 구간(새벽·월요일 아침 등): Wise 시장 중간 환율(1분 자체 기록, 없으면 1시간 간격)을 앞뒤 Yahoo 값에 맞춰 이음(옅은 선)":"")+" · 지표: Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각과 한은 의결문 공개 시각: 언론 첫 속보(네이버 뉴스 입력 시각)";
     eventList($("devents"),dayEv,LAY.mode,"이 날의 주요 지표·금리 결정 ("+mdhm(start)+" ~ "+mdhm(start+DAYM)+", 한국 시간 · Nasdaq 캘린더)",dayEv.loading);
   }
 
@@ -2172,7 +2172,7 @@ td.corr{font-family:var(--font-num)}
   }
   $("r0").addEventListener("change",onRDates); $("r1").addEventListener("change",onRDates);
   function drawRange(){
-    var box=$("rchart"), B=ID.m10, t=B.t, n=t.length;
+    var box=$("rchart"), B=ID.m10, t=B.t, n=t.length, BW={}; (B.w||[]).forEach(function(k){BW[k]=1});
     if(!n){msg(box,"10분봉 데이터가 아직 없습니다.");return}
     var last=t[n-1], s0, e0;
     if(RS.days){e0=dayStart(last)+DAYM; s0=e0-RS.days*DAYM}else{s0=RS.s;e0=RS.e}
@@ -2224,7 +2224,7 @@ td.corr{font-family:var(--font-num)}
     if(N<=240){
       var cw=Math.max(1,Math.min(10,bw*0.62));
       for(i=i0;i<=i1;i++){
-        var up=B.c[i]>=B.o[i], cl=up?"c-up":"c-dn", x=X(i);
+        var up=B.c[i]>=B.o[i], cl=(up?"c-up":"c-dn")+(BW[t[i]]?" c-wise":""), x=X(i);
         el("line",{x1:x,x2:x,y1:Y(B.h[i]),y2:Y(B.l[i]),"class":"wick "+cl},svg);
         var yT=Y(Math.max(B.o[i],B.c[i])), yB=Y(Math.min(B.o[i],B.c[i]));
         el("rect",{x:x-cw/2,y:yT,width:cw,height:Math.max(1,yB-yT),"class":cl},svg);
@@ -2240,14 +2240,14 @@ td.corr{font-family:var(--font-num)}
     hover(svg,m,pw,ph,function(px){
       var j=i0+Math.floor((px-m.l)/bw); if(j<i0)j=i0; if(j>i1)j=i1;
       var x=X(j); cross.setAttribute("x1",x);cross.setAttribute("x2",x);cross.setAttribute("visibility","visible");
-      f.tip.innerHTML='<div class="tq">'+mdhm(t[j])+'~'+hm(t[j]+10)+' (10분봉)</div><div class="tr">시가<b>'+f1(B.o[j])+'</b></div><div class="tr">고가<b>'+f1(B.h[j])+'</b></div><div class="tr">저가<b>'+f1(B.l[j])+'</b></div><div class="tr">종가<b>'+f1(B.c[j])+'</b></div>';
+      f.tip.innerHTML='<div class="tq">'+mdhm(t[j])+'~'+hm(t[j]+10)+' (10분봉)</div><div class="tr">시가<b>'+f1(B.o[j])+'</b></div><div class="tr">고가<b>'+f1(B.h[j])+'</b></div><div class="tr">저가<b>'+f1(B.l[j])+'</b></div><div class="tr">종가<b>'+f1(B.c[j])+'</b></div>'+(BW[t[j]]?'<div class="tr muted">Yahoo 시세 끊긴 구간 · Wise 시장 환율로 메움</div>':'');
       placeTip(f.tip,x,W,m.t+6);
     },function(){f.tip.hidden=true;cross.setAttribute("visibility","hidden")});
     $("rsum").innerHTML='<span>기간 <b>'+mdhm(t[i0])+' ~ '+mdhm(t[i1]+10)+'</b></span><span>10분봉 <b>'+N.toLocaleString("en-US")+'개</b></span>'+
       '<span>시가 <b>'+f1(B.o[i0])+'</b></span><span>종가 <b>'+f1(B.c[i1])+'</b></span><span>변동 '+chg(B.o[i0],B.c[i1])+'</span>'+
       '<span>고가 <b>'+f1(hi)+'</b> ('+mdhm(t[ih])+')</span><span>저가 <b>'+f1(lo)+'</b> ('+mdhm(t[il])+')</span>'+
       (N>240?'<span class="muted">봉이 많아 종가 선과 고저 범위로 표시</span>':'');
-    $("rcredit").textContent="데이터: Yahoo Finance "+CURS[CUR].y+"(국제 시세"+CURS[CUR].per+") · 10분봉(5분봉 2개 묶음) · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)";
+    $("rcredit").textContent="데이터: Yahoo Finance "+CURS[CUR].y+"(국제 시세"+CURS[CUR].per+") · 10분봉(5분봉 2개 묶음) · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)"+((B.w||[]).length?" · Yahoo 시세가 끊긴 칸은 Wise 시장 중간 환율로 메움(옅은 봉)":"");
     eventList($("revents"),rEv,rLAY.mode,"이 기간의 주요 지표·금리 결정 (한국 시간 · Nasdaq 캘린더)",rEv.loading);
   }
   if(window.ResizeObserver){
