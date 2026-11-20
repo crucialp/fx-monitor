@@ -29,3 +29,8 @@
 /app/manifest.webmanifest
   Content-Type: application/manifest+json
   Cache-Control: no-cache
+
+# 안드로이드 앱(플레이스토어, dev.pages.fx_monitor.app)이 이 사이트 것임을 확인하는 파일
+/.well-known/assetlinks.json
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *

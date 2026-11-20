@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "dev.pages.fx_monitor.app",
+      "sha256_cert_fingerprints": [
+        "FC:7B:AE:2F:D7:E2:D0:E9:9A:00:DF:06:25:81:0C:D2:ED:E3:E2:3F:D2:6D:E5:DE:24:8B:F2:70:2B:EF:EF:9E"
+      ]
+    }
+  }
+]
