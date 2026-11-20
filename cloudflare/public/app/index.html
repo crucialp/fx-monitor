@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>환율 조회</title>
+<meta name="description" content="달러·엔·유로/원 실시간 시세, 차트, 환전 계산기, 목표 환율 알림.">
+<meta name="theme-color" content="#f3f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1215" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="/app/manifest.webmanifest">
+<link rel="icon" href="/app/icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="/app/icons/apple-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="환율 조회">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="/fonts/pretendard/pretendardvariable-dynamic-subset.css">
+<link rel="stylesheet" href="/app/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="/app/icons/icon-192.png" alt="" width="26" height="26"><b>환율 조회</b></div>
+  <span class="stat" id="stat" aria-live="polite"></span>
+  <button type="button" class="installbtn" id="installBtn" hidden>앱 설치</button>
+</header>
+
+<main id="view">
+  <!-- 시세 -->
+  <section data-tab="home" aria-labelledby="hHome">
+    <h1 class="sr" id="hHome">시세</h1>
+    <div class="brief card" id="brief" hidden>
+      <div class="brief-h"><span class="tag">오늘의 브리핑</span><span class="muted small" id="briefTime"></span></div>
+      <b class="brief-t" id="briefT"></b>
+      <ul id="briefL"></ul>
+    </div>
+    <div id="cards"></div>
+    <div class="card smbs" id="smbs" hidden>
+      <div class="lab">달러/원 매매기준율 <span class="muted small" id="smbsD"></span></div>
+      <div class="row"><span class="v" id="smbsV">–</span><span class="u">원</span><span class="chg" id="smbsC"></span></div>
+      <p class="muted small">은행 환전·송금의 기준이 되는 서울외국환중개 고시 환율(평일 하루 1번).</p>
+    </div>
+    <p class="note">국제 외환시장 시세(Yahoo Finance, 약 1~2분 지연)입니다. 변동은 오늘 06:00(국제시장 하루 시작) 대비이고, 시세가 끊긴 시간은 Wise 시장 환율로 이어 그립니다(옅은 선). 은행 고시 환율과는 다를 수 있습니다.</p>
+  </section>
+
+  <!-- 차트 -->
+  <section data-tab="chart" hidden aria-labelledby="hChart">
+    <h1 class="sr" id="hChart">차트</h1>
+    <div class="seg full" role="group" aria-label="통화" id="chCur">
+      <button type="button" data-c="usd" aria-pressed="true">달러/원</button>
+      <button type="button" data-c="jpy" aria-pressed="false">엔/원</button>
+      <button type="button" data-c="eur" aria-pressed="false">유로/원</button>
+    </div>
+    <div class="seg full" role="group" aria-label="기간" id="chRng">
+      <button type="button" data-r="day" aria-pressed="true">하루</button>
+      <button type="button" data-r="3d" aria-pressed="false">3일</button>
+      <button type="button" data-r="1m" aria-pressed="false">1개월</button>
+      <button type="button" data-r="1y" aria-pressed="false">1년</button>
+      <button type="button" data-r="10y" aria-pressed="false">10년</button>
+    </div>
+    <div class="card chartcard">
+      <div class="readout" aria-live="polite"><span class="rv" id="roV">–</span><span class="u">원</span><span class="rc" id="roC"></span><span class="rt muted" id="roT"></span></div>
+      <div class="chart" id="chart"><div class="msg">불러오는 중…</div></div>
+      <div class="sum" id="chSum"></div>
+    </div>
+    <p class="note" id="chNote">그래프를 손가락으로 짚고 움직이면 그 시각의 값이 위에 나옵니다.</p>
+  </section>
+
+  <!-- 계산기 -->
+  <section data-tab="calc" hidden aria-labelledby="hCalc">
+    <h2 class="sec" id="hCalc">환전 계산기</h2>
+    <div class="card form">
+      <div class="seg full" role="group" aria-label="통화" id="cCur">
+        <button type="button" data-c="usd" aria-pressed="true">달러</button>
+        <button type="button" data-c="jpy" aria-pressed="false">엔</button>
+        <button type="button" data-c="eur" aria-pressed="false">유로</button>
+      </div>
+      <div class="seg full" role="group" aria-label="거래" id="cDir">
+        <button type="button" data-d="buy" aria-pressed="true">외화 살 때</button>
+        <button type="button" data-d="sell" aria-pressed="false">외화 팔 때</button>
+      </div>
+      <label class="fld"><span id="cAmtL">바꿀 외화 금액</span>
+        <span class="inp"><input id="cAmt" inputmode="decimal" autocomplete="off" value="1,000"><span class="u" id="cAmtU">달러</span></span>
+      </label>
+      <div class="seg" role="group" aria-label="입력 단위" id="cIn">
+        <button type="button" data-i="fx" aria-pressed="true">외화로 입력</button>
+        <button type="button" data-i="krw" aria-pressed="false">원화로 입력</button>
+      </div>
+      <label class="fld"><span>기준 환율 <small class="muted" id="cBaseNote">(지금 시세, 바꿀 수 있음)</small></span>
+        <span class="inp"><input id="cBase" inputmode="decimal" autocomplete="off"><span class="u" id="cBaseU">원</span></span>
+      </label>
+      <div class="two">
+        <label class="fld"><span>환전 수수료율</span><span class="inp"><input id="cSpr" inputmode="decimal" autocomplete="off" value="1.75"><span class="u">%</span></span></label>
+        <label class="fld"><span>환율 우대</span><span class="inp"><input id="cPref" inputmode="decimal" autocomplete="off" value="0"><span class="u">%</span></span></label>
+      </div>
+      <div class="chips" id="cPrefChips" aria-label="우대율 빠른 선택">
+        <button type="button" data-p="0">0%</button><button type="button" data-p="50">50%</button><button type="button" data-p="70">70%</button><button type="button" data-p="90">90%</button><button type="button" data-p="100">100%</button>
+      </div>
+    </div>
+    <div class="card result" id="cRes" aria-live="polite"></div>
+    <p class="note">현찰 기준 어림값입니다. 은행은 매매기준율(하루 1번 고시)에 수수료율을 더하거나 빼고, 우대율만큼 수수료를 깎아 줍니다. 수수료율은 은행·통화·현찰/송금마다 다르니(현찰 보통 달러·엔 1.75%, 유로 약 2%) 거래 은행 값으로 바꿔 넣으세요.</p>
+  </section>
+
+  <!-- 알림 -->
+  <section data-tab="alerts" hidden aria-labelledby="hAl">
+    <h2 class="sec" id="hAl">환율 알림</h2>
+    <div class="card" id="alGate"></div>
+    <div id="alBody" hidden>
+      <div class="card">
+        <div class="ah"><b>목표 환율</b><span class="muted small">닿으면 한 번 알리고 꺼집니다</span></div>
+        <ul class="rules" id="tList"></ul>
+        <form class="addrow" id="tForm">
+          <select id="tCur" aria-label="통화"><option value="usd">달러/원</option><option value="jpy">엔/원(100엔)</option><option value="eur">유로/원</option></select>
+          <input id="tVal" inputmode="decimal" autocomplete="off" placeholder="환율" aria-label="목표 환율">
+          <select id="tOp" aria-label="조건"><option value="le">이하</option><option value="ge">이상</option></select>
+          <button type="submit" class="btn">추가</button>
+        </form>
+        <p class="muted small" id="tHint"></p>
+      </div>
+      <div class="card">
+        <div class="ah"><b>급변 알림</b><span class="muted small">최근 1시간 움직임 기준 · 2시간에 한 번까지</span></div>
+        <ul class="rules" id="sList"></ul>
+      </div>
+      <div class="card">
+        <label class="sw-row"><span><b>아침 요약</b><br><span class="muted small">평일 08:30 · 밤사이 환율 움직임과 오늘의 브리핑</span></span><input type="checkbox" id="mOn" class="tg"></label>
+      </div>
+      <div class="btnrow"><button type="button" class="btn ghost" id="alTest">테스트 알림 보내기</button><button type="button" class="btn ghost" id="alOff">알림 모두 끄기</button></div>
+      <p class="muted small" id="alMsg" aria-live="polite"></p>
+    </div>
+    <p class="note">알림은 서버가 1분마다 시세를 확인해 보냅니다(시세 지연 1~2분 포함, 주말 휴장 중에는 보내지 않음). 가입 없이 이 기기에만 저장되며, 앱을 180일 동안 열지 않으면 알림 설정이 지워집니다.</p>
+  </section>
+
+  <!-- 더보기 -->
+  <section data-tab="more" hidden aria-labelledby="hMore">
+    <h2 class="sec" id="hMore">환율 뉴스</h2>
+    <ul class="news card" id="news"><li class="muted">불러오는 중…</li></ul>
+    <h2 class="sec">전체 사이트</h2>
+    <ul class="links card">
+      <li><a href="/#p1">실시간 차트(1분봉·10분봉·드래그)<span>1페이지</span></a></li>
+      <li><a href="/#p2">매매기준율 추이·분기 전망<span>2페이지</span></a></li>
+      <li><a href="/#p3">기관별 전망·출처<span>3페이지</span></a></li>
+      <li><a href="/#p4">환율 뉴스 전체<span>4페이지</span></a></li>
+      <li><a href="/#p5">비교 차트(금리·주가 47개 지표)<span>5페이지</span></a></li>
+      <li><a href="/contact/">문의·건의<span>문의</span></a></li>
+    </ul>
+    <h2 class="sec">앱으로 설치하기</h2>
+    <div class="card install">
+      <p><b>안드로이드</b> · 크롬에서 이 화면을 열고 오른쪽 위 ⋮ 메뉴 → <b>앱 설치</b>(또는 홈 화면에 추가).</p>
+      <p><b>아이폰</b> · 사파리에서 이 화면을 열고 아래 공유 버튼 → <b>홈 화면에 추가</b>. 알림은 홈 화면 아이콘으로 연 앱에서만 켤 수 있습니다(iOS 16.4 이상).</p>
+      <button type="button" class="btn" id="installBtn2" hidden>지금 설치</button>
+    </div>
+    <h2 class="sec">업데이트 내역</h2>
+    <ul class="card log">
+      <li><b>2026-11-20</b> 모바일 앱 출시: 시세·차트·환전 계산기·목표 환율/급변/아침 요약 알림.</li>
+      <li><b>2026-11-19</b> 시세가 끊긴 시간을 1분 예비 기록으로 메움.</li>
+      <li><b>2026-11-18</b> 비교 차트 47개 지표, 그림·표 저장.</li>
+    </ul>
+    <p class="note">자료: Yahoo Finance(국제 시세), Wise(시장 중간 환율), 한국은행 ECOS(매매기준율), 연합뉴스 RSS. 투자 판단의 근거가 아닌 참고용입니다.</p>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="메뉴">
+  <a href="#home" data-t="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>시세</span></a>
+  <a href="#chart" data-t="chart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-6 4 3 6-8 3 3"/><path d="M3 21h18"/></svg><span>차트</span></a>
+  <a href="#calc" data-t="calc"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></svg><span>계산기</span></a>
+  <a href="#alerts" data-t="alerts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span>알림</span></a>
+  <a href="#more" data-t="more"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>더보기</span></a>
+</nav>
+<div class="toast" id="toast" role="status" hidden></div>
+<script src="/app/app.js" defer></script>
+</body>
+</html>

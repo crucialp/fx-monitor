@@ -462,7 +462,7 @@ td.corr{font-family:var(--font-num)}
 .sitebar a[aria-current=page]{background:#fff;color:#16181d;font-weight:600}
 .sitebar a:focus-visible{outline:2px solid #7ea2ff;outline-offset:2px}
 </style>
-<nav class="sitebar" aria-label="사이트"><div class="sitebar-in"><a href="/" id="sb-fx" aria-current="page">환율 조회</a><a href="/rates/" id="sb-rates">금리 모니터</a><a href="/contact/" id="sb-ask">문의·건의사항</a></div></nav>
+<nav class="sitebar" aria-label="사이트"><div class="sitebar-in"><a href="/" id="sb-fx" aria-current="page">환율 조회</a><a href="/rates/" id="sb-rates">금리 모니터</a><a href="/contact/" id="sb-ask">문의·건의사항</a><!--whatsnew--><a href="/app/" id="sb-app">모바일 앱</a><!--/whatsnew--></div></nav>
 <script>/* GitHub Pages 예비 주소에서는 금리 모니터·문의를 본 주소로 */try{if(/github\.io$/.test(location.hostname)){document.getElementById("sb-rates").href="https://fx-monitor.pages.dev/rates/";document.getElementById("sb-ask").href="https://fx-monitor.pages.dev/contact/"}}catch(e){}</script>
 <div class="wrap">
   <header class="top">
@@ -2862,6 +2862,13 @@ td.corr{font-family:var(--font-num)}
    새 업데이트를 알리려면 WN 맨 앞에 항목을 하나 더하면 된다. */
 (function(){
   var WN=[
+    {id:"2026-11-20-app",date:"2026.11.20",title:"모바일 앱이 나왔습니다",sub:"휴대폰 홈 화면에 설치해 앱처럼 쓰고, 원하는 환율이 되면 알림을 받을 수 있습니다.",
+     items:["<b>시세</b> — 달러·엔·유로/원 현재가와 06:00 대비 변동, 오늘의 브리핑, 매매기준율을 한 화면에",
+            "<b>차트</b> — 하루·3일(1분)부터 1개월·1년·10년까지, 손가락으로 짚으면 그 시각의 값",
+            "<b>환전 계산기</b> — 은행 수수료율과 환율 우대(%)를 넣으면 실제 필요한·받는 금액",
+            "<b>알림</b> — 목표 환율 도달, 1시간 급변, 평일 아침 8:30 요약을 휴대폰 알림으로(가입 없음)",
+            "<b>설치</b> — 안드로이드는 크롬 메뉴 → 앱 설치, 아이폰은 사파리 공유 → 홈 화면에 추가"],
+     go:{href:"/app/",text:"모바일 앱 열기"}},
     {id:"2026-11-18-cmp",date:"2026.11.18",title:"비교 차트에 금리·주가가 들어왔습니다",sub:"5페이지 '비교 차트'에서 지표를 골라 그래프로 비교하고, 그림과 표로 저장할 수 있습니다.",
      items:["<b>지표 47개</b>를 6개까지 골라 한 그래프에서 비교 — 환율에 더해 코스피·S&P 500·금·유가 같은 주가·원자재, 한국·미국·일본·유로·영국의 정책금리와 국채 금리, 한미 금리차",
             "<b>보기 3가지</b> — 기간 시작 대비 변화(%·%p), 실제 값을 한 그림에(두 축), 지표별 칸 나눔 · 기간은 1일부터 20년까지",

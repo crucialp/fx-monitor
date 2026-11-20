@@ -22,7 +22,7 @@ export async function onRequestPost(ctx) {
     if (recent && recent.n >= 60) return;   // 같은 IP 1시간 60건 넘으면 더 남기지 않음(도배로 D1 쓰기 한도 소진 방지)
     await env.DB.prepare("INSERT INTO visits (ts, ip, country, region, city, asn, org, ua, ref, host, vid, me, w, bot) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
       .bind(Date.now(), req.headers.get("cf-connecting-ip"), cf.country || null, cf.region || null, cf.city || null, cf.asn || null,
-        cut(cf.asOrganization, 120), cut(req.headers.get("user-agent"), 300), cut(b.r, 300), origin.replace(/^https:\/\//, "") + (b.p === "community" ? "/community" : ""),
+        cut(cf.asOrganization, 120), cut(req.headers.get("user-agent"), 300), cut(b.r, 300), origin.replace(/^https:\/\//, "") + (b.p === "community" ? "/community" : b.p === "app" ? "/app" : b.p === "app-installed" ? "/app(설치)" : ""),
         cut(b.v, 40), b.o ? 1 : 0, Number.isFinite(b.w) ? Math.round(b.w) : null, isBot(req.headers.get("user-agent") || "", cf.asOrganization || "") ? 1 : 0)
       .run();
     if (Math.random() < 0.02) await env.DB.prepare("DELETE FROM visits WHERE ts < ?").bind(Date.now() - 90 * 86400e3).run();
