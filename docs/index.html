@@ -2171,7 +2171,7 @@ td.corr{font-family:var(--font-num)}
     $("dnowv").textContent=f1(now);
     $("dnowc").innerHTML="06:00 시가 대비 "+chg(open,now);
     $("dnowt").textContent=(stale?"마지막 거래 ":"")+mdhm(endT)+" 기준";
-    $("dcredit").textContent="데이터: Yahoo Finance "+CURS[CUR].y+"(국제 시세"+CURS[CUR].per+") · 1분 단위 · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)"+(nW?" · Yahoo 시세가 10분 넘게 끊긴 구간(새벽·월요일 아침 등): Wise 시장 중간 환율(1분 자체 기록, 없으면 1시간 간격)을 앞뒤 Yahoo 값에 맞춰 이음(옅은 선)":"")+" · 지표: Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각과 한은 의결문 공개 시각: 언론 첫 속보(네이버 뉴스 입력 시각)";
+    $("dcredit").textContent="데이터: Yahoo Finance "+CURS[CUR].y+"(국제 시세"+CURS[CUR].per+") · 1분 단위 · 받은 시각 "+(ID.updated||"").replace("T"," ")+" (약 1~2분 지연)"+(nW?" · Yahoo 시세가 끊기거나 띄엄띄엄 온 구간(새벽·월요일 아침 등, 1분이라도 비면): Wise 시장 중간 환율(1분 자체 기록, 없으면 1시간 간격)을 앞뒤 Yahoo 값에 맞춰 이음(옅은 선)":"")+" · 지표: Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각과 한은 의결문 공개 시각: 언론 첫 속보(네이버 뉴스 입력 시각)";
     eventList($("devents"),dayEv,LAY.mode,"이 날의 주요 지표·금리 결정 ("+mdhm(start)+" ~ "+mdhm(start+DAYM)+", 한국 시간 · Nasdaq 캘린더)",dayEv.loading);
   }
 

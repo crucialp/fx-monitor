@@ -44,7 +44,8 @@ async function wise(src) {
   } catch { return []; }
 }
 
-const GAP = 10;   // 분: 이보다 길게 비면 메움
+const GAP = 1;    // 분: 1분이라도 비면 메운다(1분 예비 기록이 매분 있음). 2026-11-23 Yahoo 가 5분 간격·09:16 멈춤으로 와서 10분 기준으론 빈칸이 남았음
+const HR_GAP = 10; // 예비 기록이 없을 때 1시간 간격 Wise 로는 10분 넘는 빈칸만 메운다
 // 주말 휴장(한국 시간 토 07:00 ~ 월 06:00)에는 Wise 도 주말 고정 환율이라 메우지 않는다
 function closed(min) {
   const d = new Date((min + 540) * 60000), wd = d.getUTCDay(), h = d.getUTCHours();
@@ -65,9 +66,9 @@ function patch(m1, bk, hr) {
   }
   const out = [], runs = [];
   const put = (a, va, b, vb, from = a) => {   // from < 시각 < b 를 메운다(맞춤 기준은 a·b 의 Yahoo 값)
-    const inGap = (p) => p[0] > from + 1 && p[0] < b - 1 && !closed(p[0]);
+    const inGap = (p) => p[0] > from && p[0] < b && !closed(p[0]);
     let src = bk.filter(inGap), all = bk;
-    if (!src.length) { src = hr.filter(inGap); all = hr; }
+    if (!src.length && b - from > HR_GAP) { src = hr.filter(inGap); all = hr; }
     if (!src.length) return;
     const wa = near(all, a), wb = Number.isFinite(b) ? near(all, b) : null, cap = va * 0.01;
     let oa = wa === null ? null : va - wa, ob = wb === null || vb === null ? null : vb - wb;
@@ -83,7 +84,7 @@ function patch(m1, bk, hr) {
   };
   m1.forEach((p, i) => { if (i && p[0] - m1[i - 1][0] > GAP) put(m1[i - 1][0], m1[i - 1][1], p[0], p[1]); out.push(p); });
   const L = m1[m1.length - 1];
-  put(L[0], L[1], Infinity, null, L[0] + GAP - 2);   // Yahoo 가 지금 멈춰 있으면 그 뒤도 잇는다
+  put(L[0], L[1], Infinity, null, L[0]);   // Yahoo 가 지금 멈춰 있으면 그 뒤도 바로 잇는다
   return { m1: out, w: runs };
 }
 
@@ -144,6 +145,6 @@ async function build(code, env) {
 export const onRequestGet = (ctx) => {
   const c = new URL(ctx.request.url).searchParams.get("c") || "usd";
   if (!CUR[c]) return new Response("Not Found", { status: 404 });
-  return cached(ctx, c === "usd" ? "intraday-v5" : `intraday-v5-${c}`, 60, () => build(c, ctx.env), 600);
+  return cached(ctx, c === "usd" ? "intraday-v6" : `intraday-v6-${c}`, 60, () => build(c, ctx.env), 600);
 };
 export const onRequestOptions = options;
