@@ -98,10 +98,22 @@ async function backup(env, cur) {   // backup-worker 의 1분 기록(최근 72�
 
 async function build(code, env) {
   const C = CUR[code], mul = C.mult, r2 = (x) => Math.round(x * mul * 100) / 100;
-  const [a, b, w, bk] = await Promise.all([
-    chart(C.sym, "1m", "5d").catch(() => ({ t: [], c: [] })), chart(C.sym, "5m", "1mo"), wise(C.wise), backup(env, C.wise)]);
+  // 엔·유로: Yahoo 의 JPYKRW=X·EURKRW=X 1분 자료는 실제로 5분 간격뿐이라(하루 288개, 2026-11-25 확인)
+  // 달러/원(KRW=X)과 달러/엔(JPY=X)·유로/달러(EURUSD=X) 1분 값으로 교차 환율을 계산해 그 사이를 채운다.
+  // 계산값은 Yahoo 자체 교차 값과 수준이 조금 달라(엔 +2원/100엔, 유로 +1원 안팎) 앞뒤 5분 값에 맞춰 옮겨 붙인다(patch). Yahoo 자료라 진한 선.
+  const XS = { jpy: ["JPY=X", (u, z) => u / z * 100], eur: ["EURUSD=X", (u, z) => u * z] }[code];
+  const [a, b, w, bk, xk, xm] = await Promise.all([
+    chart(C.sym, "1m", "5d").catch(() => ({ t: [], c: [] })), chart(C.sym, "5m", "1mo"), wise(C.wise), backup(env, C.wise),
+    XS ? chart("KRW=X", "1m", "5d").catch(() => null) : null, XS ? chart(XS[0], "1m", "5d").catch(() => null) : null]);
   let m1 = [];
   (a.t || []).forEach((t, i) => { if (a.c[i] != null) m1.push([Math.floor(t / 60), r2(a.c[i])]); });
+  if (XS && xk && xm) {
+    const Z = new Map();
+    xm.t.forEach((t, i) => { if (xm.c[i] != null) Z.set(Math.floor(t / 60), xm.c[i]); });
+    const X = [];
+    xk.t.forEach((t, i) => { const k = Math.floor(t / 60), u = xk.c[i], z = Z.get(k); if (u != null && z) X.push([k, Math.round(XS[1](u, z) * 100) / 100]); });
+    if (X.length) m1 = patch(m1, X, []).m1;
+  }
   if (m1.length) { const cut = m1[m1.length - 1][0] - 72 * 60; m1 = m1.filter((p) => p[0] >= cut); }
   const P = patch(m1, bk.map((p) => [p[0], r2(p[1])]), w.map((p) => [p[0], r2(p[1])]));
   m1 = P.m1;
@@ -145,6 +157,6 @@ async function build(code, env) {
 export const onRequestGet = (ctx) => {
   const c = new URL(ctx.request.url).searchParams.get("c") || "usd";
   if (!CUR[c]) return new Response("Not Found", { status: 404 });
-  return cached(ctx, c === "usd" ? "intraday-v6" : `intraday-v6-${c}`, 60, () => build(c, ctx.env), 600);
+  return cached(ctx, c === "usd" ? "intraday-v7" : `intraday-v7-${c}`, 60, () => build(c, ctx.env), 600);
 };
 export const onRequestOptions = options;
