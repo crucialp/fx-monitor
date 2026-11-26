@@ -114,6 +114,7 @@ nav.toc a:hover{color:var(--ink)}
 .evlist .evr .nb{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--ev);color:#fff;font-family:var(--font-num);font-size:10.5px;font-weight:600;margin-right:6px;vertical-align:1px}
 .evlist{display:grid;gap:0;border:1px solid var(--rule);border-radius:6px;background:var(--surface);overflow:hidden}
 .evlist .evh{font-size:12.5px;font-weight:600;color:var(--ink-2);padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--rule)}
+.evlist .evr .evinfo{grid-column:span 3}
 .evlist .evr{display:grid;grid-template-columns:52px minmax(140px,1.4fr) repeat(3,minmax(70px,.6fr)) auto;gap:4px 12px;align-items:baseline;padding:7px 12px;border-bottom:1px solid var(--rule);font-size:13px}
 .evlist .evr:last-child{border-bottom:0}
 .evlist .evr b{font-family:var(--font-num);font-weight:500}
@@ -2098,7 +2099,7 @@ td.corr{font-family:var(--font-num)}
       var tm=when+(e.ts&&e.ts!==e.t?'<br><span class="st">예정 '+hm(e.ts)+'</span>':'');
       var nb=(mode==="badge"&&e._n)?'<span class="nb">'+e._n+'</span>':'';
       return '<div class="evr"><span class="ntime">'+tm+'</span><span>'+nb+'<b style="font-family:var(--font-body);font-weight:600">'+e.label+'</b></span>'+
-        (e.info?'<span>'+(e.note?'('+e.note+')':'')+'</span><span class="num"></span><span class="num"></span>':
+        (e.info?'<span class="evinfo">'+(e.note?'('+e.note+')':'')+'</span>':
         '<span>발표 <b>'+(e.actual||"–")+'</b>'+(e.note?' '+e.note:'')+'</span><span class="num">예상 '+(e.forecast||"–")+'</span><span class="num">이전 '+(e.previous||"–")+'</span>')+
         '<span class="st">'+(e.info?"공개됨":done?"발표됨":e.t>nowM?"예정":"발표 대기")+(e.tsrc?' · <a href="'+e.turl+'" target="_blank" rel="noopener nofollow" title="이 시각은 언론사들의 첫 속보 입력 시각(네이버 뉴스)으로 확인함">'+e.tsrc+'</a>':'')+'</span></div>';
     }).join("");
