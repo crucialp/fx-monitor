@@ -55,6 +55,59 @@ const RULES = [
   { c: "Euro Zone", re: /ECB Interest Rate Decision/i, cc: "EU", k: "rate", label: "ECB 기준금리" },
 ];
 
+// ---- Nasdaq 캘린더가 비는 날 대비(2026-11-23 부터 모든 날짜가 'No record found'로 옴)
+// ① 금리 결정은 금리 모니터의 회의 일정표(rates/data/forecast.json: mpc_dates·fomc_dates)로 항상 넣는다.
+// ② 그 밖의 미국·일본·유로 지표는 Nasdaq 이 통째로 비면 ForexFactory 공개 주간 캘린더(예상·이전치만, 실제치 없음)로 대신한다.
+async function cachedJSON(ctx, name, url, ttl) {
+  const key = new Request(`https://cache.usdkrw.local/${name}`);
+  const hit = await caches.default.match(key);
+  if (hit) return hit.json();
+  const r = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", accept: "application/json" }, signal: AbortSignal.timeout(6000) });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const j = await r.json();
+  ctx.waitUntil(caches.default.put(key, new Response(JSON.stringify(j), { headers: { "content-type": "application/json", "cache-control": `public, max-age=${ttl}` } })));
+  return j;
+}
+const FF_RULES = [
+  [/^CPI y\/y$/i, "USD", "US", "cpi", "美 CPI(전년비)"],
+  [/^PPI y\/y$/i, "USD", "US", "ppi", "美 PPI(전년비)"],
+  [/^PCE Price Index y\/y$/i, "USD", "US", "pce", "美 PCE 물가(전년비)"],
+  [/^Unemployment Claims$/i, "USD", "US", "claims", "美 신규 실업수당 청구"],
+  [/^Unemployment Rate$/i, "USD", "US", "unemp", "美 실업률"],
+  [/^Non-Farm Employment Change$/i, "USD", "US", "nfp", "美 비농업 고용"],
+  [/^(Advance|Prelim|Final) GDP q\/q$/i, "USD", "US", "gdp", "美 GDP(연율"],
+  [/^Federal Funds Rate$/i, "USD", "US", "rate", "美 기준금리(연준)"],
+  [/^BOJ Policy Rate$/i, "JPY", "JP", "rate", "日 기준금리(일본은행)"],
+  [/^Main Refinancing Rate$/i, "EUR", "EU", "rate", "ECB 기준금리"],
+];
+async function ffEvents(ctx) {
+  const out = [];
+  for (const wk of ["thisweek", "nextweek"]) {
+    let rows = [];
+    try { rows = await cachedJSON(ctx, `ff-${wk}`, `https://nfs.faireconomy.media/ff_calendar_${wk}.json`, 3600); } catch { continue; }
+    for (const x of rows || []) {
+      const ru = FF_RULES.find((r) => r[1] === x.country && r[0].test(String(x.title || "").trim()));
+      const ms = Date.parse(x.date);
+      if (!ru || !Number.isFinite(ms)) continue;
+      const t = Math.floor(ms / 60000);
+      out.push({ t, cc: ru[2], k: ru[3], label: ru[3] === "gdp" ? `${ru[4]}, ${stage(ru[2], t)})` : ru[4], actual: null,
+        forecast: x.forecast || null, previous: x.previous || null, note: null, src: "ForexFactory" });
+    }
+  }
+  return out;
+}
+// 한은 결정 속보 제목에서 결과 읽기: '[속보] 한은, 기준금리 3.25%로 0.25%p 인상' → 3.25%, 인상 +0.25%p
+function readDecision(titles) {
+  for (const t of titles || []) {
+    const v = /(\d\.\d{1,2})\s*%(?!p)/.exec(t), a = /인상|인하|동결/.exec(t);
+    if (!v || !a) continue;
+    const val = parseFloat(v[1]), step = /(\d\.\d{1,2})\s*%p/.exec(t), d = step ? parseFloat(step[1]) : 0.25;
+    const prev = a[0] === "동결" ? val : a[0] === "인상" ? val - d : val + d;
+    return { actual: val.toFixed(2) + "%", previous: prev.toFixed(2) + "%", note: a[0] === "동결" ? "동결" : `${a[0]} ${a[0] === "인상" ? "+" : "−"}${d.toFixed(2)}%p` };
+  }
+  return null;
+}
+
 async function day(dateStr, bust) {
   const r = await fetch(`https://api.nasdaq.com/api/calendar/economicevents?date=${dateStr}${bust ? "&_=" + Date.now() + bust : ""}`, {
     headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", accept: "application/json", "accept-language": "en-US,en;q=0.9" },
@@ -249,7 +302,27 @@ export async function onRequestGet(ctx) {
   const events = normalize(results.flat().filter((x) => !x._error)).filter((e) => e.t >= from - 240 && e.t <= to + 240);
   // 금리 결정 실제 시각(+한은 의결문 공개)을 차례로 확인. 점검용: ?fresh=1 이면 캐시 없이 다시 찾고 과정(_check)을 보여 줌
   const fresh = u.searchParams.has("fresh") && (await isAdmin(ctx));   // 점검용은 관리자만(아무나 쓰면 외부 호출을 마구 일으킴)
-  const budget = { left: 48 - misses };
+  const nasdaqEmpty = results.flat().filter((x) => !x._error).length === 0;
+  let used = 0;
+  try {
+    used++;
+    const fc = await cachedJSON(ctx, "rate-schedule", `${u.origin}/rates/data/forecast.json`, 3600);
+    const add = (cc, t, label) => {
+      if (t < from - 240 || t > to + 240 || events.some((e) => e.cc === cc && e.k === "rate" && Math.abs(e.t - t) < 720)) return;
+      events.push({ t, cc, k: "rate", label, actual: null, forecast: null, previous: null, note: null, approx: true, src: "회의 일정표" });
+    };
+    for (const ds of (fc && fc.mpc_dates) || []) add("KR", Date.parse(ds + "T10:00:00+09:00") / 60000, "한은 기준금리");
+    for (const ds of (fc && fc.fomc_dates) || []) {
+      const [y, m, d] = ds.split("-").map(Number), off = nyOffset(Date.UTC(y, m - 1, d, 12));
+      add("US", (Date.UTC(y, m - 1, d, 14) - off * 3600e3) / 60000, "美 기준금리(연준)");   // 결정 발표 미국 동부 14:00
+    }
+  } catch (err) { errors.push("회의 일정표 못 받음: " + String((err && err.message) || err)); }
+  {   // Nasdaq 이 빠뜨린 날(일부 날짜만 빌 때도 있음)도 채우도록 늘 합친다. 같은 지표가 이미 있으면 넣지 않음
+    used += 2;
+    for (const e of await ffEvents(ctx))
+      if (e.t >= from - 240 && e.t <= to + 240 && !events.some((x) => x.cc === e.cc && x.k === e.k && Math.abs(x.t - e.t) < 720)) events.push(e);
+  }
+  const budget = { left: 48 - misses - used };
   for (const e of events.slice()) {
     const cf = CONFIRM[e.cc];
     if (!cf || e.k !== "rate" || now < e.t - cf.before) continue;
@@ -257,6 +330,7 @@ export async function onRequestGet(ctx) {
     const c = await lookup(ctx, `confirm-v5-${e.cc}-${ds}`, fresh, sched,
       () => naverSearch({ queries: [[cf.q, [0, 2]]], match: (t) => isFlash(cf, t), minPress: 2, max: 12 }, ds, sched - cf.before, sched + cf.after, budget));
     if (c && fresh) e._check = c;
+    if (c && c.t != null && e.cc === "KR" && e.actual == null) { const rd = readDecision(c.titles || [c.title]); if (rd) Object.assign(e, rd); }
     if (c && c.t != null) { e.ts = e.t; e.t = c.t; e.approx = false; e.tsrc = `언론 ${c.n}곳 첫 속보`; e.turl = c.url; }
     else if (c && c.error) errors.push(e.cc + " 발표 시각 확인 실패: " + c.error);
     if (e.cc === "KR" && now >= e.t + 10) {
@@ -271,7 +345,7 @@ export async function onRequestGet(ctx) {
   for (let i = events.length - 1; i >= 0; i--) if (events[i].t < from || events[i].t > to) events.splice(i, 1);
   events.sort((a, b) => a.t - b.t);
   const diag = fresh ? { nasdaq: list.map((ds, i) => [ds, results[i].length, results[i].filter((x) => x.country === "South Korea").map((x) => `${x.gmt} ${x.eventName} ${x.actual}`)]), budget: budget.left, misses } : undefined;
-  return new Response(JSON.stringify({ diag, updated: kstNow().iso, source: "Nasdaq 경제 캘린더 · 한은·일본은행 결정 시각과 한은 의결문 공개 시각은 언론 첫 속보(네이버 뉴스 입력 시각)", from, to, errors, events }), {
+  return new Response(JSON.stringify({ diag, updated: kstNow().iso, source: (nasdaqEmpty ? "ForexFactory 주간 캘린더(Nasdaq 캘린더가 비어 대신 씀, 실제치 없음) · 금리 결정 일정은 회의 일정표 · " : "Nasdaq 경제 캘린더(빠진 날은 ForexFactory) · ") + "한은·일본은행 결정 시각과 한은 의결문 공개 시각은 언론 첫 속보(네이버 뉴스 입력 시각)", from, to, errors, events }), {
     headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*" },
   });
 }

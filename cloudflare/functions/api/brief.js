@@ -96,6 +96,22 @@ function surprises(evs, now, ccs) {
   return out;
 }
 
+// 금리 결정(실제 결과): 최근 18시간 안 한은·연준 결정. dir = {KR:{인상:e,인하:e}, US:{...}} 대상을 올리는 쪽 +1
+// 결정이 있으면 같은 주제의 외신 요인('한국은행 긴축 쪽 신호' 등)은 빼고 이것을 국내 요인으로 쓴다(2026-11-26 사용자 지적).
+function decisions(evs, now, dir) {
+  const out = [];
+  for (const e of (evs && evs.events) || []) {
+    if (e.k !== "rate" || !dir[e.cc] || !e.note || e.t * 60000 > now || e.t * 60000 < now - 18 * 3600e3) continue;
+    const act = /인상/.test(e.note) ? "인상" : /인하/.test(e.note) ? "인하" : "동결";
+    const who = e.cc === "KR" ? "한은" : "연준";
+    out.push({ cc: e.cc, e: dir[e.cc][act] || 0, s: act === "동결" ? 0.5 : 2.5, short: `${who} ${act}`,
+      text: `${who} 기준금리 ${act === "동결" ? `${e.actual} 동결` : `${e.actual}로 ${e.note}`}(${md(e.t * 60000)} ${hm(e.t * 60000)} 결정)` });
+  }
+  return out;
+}
+const WIRE_TOPIC = { KR: /한국은행|한은/, US: /연준|FOMC|미국 기준금리/ };
+const dropWire = (wf, dec) => (wf || []).filter((x) => !dec.some((d) => WIRE_TOPIC[d.cc] && WIRE_TOPIC[d.cc].test(x.ko || "")));
+
 // 그 하루(06:00~익일 06:00)의 06:00 시가 대비 움직임. 주말처럼 멈췄고 마지막 하루가 3시간도 안 됐으면 그 전 하루로
 function dayMove(ID, now) {
   const t = ID && ID.m1 ? ID.m1.t : [], c = ID && ID.m1 ? ID.m1.c : [], n = t.length;
@@ -165,6 +181,8 @@ function fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, wire,
   const op = pct(oil);
   if (op != null) ds.push({ e: Math.sign(op), s: Math.abs(op) / 2, short: op > 0 ? "유가 상승" : "유가 하락", text: `국제유가 ${op > 0 ? "상승" : "하락"}(WTI ${sg(op, 2, "%")})` });
   for (const x of surprises(evs, now, ["US"])) ds.push({ e: x.hawk, s: 1.5, short: x.short, text: x.text });
+  const decFx = decisions(evs, now, { KR: { 인상: -1, 인하: 1 }, US: { 인상: 1, 인하: -1 } });
+  for (const x of decFx) if (x.e) ds.push(x);
   const D = U.dir === "up" ? 1 : U.dir === "down" ? -1 : 0;
   if (!U.stale) lines[0] = l1base;   // 달러인덱스 얘기는 아래 요인 목록에서
   // 제목: 원인(추정)이 있으면 "A·B에 원화 강세", 없으면 달러 전반과 같은 쪽이면 "속", 엇갈리면 "에도"
@@ -187,8 +205,8 @@ function fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, wire,
     title: (U.stale ? "지난 거래일 " : "") + pre + f,
     lines, links, asof: `${md(U.at)} ${hm(U.at)}`,
     factorHead: U.stale ? "달러/원 움직임 요인 (추정 · 전일 대비 시세 · 큰 순서)" : "달러/원 움직임 요인 (추정 · 큰 순서)",
-    factors: factorList(ds, wireFactors(wire, "fx", now)),
-    src: "Yahoo Finance(환율·달러인덱스·유가) · 네이버 증권(외국인 매매·미국채) · Nasdaq 경제 캘린더 · " + WIRE_SRC,
+    factors: factorList(ds, dropWire(wireFactors(wire, "fx", now), decFx)),
+    src: "Yahoo Finance(환율·달러인덱스·유가) · 네이버 증권(외국인 매매·미국채) · 경제 캘린더(Nasdaq·ForexFactory·회의 일정표) · " + WIRE_SRC,
   };
 }
 
@@ -254,6 +272,8 @@ function rateBrief(k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, wire, now) 
   const ds = [];
   if (u10) ds.push({ e: Math.sign(u10.chg), s: Math.abs(u10.chg) / 3, short: u10.chg > 0 ? "미국 금리 상승" : "미국 금리 하락", text: `미국채 금리 ${u10.chg > 0 ? "상승" : "하락"}(10년 ${sg(u10.chg, 1, "bp")})` });
   for (const x of surprises(evs, now, ["US", "KR"])) ds.push({ e: x.hawk, s: 1.5, short: x.short, text: x.text });
+  const decKr = decisions(evs, now, { KR: { 인상: 1, 인하: -1 }, US: { 인상: 1, 인하: -1 } });
+  for (const x of decKr) if (x.e) ds.push(x);
   // 금통위 기대: 다음 회의(일정표)가 든 분기의 기관 전망 vs 지금 기준금리(매일 ECOS → meta.json). 회의 3주 전부터
   const nextMpc = nextMeet(fc && fc.mpc_dates, fc && fc.next_mpc, now), baseNow = meta && Number.isFinite(meta.base_last) ? meta.base_last : fc && fc.base_now;
   if (fc && nextMpc && baseNow != null) {
@@ -294,8 +314,8 @@ function rateBrief(k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, wire, now) 
     title: (today ? "" : "지난 거래일 ") + pre + b + us,
     lines, links, asof: `${md(k3.at)} ${hm(k3.at)}`,
     factorHead: today ? "국고채 금리 움직임 요인 (추정 · 큰 순서)" : "오늘 국고채 금리에 영향을 줄 요인 (추정 · 큰 순서)",
-    factors: factorList(ds, wireFactors(wire, "kr", now)),
-    src: "네이버 증권(국고채·미국채) · Yahoo Finance(유가·달러/원) · Nasdaq 경제 캘린더 · 금리 전망 탭(금통위 기대) · " + WIRE_SRC,
+    factors: factorList(ds, dropWire(wireFactors(wire, "kr", now), decKr)),
+    src: "네이버 증권(국고채·미국채) · Yahoo Finance(유가·달러/원) · 경제 캘린더(Nasdaq·ForexFactory·회의 일정표) · 금리 전망 탭(금통위 기대) · " + WIRE_SRC,
   };
 }
 
