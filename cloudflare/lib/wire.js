@@ -67,6 +67,8 @@ function policy(h, subj) {
   return 0;
 }
 const dir = (h, subj) => (near(subj, UP).test(h) ? 1 : near(subj, DOWN).test(h) ? -1 : 0);
+// 다른 통화·원자재가 주제인 제목(FXStreet 식 'Australian Dollar edges up but Fed hike bets cap…')은 중앙은행을 한 번 언급해도 정책 신호로 보지 않는다(2026-11-27)
+const OTHER_SUBJ = /^\s*(?:australian dollar|aussie|aud\/\w{3}|\w{3}\/aud|new zealand dollar|kiwi|nzd\/\w{3}|pound sterling|sterling|gbp\/\w{3}|eur\/(?!usd)\w{3}|canadian dollar|loonie|usd\/cad|swiss franc|usd\/chf|indian rupee|usd\/inr|mexican peso|usd\/mxn|gold|silver|xau\/usd|xag\/usd|bitcoin|crude|wti|brent|oil)\b/i;
 const FED = "\\bfed\\b|fed's|\\bfomc\\b|federal reserve|powell|warsh|waller|bowman|jefferson|logan|hammack|kashkari|musalem|schmid|goolsbee|bostic|daly|barkin|miran";
 const BOK = "bank of korea|\\bbok\\b|korea(?:n)? central bank|governor rhee|rhee chang";
 const BOJ = "\\bboj\\b|bank of japan|ueda|kuroda|himino|uchida";
@@ -86,7 +88,7 @@ function classify(title) {
   if (/korea|\bkrw\b/i.test(h) && (d = dir(h, "\\bwon\\b|\\bkrw\\b"))) return { cat: "won", w: 1, fx: -d, kr: 0, ko: d > 0 ? "원화 강세 보도" : "원화 약세 보도" };
   if ((d = dir(h, "(?:south )?korea(?:'s|n)? (?:\\w+ )?exports?"))) return { cat: "krexp", w: 0.8, fx: -d, kr: 0, ko: d > 0 ? "한국 수출 호조" : "한국 수출 부진" };
   // 미국 통화정책·지표·금리
-  if ((d = policy(h, FED))) return { cat: "fed", w: 0.95, fx: d, kr: d, ko: d > 0 ? "연준 금리 인상(긴축) 쪽 신호" : "연준 금리 인하(완화) 쪽 신호" };
+  if (!OTHER_SUBJ.test(h) && (d = policy(h, FED))) return { cat: "fed", w: 0.95, fx: d, kr: d, ko: d > 0 ? "연준 금리 인상(긴축) 쪽 신호" : "연준 금리 인하(완화) 쪽 신호" };
   if (!FOREIGN.test(h) && !NATADJ.test(h)) {
     // 지표 발표 속보: "Actual 0.4% (Forecast 0.3%..." · "3.1% vs 3.2% expected" → 예상보다 높으면 매파(달러·금리 올리는 쪽)
     const AF = h.match(/actual[:\s]+(-?\d+(?:\.\d+)?\s*[%kKmMbB]?)\s*\(?\s*(?:forecast|f'cast|exp(?:ected)?|est(?:imate)?|consensus)[:\s]+(-?\d+(?:\.\d+)?\s*[%kKmMbB]?)/i)

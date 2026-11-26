@@ -97,14 +97,16 @@ function surprises(evs, now, ccs) {
 }
 
 // 금리 결정(실제 결과): 최근 18시간 안 한은·연준 결정. dir = {KR:{인상:e,인하:e}, US:{...}} 대상을 올리는 쪽 +1
+// 결정 뒤 30시간(다음 날 아침 장까지)은 요인으로 넣고, 72시간 동안은 같은 주제의 외신 요인(결정 해설 기사)을 뺀다.
 // 결정이 있으면 같은 주제의 외신 요인('한국은행 긴축 쪽 신호' 등)은 빼고 이것을 국내 요인으로 쓴다(2026-11-26 사용자 지적).
-function decisions(evs, now, dir) {
+function decisions(evs, now, dir, hours = 30) {
   const out = [];
   for (const e of (evs && evs.events) || []) {
-    if (e.k !== "rate" || !dir[e.cc] || !e.note || e.t * 60000 > now || e.t * 60000 < now - 18 * 3600e3) continue;
+    if (e.k !== "rate" || !dir[e.cc] || !e.note || e.t * 60000 > now || e.t * 60000 < now - hours * 3600e3) continue;
     const act = /인상/.test(e.note) ? "인상" : /인하/.test(e.note) ? "인하" : "동결";
     const who = e.cc === "KR" ? "한은" : "연준";
-    out.push({ cc: e.cc, e: dir[e.cc][act] || 0, s: act === "동결" ? 0.5 : 2.5, short: `${who} ${act}`,
+    const fresh = now - e.t * 60000 < 18 * 3600e3;   // 결정 당일은 크게, 다음 날 아침 장까지는 조금 작게
+    out.push({ cc: e.cc, e: dir[e.cc][act] || 0, s: act === "동결" ? 0.5 : fresh ? 2.5 : 1.2, short: `${who} ${act}`,
       text: `${who} 기준금리 ${act === "동결" ? `${e.actual} 동결` : `${e.actual}로 ${e.note}`}(${md(e.t * 60000)} ${hm(e.t * 60000)} 결정)` });
   }
   return out;
@@ -167,7 +169,7 @@ function fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, wire,
   const ds = [];
   if (dx != null) ds.push({ e: Math.sign(dx), s: Math.abs(dx) / 0.2, short: dx > 0 ? "달러 강세" : "달러 약세", text: `달러 전반 ${dx > 0 ? "강세" : "약세"}(달러인덱스 ${sg(dx, 2, "%")})` });
   const yp = pct(yen), cp = pct(cny), asia = [yp, cp].filter((v) => v != null);
-  if (asia.length) {
+  if (asia.length && (asia.length === 1 || Math.sign(asia[0]) === Math.sign(asia[1]))) {   // 엔·위안이 반대로 가면 '동반'이 아니므로 뺀다
     const av = asia.reduce((a, b) => a + b, 0) / asia.length;
     ds.push({ e: Math.sign(av), s: Math.abs(av) / 0.25, short: av > 0 ? "엔·위안 약세" : "엔·위안 강세",
       text: `아시아 통화 ${av > 0 ? "동반 약세" : "동반 강세"}(${[yp != null ? `달러/엔 ${sg(yp, 2, "%")}` : "", cp != null ? `달러/위안 ${sg(cp, 2, "%")}` : ""].filter(Boolean).join(", ")})` });
@@ -205,7 +207,7 @@ function fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, wire,
     title: (U.stale ? "지난 거래일 " : "") + pre + f,
     lines, links, asof: `${md(U.at)} ${hm(U.at)}`,
     factorHead: U.stale ? "달러/원 움직임 요인 (추정 · 전일 대비 시세 · 큰 순서)" : "달러/원 움직임 요인 (추정 · 큰 순서)",
-    factors: factorList(ds, dropWire(wireFactors(wire, "fx", now), decFx)),
+    factors: factorList(ds, dropWire(wireFactors(wire, "fx", now), decisions(evs, now, { KR: { 인상: 1, 인하: 1, 동결: 1 }, US: { 인상: 1, 인하: 1, 동결: 1 } }, 72))),
     src: "Yahoo Finance(환율·달러인덱스·유가) · 네이버 증권(외국인 매매·미국채) · 경제 캘린더(Nasdaq·ForexFactory·회의 일정표) · " + WIRE_SRC,
   };
 }
@@ -314,7 +316,7 @@ function rateBrief(k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, wire, now) 
     title: (today ? "" : "지난 거래일 ") + pre + b + us,
     lines, links, asof: `${md(k3.at)} ${hm(k3.at)}`,
     factorHead: today ? "국고채 금리 움직임 요인 (추정 · 큰 순서)" : "오늘 국고채 금리에 영향을 줄 요인 (추정 · 큰 순서)",
-    factors: factorList(ds, dropWire(wireFactors(wire, "kr", now), decKr)),
+    factors: factorList(ds, dropWire(wireFactors(wire, "kr", now), decisions(evs, now, { KR: { 인상: 1, 인하: 1, 동결: 1 }, US: { 인상: 1, 인하: 1, 동결: 1 } }, 72))),
     src: "네이버 증권(국고채·미국채) · Yahoo Finance(유가·달러/원) · 경제 캘린더(Nasdaq·ForexFactory·회의 일정표) · 금리 전망 탭(금통위 기대) · " + WIRE_SRC,
   };
 }
@@ -330,7 +332,7 @@ async function build(origin, k, c) {
     ]);
     out = crossBrief(c, usd, X, yen, eu, kospi, wire, now);
   } else if (k === "fx") {
-    const ev = `${origin}/api/events?from=${Math.floor(now / 60000) - 1440}&to=${Math.floor(now / 60000)}`;
+    const ev = `${origin}/api/events?from=${Math.floor(now / 60000) - 3 * 1440}&to=${Math.floor(now / 60000)}`;
     const [usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, wire] = await Promise.all([
       settle(getJSON(`${origin}/api/intraday`, 8000)), settle(getJSON(`${origin}/api/intraday?c=jpy`, 8000)), settle(getJSON(`${origin}/api/intraday?c=eur`, 8000)),
       settle(yahoo("DX-Y.NYB")), settle(yahoo("JPY=X")), settle(yahoo("CNY=X")), settle(yahoo("CL=F")), settle(naverBond("US10YT=RR")),
@@ -338,7 +340,7 @@ async function build(origin, k, c) {
     ]);
     out = fxBrief(usd, jpy, eur, dxy, yen, cny, oil, u10, kospi, evs, news, wire, now);
   } else {
-    const ev = `${origin}/api/events?from=${Math.floor(now / 60000) - 1440}&to=${Math.floor(now / 60000)}`;
+    const ev = `${origin}/api/events?from=${Math.floor(now / 60000) - 3 * 1440}&to=${Math.floor(now / 60000)}`;
     const [k3, k10, u2, u10, fc, meta, rnews, usd, oil, evs, wire] = await Promise.all([
       settle(naverBond("KR3YT=RR")), settle(naverBond("KR10YT=RR")), settle(naverBond("US2YT=RR")), settle(naverBond("US10YT=RR")),
       settle(getJSON(`${origin}/rates/data/forecast.json`, 8000)), settle(getJSON(`${origin}/rates/data/meta.json`, 8000)), settle(getJSON(`${origin}/rates/data/news.json`, 8000)),
