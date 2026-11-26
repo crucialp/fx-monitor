@@ -170,21 +170,29 @@ const STMT = {
   match: (t) => /속보|1보/.test(t) && /만장일치|소수\s?의견|\d\s*대\s*\d/.test(t) && /금통위|한은|한국은행|기준금리/.test(t) && !/총재|신현송|이창용|기자간담회/.test(t),
   minPress: 1, max: 8,
 };
-// 괄호에 넣을 짧은 내용: '만장일치' 또는 '6대 1' (금통위원 7명 기준)
-function voteNote(titles) {
-  for (const t of titles) { const m = /(\d)\s*대\s*(\d)/.exec(t); if (m) return `${m[1]}대 ${m[2]}`; }
-  for (const t of titles) {
-    if (!/소수\s?의견/.test(t)) continue;
-    let k = null;
-    const c = /소수\s?의견[^\d]{0,8}(\d)\s*명|(\d)\s*명[^\d]{0,8}소수/.exec(t);
-    if (c) k = +(c[1] || c[2]);
-    else {
-      const nm = /([가-힣]{2,3}(?:\s*[·,]\s*[가-힣]{2,3})*)\s*위원(?!회)/.exec(t.replace(/금통위원?/g, " "));
-      if (nm) k = nm[1].split(/[·,]/).length;
-    }
-    return k && k < 7 ? `${7 - k}대 ${k}` : "소수의견";
+// 괄호에 넣을 내용: 다수 의견과 소수의견을 방향까지 — '인상 5 · 동결 2(황건일·이수형)', '만장일치 동결' (금통위원 7명 기준)
+// act: 그날 결정(인상·인하·동결, 결정 속보에서 읽은 것). 소수의견 방향은 제목의 "'동결' 소수의견", "동결 소수의견 2명" 등에서 읽는다
+// (2026-11-26: '[속보] 한은 금통위, 3.25% 인상에 황건일·이수형 위원 '동결' 소수의견', '[속보]금통위, 기준금리 인상 결정…동결 소수의견 2명').
+function voteNote(titles, act) {
+  const T = (titles || []).map((t) => t.replace(/['‘’"“”]/g, ""));
+  const ACT = /동결|인상|인하/;
+  if (!T.some((t) => /소수\s?의견|\d\s*대\s*\d/.test(t))) return T.some((t) => /만장일치/.test(t)) ? (act ? `만장일치 ${act}` : "만장일치") : null;
+  let k = null, minAct = null, names = null;
+  for (const t of T) {
+    const v = /(\d)\s*대\s*(\d)/.exec(t);
+    if (v && k == null) k = Math.min(+v[1], +v[2]);
+    const c = /소수\s?의견[^\d]{0,8}(\d)\s*(?:명|인)|(\d)\s*(?:명|인)[^\d]{0,8}소수/.exec(t);
+    if (c && k == null) k = +(c[1] || c[2]);
+    const d = /(동결|인상|인하)\s*소수\s?의견/.exec(t) || /소수\s?의견[^.…]{0,12}?(동결|인상|인하)/.exec(t);
+    if (d && !minAct) minAct = d[1];
+    const nm = /([가-힣]{2,3}(?:\s*[·,]\s*[가-힣]{2,3})*)\s*위원(?!회)/.exec(t.replace(/금통위원?/g, " "));
+    if (nm && !names) names = nm[1].split(/\s*[·,]\s*/);
   }
-  return titles.some((t) => /만장일치/.test(t)) ? "만장일치" : null;
+  if (k == null && names) k = names.length;
+  if (k == null || k >= 7) return "소수의견";
+  const maj = act || null, who = names && names.length === k ? `(${names.join("·")})` : "";
+  if (maj && minAct && minAct !== maj) return `${maj} ${7 - k} · ${minAct} ${k}${who}`;
+  return `${7 - k}대 ${k}${minAct ? ` · 소수 ${minAct}` : ""}${who}`;
 }
 
 // 네이버 뉴스 검색 → 제목으로 거른 기사만 열어 입력 시각을 모은다.
@@ -334,9 +342,9 @@ export async function onRequestGet(ctx) {
     if (c && c.t != null) { e.ts = e.t; e.t = c.t; e.approx = false; e.tsrc = `언론 ${c.n}곳 첫 속보`; e.turl = c.url; }
     else if (c && c.error) errors.push(e.cc + " 발표 시각 확인 실패: " + c.error);
     if (e.cc === "KR" && now >= e.t + 10) {
-      const st = await lookup(ctx, `stmt-v1-KR-${ds}`, fresh, e.t, () => naverSearch(STMT, ds, e.t + 5, e.t + 180, budget));
+      const st = await lookup(ctx, `stmt-v2-KR-${ds}`, fresh, e.t, () => naverSearch(STMT, ds, e.t + 5, e.t + 180, budget));
       if (st && st.t != null) {
-        const note = voteNote(st.titles || [st.title]);
+        const note = voteNote(st.titles || [st.title], (/인상|인하|동결/.exec(e.note || "") || [])[0]);
         events.push({ t: st.t, cc: "KR", k: "stmt", label: "한은 의결문 공개", actual: null, forecast: null, previous: null, note, info: true,
           tsrc: `언론 ${st.n}곳 첫 속보`, turl: st.url, ...(fresh ? { _check: st } : {}) });
       } else if (st && st.error) errors.push("KR 의결문 확인 실패: " + st.error);
